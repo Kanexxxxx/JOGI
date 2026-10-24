@@ -36,6 +36,13 @@ func _ready() -> void:
 	add_child(_http)
 
 
+func _exit_tree() -> void:
+	_pending.clear()
+	_active.clear()
+	if _http != null:
+		_http.cancel_request()
+
+
 func register_event(envelope: Dictionary) -> void:
 	if str(envelope.get("event_type", "")) != "gift":
 		return
@@ -86,10 +93,19 @@ func _process(delta: float) -> void:
 		_active = _pending[index]
 		_pending.remove_at(index)
 		_active["attempt"] = int(_active.get("attempt", 0)) + 1
-		var error: Error = _http.request(_origin + str(_active["path"]))
+		var error: Error = _http.request(_origin + str(_active["path"]), _request_headers())
 		if error != OK:
 			_retry_active()
 		break
+
+
+func _request_headers() -> PackedStringArray:
+	var token: String = OS.get_environment("LIVE_BRIDGE_PRODUCER_TOKEN").strip_edges()
+	if token.is_empty() or token == "change_me_local_random_token":
+		token = OS.get_environment("LIVE_BRIDGE_LOCAL_TOKEN").strip_edges()
+	if token.is_empty() or token == "change_me_local_random_token":
+		return PackedStringArray()
+	return PackedStringArray(["X-JOGI-Token: " + token])
 
 
 func _on_request_completed(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:

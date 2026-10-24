@@ -174,6 +174,7 @@ func _capture_snapshot(cursor: int) -> Dictionary:
 		"obstacles_enabled": _race.obstacles_enabled,
 		"last_live_event_text": _race.last_live_event_text.substr(0, 512),
 		"live_goal": _race.live_goal.duplicate(true),
+		"live_goals": _race.live_goals.duplicate(true),
 		"audio_settings": _race.audio_settings.duplicate(),
 		"pending_round_effects": _race.pending_round_effects.duplicate(true)
 	})
@@ -239,6 +240,8 @@ func _validate_snapshot(state: Dictionary) -> bool:
 			return false
 		if not goal.get("goal_label") is String or String(goal["goal_label"]).is_empty() or String(goal["goal_label"]).length() > 40:
 			return false
+	if data.has("live_goals") and not _valid_live_goals(data["live_goals"]):
+		return false
 	for field_value: Variant in MATCH_FLOATS:
 		var field: String = String(field_value)
 		var limits: Array = MATCH_FLOATS[field] as Array
@@ -333,6 +336,8 @@ func _apply_snapshot(state: Dictionary) -> void:
 		_race.live_goal = {"goal_kind": String(data["live_goal"]["goal_kind"]), "goal_target": int(data["live_goal"]["goal_target"]), "goal_label": String(data["live_goal"]["goal_label"])}
 		if data["live_goal"].get("goal_kind") == "gift_specific":
 			_race.live_goal["goal_gift_id"] = String(data["live_goal"]["goal_gift_id"])
+	if data.has("live_goals"):
+		_race.live_goals = (data["live_goals"] as Dictionary).duplicate(true)
 	for field_value: Variant in MATCH_FLOATS:
 		var field: String = String(field_value)
 		_race.set(field, float(data[field]))
@@ -450,4 +455,31 @@ func _valid_pending_effects(value: Variant) -> bool:
 			return false
 		if not _number(item.get("shield_duration"), 0.0, 15.0) or not _integer(item.get("attacks"), 0, 4) or typeof(item.get("super_turbo")) != TYPE_BOOL:
 			return false
+	return true
+
+
+func _valid_live_goals(value: Variant) -> bool:
+	if not value is Dictionary:
+		return false
+	var goals: Dictionary = value as Dictionary
+	for slot: String in ["likes", "gifts", "follows"]:
+		if not goals.get(slot) is Dictionary:
+			return false
+		var item: Dictionary = goals[slot] as Dictionary
+		var kind: String = String(item.get("goal_kind", ""))
+		if slot == "likes" and kind != "likes":
+			return false
+		if slot == "gifts" and not kind in ["gifts", "coins", "gift_specific"]:
+			return false
+		if slot == "follows" and kind != "follows":
+			return false
+		if not _integer(item.get("goal_target"), 1, MAX_COUNTER):
+			return false
+		if not item.get("goal_label") is String or String(item["goal_label"]).is_empty() or String(item["goal_label"]).length() > 40:
+			return false
+		if kind == "gift_specific" and (not item.get("goal_gift_id") is String or String(item["goal_gift_id"]).is_empty() or String(item["goal_gift_id"]).length() > 64):
+			return false
+		if slot == "follows" and item.has("follower_baseline") and item["follower_baseline"] != null:
+			if not _integer(item["follower_baseline"], 0, MAX_COUNTER):
+				return false
 	return true

@@ -31,12 +31,17 @@ var _round_counts: Dictionary = {}
 var _session_counts: Dictionary = {}
 var _gift_id_counts: Dictionary = {}
 const MAX_TRACKED_GIFT_IDS: int = 4096
+const MAX_TRANSIENT_AVATARS: int = 256
+var _transient_avatars: Dictionary = {}
+var _transient_avatar_order: Array[String] = []
 var _ranking_limited: bool = false
 var _name_tags: RegEx = RegEx.new()
+var _gift_icon_regex: RegEx = RegEx.new()
 
 
 func _init() -> void:
 	_name_tags.compile("\\[/?[a-zA-Z0-9_=#:.,\\s-]*\\]")
+	_gift_icon_regex.compile("^/gift-icons/[0-9a-f]{64}$")
 	_round_counts = _empty_counts()
 	_session_counts = _empty_counts()
 
@@ -108,6 +113,11 @@ func ingest_event(envelope: Dictionary) -> bool:
 		return false
 	_record_event_id(event_id)
 	var display_name: String = sanitize_name(String(user.get("display_name", "")))
+	var avatar_icon_path: String = _safe_avatar_path(user.get("avatar_icon_path", ""))
+	if not avatar_icon_path.is_empty():
+		_remember_transient_avatar(identity, avatar_icon_path)
+	elif _transient_avatars.has(identity):
+		avatar_icon_path = String(_transient_avatars[identity])
 	var participant: Dictionary = _get_or_create_user(identity, display_name)
 	participant["display_name"] = display_name
 	var joined: bool = false
@@ -121,14 +131,22 @@ func ingest_event(envelope: Dictionary) -> bool:
 	var count_key: String = {"vote": "votes", "gift": "coins", "like_batch": "likes", "share": "shares", "follow": "follows"}[kind]
 	_increment_count(_round_counts, count_key, team, amount)
 	_increment_count(_session_counts, count_key, team, amount)
+	var safe_gift_id: String = ""
+	var safe_gift_name: String = ""
+	var safe_gift_icon_path: String = ""
 	if kind == "gift":
 		_increment_count(_round_counts, "gifts", team, gift_quantity)
 		_increment_count(_session_counts, "gifts", team, gift_quantity)
-		var gift_id: String = String(payload.get("gift_id", ""))
+		var gift_id: String = String(payload.get("gift_id", "")).strip_edges()
 		if not gift_id.is_empty() and gift_id.length() <= 64:
+			safe_gift_id = gift_id
 			var gift_key: String = source + ":" + gift_id
 			if _gift_id_counts.has(gift_key) or _gift_id_counts.size() < MAX_TRACKED_GIFT_IDS:
 				_gift_id_counts[gift_key] = int(_gift_id_counts.get(gift_key, 0)) + gift_quantity
+		var raw_gift_name: String = String(payload.get("gift_name", "")).strip_edges()
+		if not raw_gift_name.is_empty():
+			safe_gift_name = sanitize_name(raw_gift_name)
+		safe_gift_icon_path = _safe_gift_icon_path(payload.get("gift_icon_path", ""))
 	if kind == "gift" and amount > 0:
 		_register_gift(identity, display_name, team, amount)
 	var now_ms: int = _now_ms()
@@ -137,11 +155,21 @@ func ingest_event(envelope: Dictionary) -> bool:
 	# The presentation layer may combine successive combo deltas into one visible card.
 	if kind in ["gift", "follow"] or now_ms - last_shown >= NAME_COOLDOWN_MS:
 		participant["last_shown_ms"] = now_ms
-		participation_received.emit({
+		var card_payload: Dictionary = {
+			"identity": identity,
 			"display_name": display_name, "team": team, "kind": kind,
 			"amount": amount, "gift_quantity": gift_quantity, "joined": joined, "switched_team": switched,
 			"source": source
-		})
+		}
+		if not avatar_icon_path.is_empty():
+			card_payload["avatar_icon_path"] = avatar_icon_path
+		if not safe_gift_id.is_empty():
+			card_payload["gift_id"] = safe_gift_id
+		if not safe_gift_name.is_empty():
+			card_payload["gift_name"] = safe_gift_name
+		if not safe_gift_icon_path.is_empty():
+			card_payload["gift_icon_path"] = safe_gift_icon_path
+		participation_received.emit(card_payload)
 		var moment: String = "join" if kind == "vote" else kind
 		moment_requested.emit(moment, team, display_name)
 	return true
@@ -151,7 +179,10 @@ func get_top_supporters() -> Array[Dictionary]:
 	var top: Array[Dictionary] = []
 	for cached_entry: Dictionary in _top_supporters:
 		var entry: Dictionary = cached_entry.duplicate(true)
+		var identity: String = String(entry.get("_identity", ""))
 		entry.erase("_identity")
+		if not identity.is_empty() and _transient_avatars.has(identity):
+			entry["avatar_icon_path"] = String(_transient_avatars[identity])
 		top.append(entry)
 	return top
 
@@ -195,6 +226,8 @@ func reset_session() -> void:
 	_top_supporters.clear()
 	_seen_events.clear()
 	_event_order.clear()
+	_transient_avatars.clear()
+	_transient_avatar_order.clear()
 	_round_counts = _empty_counts()
 	_session_counts = _empty_counts()
 	_ranking_limited = false
@@ -501,3 +534,28 @@ func _strict_integer(value: Variant, minimum: int, maximum: int) -> int:
 
 func _now_ms() -> int:
 	return int(time_provider.call()) if time_provider.is_valid() else Time.get_ticks_msec()
+
+
+func _safe_avatar_path(value: Variant) -> String:
+	if not value is String:
+		return ""
+	var candidate: String = String(value).strip_edges()
+	return candidate if AvatarVisualCache.is_safe_avatar_path(candidate) else ""
+
+
+func _safe_gift_icon_path(value: Variant) -> String:
+	if not value is String:
+		return ""
+	var candidate: String = String(value).strip_edges()
+	return candidate if _gift_icon_regex.search(candidate) != null else ""
+
+
+func _remember_transient_avatar(identity: String, avatar_path: String) -> void:
+	if _transient_avatars.has(identity):
+		_transient_avatar_order.erase(identity)
+	else:
+		while _transient_avatar_order.size() >= MAX_TRANSIENT_AVATARS:
+			var evicted: String = String(_transient_avatar_order.pop_front())
+			_transient_avatars.erase(evicted)
+	_transient_avatars[identity] = avatar_path
+	_transient_avatar_order.append(identity)

@@ -49,7 +49,22 @@ var cycle_wins: Array[int] = [0, 0]
 var race_paused: bool = false
 var round_metadata: Dictionary = {}
 var live_goal: Dictionary = {"goal_kind": "likes", "goal_target": 1000, "goal_label": "Meta de curtidas"}
+var live_goals: Dictionary = default_live_goals()
 var audio_settings: Dictionary = {"voices_enabled": true, "sfx_enabled": true, "crowd_enabled": true, "memes_enabled": true}
+
+
+static func default_live_goals() -> Dictionary:
+	return {
+		"likes": {"goal_kind": "likes", "goal_target": 1000, "goal_label": "Meta de curtidas"},
+		"gifts": {"goal_kind": "gifts", "goal_target": 500, "goal_label": "Meta de presentes"},
+		"follows": {
+			"goal_kind": "follows",
+			"goal_target": 10000,
+			"goal_label": "Meta de seguidores",
+			"follower_baseline": null,
+			"baseline_updated_at": null
+		}
+	}
 ## At most two bounded aggregates; accounting stays in AudienceDirector.
 var pending_round_effects: Dictionary = {}
 var _round_catalog: Array[Dictionary] = []

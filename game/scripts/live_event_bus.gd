@@ -45,7 +45,9 @@ const VALID_ADMIN_COMMANDS: Array[String] = [
 	"candidate_boost",
 	"candidate_shield",
 	"candidate_attack",
-	"set_live_goal", "set_audio_settings"
+	"set_live_goal",
+	"set_live_goals",
+	"set_audio_settings"
 ]
 
 @export var ws_url: String = "ws://127.0.0.1:8765/ws/godot"
@@ -102,6 +104,15 @@ func is_loopback_ws_url(url: String) -> bool:
 	return normalized.begins_with("ws://127.0.0.1:") or normalized.begins_with("ws://localhost:")
 
 
+func _handshake_headers() -> PackedStringArray:
+	var token: String = OS.get_environment("LIVE_BRIDGE_PRODUCER_TOKEN").strip_edges()
+	if token.is_empty() or token == "change_me_local_random_token":
+		token = OS.get_environment("LIVE_BRIDGE_LOCAL_TOKEN").strip_edges()
+	if token.is_empty() or token == "change_me_local_random_token":
+		return PackedStringArray()
+	return PackedStringArray(["X-JOGI-Token: " + token])
+
+
 func connect_to_local_bridge(custom_url: String = "") -> Error:
 	if not custom_url.strip_edges().is_empty():
 		ws_url = custom_url.strip_edges()
@@ -114,6 +125,7 @@ func connect_to_local_bridge(custom_url: String = "") -> Error:
 		_ws_peer.close()
 	_ws_peer = WebSocketPeer.new()
 	_ws_peer.inbound_buffer_size = 65536
+	_ws_peer.handshake_headers = _handshake_headers()
 	var err: Error = _ws_peer.connect_to_url(ws_url)
 	_connect_in_progress = (err == OK)
 	return err
@@ -192,6 +204,7 @@ func _attempt_ws_connect() -> void:
 	if _ws_peer == null:
 		_ws_peer = WebSocketPeer.new()
 	_ws_peer.inbound_buffer_size = 65536
+	_ws_peer.handshake_headers = _handshake_headers()
 	var err: Error = _ws_peer.connect_to_url(ws_url)
 	if err == OK:
 		_connect_in_progress = true
@@ -260,6 +273,44 @@ func ingest_raw_json(raw_text: String) -> bool:
 
 	var envelope: Dictionary = json_parser.data as Dictionary
 	return ingest_envelope(envelope)
+
+
+func _valid_live_goals_payload(raw_goals: Variant) -> bool:
+	if not raw_goals is Dictionary:
+		return false
+	var goals: Dictionary = raw_goals as Dictionary
+	for slot: String in ["likes", "gifts", "follows"]:
+		if not goals.get(slot) is Dictionary:
+			return false
+		var spec: Dictionary = goals[slot] as Dictionary
+		var kind: String = str(spec.get("goal_kind", ""))
+		if slot == "likes" and kind != "likes":
+			return false
+		if slot == "follows" and kind != "follows":
+			return false
+		if slot == "gifts" and not (kind in ["gifts", "coins", "gift_specific"]):
+			return false
+		if not spec.get("goal_label") is String:
+			return false
+		var label_str: String = String(spec["goal_label"]).strip_edges()
+		if label_str.is_empty() or label_str.length() > 40:
+			return false
+		var target_var: Variant = spec.get("goal_target", null)
+		if not typeof(target_var) in [TYPE_INT, TYPE_FLOAT]:
+			return false
+		var target_f: float = float(target_var)
+		if not is_finite(target_f) or target_f < 1.0 or target_f > 1000000000.0 or target_f != floorf(target_f):
+			return false
+		if slot == "gifts" and kind == "gift_specific" and not _valid_gift_identifier(spec.get("goal_gift_id")):
+			return false
+		if slot == "follows" and spec.has("follower_baseline") and spec["follower_baseline"] != null:
+			var base_var: Variant = spec["follower_baseline"]
+			if not typeof(base_var) in [TYPE_INT, TYPE_FLOAT]:
+				return false
+			var base_f: float = float(base_var)
+			if not is_finite(base_f) or base_f < 0.0 or base_f > 1000000000.0 or base_f != floorf(base_f):
+				return false
+	return true
 
 
 func ingest_envelope(envelope: Dictionary) -> bool:
@@ -341,7 +392,7 @@ func ingest_envelope(envelope: Dictionary) -> bool:
 	# Validate candidate_slot for candidate-targeted events
 	var candidate_slot: int = 0
 	var requires_slot: bool = event_type == "vote"
-	if requires_slot or payload.has("candidate_slot"):
+	if requires_slot or (payload.has("candidate_slot") and payload.get("candidate_slot") != null):
 		var slot_var: Variant = payload.get("candidate_slot", null)
 		if typeof(slot_var) == TYPE_INT:
 			candidate_slot = int(slot_var)
@@ -354,7 +405,8 @@ func ingest_envelope(envelope: Dictionary) -> bool:
 		else:
 			_reject("invalid_candidate_slot_type")
 			return false
-		if candidate_slot < 1 or candidate_slot > 2:
+		var min_slot: int = 1 if requires_slot else 0
+		if candidate_slot < min_slot or candidate_slot > 2:
 			_reject("candidate_slot_out_of_range")
 			return false
 
@@ -386,6 +438,10 @@ func ingest_envelope(envelope: Dictionary) -> bool:
 				return false
 			if payload.get("goal_kind") == "gift_specific" and not _valid_gift_identifier(payload.get("goal_gift_id")):
 				_reject("invalid_goal_gift_id")
+				return false
+		if cmd_check == "set_live_goals":
+			if not _valid_live_goals_payload(payload.get("live_goals")):
+				_reject("invalid_live_goals")
 				return false
 
 	# 7. Idempotent Deduplication (FIFO/LRU up to 2000 IDs)
@@ -530,4 +586,3 @@ func import_dedup_state(ids: Array) -> void:
 func _reject(reason: String) -> void:
 	rejected_count += 1
 	event_rejected.emit(reason)
-

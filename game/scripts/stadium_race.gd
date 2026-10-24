@@ -22,6 +22,7 @@ var sound_effects: RaceSoundEffects = null
 var ambience: RaceAmbience = null
 var memes: RaceMemeBoard = null
 var gift_visuals: GiftVisualCache = null
+var avatar_visuals: AvatarVisualCache = null
 var _observed_gift_actions: Dictionary = {}
 var _stage_shadows: Array[MeshInstance3D] = []
 var _attack_visuals: Array[Area3D] = []
@@ -69,6 +70,13 @@ func _ready() -> void:
 	gift_visuals.name = "CacheDeIconesPresentes"
 	add_child(gift_visuals)
 	gift_visuals.icon_ready.connect(_on_gift_icon_ready)
+	avatar_visuals = AvatarVisualCache.new()
+	avatar_visuals.name = "CacheDeAvataresDaLive"
+	add_child(avatar_visuals)
+	avatar_visuals.avatar_ready.connect(_on_avatar_icon_ready)
+	if stadium_hud != null:
+		stadium_hud.set_gift_cache(gift_visuals)
+		stadium_hud.set_avatar_cache(avatar_visuals)
 	_setup_finish_line()
 	for runner: CandidateRunner in runners:
 		runner.runner_stumbled.connect(_on_runner_stumbled)
@@ -266,6 +274,8 @@ func _on_visual_round_changed(_round_id: int, _cycle_id: int, metadata: Dictiona
 	world_visual.set_round_metadata(metadata)
 	if audience != null:
 		audience.reset_round()
+	if avatar_visuals != null:
+		avatar_visuals.cancel_pending_requests()
 	_update_stage(0.0, true)
 
 
@@ -277,6 +287,8 @@ func _on_audience_moment(kind: String, team: int, _display_name: String) -> void
 
 
 func _on_show_event(envelope: Dictionary) -> void:
+	if avatar_visuals != null:
+		avatar_visuals.register_event(envelope)
 	if str(envelope.get("event_type", "")) != "gift":
 		return
 	_observe_gift_visual(envelope)
@@ -333,8 +345,15 @@ func _resolve_gift_legend_action(payload: Dictionary) -> String:
 	return ""
 
 
-func _on_gift_icon_ready(_gift_id: String, _texture: Texture2D) -> void:
+func _on_gift_icon_ready(gift_id: String, texture: Texture2D) -> void:
 	_refresh_gift_legend()
+	if stadium_hud != null:
+		stadium_hud.on_gift_icon_ready(gift_id, texture)
+
+
+func _on_avatar_icon_ready(avatar_path: String, texture: Texture2D) -> void:
+	if stadium_hud != null:
+		stadium_hud.on_avatar_ready(avatar_path, texture)
 
 
 func _refresh_gift_legend() -> void:
@@ -454,6 +473,8 @@ func restart_race(p_skip_lobby: bool = false) -> void:
 		memes.stop_all()
 	_attack_visuals.clear()
 	_attack_slots.clear()
+	if avatar_visuals != null:
+		avatar_visuals.cancel_pending_requests()
 	if runners.size() == 2:
 		_update_stage(0.0, true)
 
@@ -548,6 +569,7 @@ func _update_hud() -> void:
 	var flavio: StadiumRunner = runners[1] as StadiumRunner
 	var live: Dictionary = _get_live_summary()
 	stadium_hud.update_live_goal(live["goal"] as Dictionary, int(live["followers"]))
+	stadium_hud.update_live_goals(live["goals"] as Dictionary, int(live["followers"]))
 	stadium_hud.set_podium_mode(current_state == RaceState.PODIO)
 	stadium_hud.apply_state({"round": current_round, "cycle": cycle_number, "wins": cycle_wins,
 		"winner_id": winner.candidate_id if winner != null else 0, "state_name": _get_state_name(current_state), "next_round_in": get_next_round_in(),
@@ -564,34 +586,72 @@ func _update_hud() -> void:
 
 
 func _session_caption() -> String:
-	var platform: String = OS.get_environment("LIVE_PLATFORM").to_lower()
-	if not "--asset-preview" in OS.get_cmdline_user_args() and platform in ["tiktok", "kwai"]:
-		return "CORRIDA INTERATIVA"
-	return "TESTE LOCAL"
+	var platform: String = OS.get_environment("LIVE_PLATFORM").strip_edges().to_lower()
+	if "--asset-preview" in OS.get_cmdline_user_args() or not platform in ["tiktok", "kwai"]:
+		return "TESTE LOCAL"
+	var ws_live: bool = event_bus != null and event_bus.is_ws_connected
+	if platform == "tiktok":
+		return "TIKTOK · BRIDGE" if ws_live else "TIKTOK · LOCAL"
+	return "KWAI · BRIDGE" if ws_live else "KWAI · LOCAL"
+
+
+func _sum_session_metric(counts: Dictionary, key: String) -> int:
+	var total: int = 0
+	for amount: Variant in counts.get(key, [0, 0, 0]) as Array:
+		total += int(amount)
+	return total
+
+
+func _evaluate_single_goal(raw_goal: Dictionary, counts: Dictionary) -> Dictionary:
+	var goal: Dictionary = raw_goal.duplicate(true)
+	var kind: String = String(goal.get("goal_kind", "likes"))
+	var target: int = maxi(1, int(goal.get("goal_target", 1000)))
+	goal["goal_target"] = target
+	var value: int = 0
+	if kind == "gift_specific":
+		if audience != null:
+			var platform: String = OS.get_environment("LIVE_PLATFORM").strip_edges().to_lower()
+			value = audience.get_gift_count(String(goal.get("goal_gift_id", "")), platform if platform in ["tiktok", "kwai"] else "")
+		goal["unit_kind"] = "gift_specific"
+	elif kind == "follows":
+		var session_follows: int = _sum_session_metric(counts, "follows")
+		goal["session_follows"] = session_follows
+		var baseline_raw: Variant = goal.get("follower_baseline", null)
+		if baseline_raw is int or baseline_raw is float:
+			var baseline: int = maxi(0, int(baseline_raw))
+			value = baseline + session_follows
+			goal["follower_baseline"] = baseline
+			goal["source_mode"] = "manual_baseline"
+		else:
+			value = session_follows
+			goal["follower_baseline"] = null
+			goal["source_mode"] = "session_only"
+		goal["unit_kind"] = "follows"
+	else:
+		value = _sum_session_metric(counts, kind)
+		goal["unit_kind"] = kind
+	goal["value"] = value
+	goal["progress"] = clampf(float(value) / float(target), 0.0, 1.0)
+	return goal
 
 
 func _get_live_summary() -> Dictionary:
 	var counts: Dictionary = audience.get_session_counts() if audience != null else {}
-	var goal: Dictionary = live_goal.duplicate()
-	var values: Array = counts.get(String(goal["goal_kind"]), [0, 0, 0]) as Array
-	var value: int = 0
-	for amount: Variant in values:
-		value += int(amount)
-	if goal["goal_kind"] == "gift_specific" and audience != null:
-		var platform: String = OS.get_environment("LIVE_PLATFORM").to_lower()
-		value = audience.get_gift_count(String(goal.get("goal_gift_id", "")), platform if platform in ["tiktok", "kwai"] else "")
-	goal["value"] = value
-	goal["progress"] = clampf(float(value) / float(goal["goal_target"]), 0.0, 1.0)
-	var followers: int = 0
-	for amount: Variant in counts.get("follows", [0, 0, 0]) as Array:
-		followers += int(amount)
-	return {"goal": goal, "followers": followers, "counts": counts}
+	var goal: Dictionary = _evaluate_single_goal(live_goal, counts)
+	var defaults: Dictionary = RaceMain.default_live_goals()
+	var goals_summary: Dictionary = {}
+	for slot: String in ["likes", "gifts", "follows"]:
+		var slot_cfg: Dictionary = (live_goals.get(slot, defaults[slot]) as Dictionary)
+		goals_summary[slot] = _evaluate_single_goal(slot_cfg, counts)
+	var followers: int = _sum_session_metric(counts, "follows")
+	return {"goal": goal, "goals": goals_summary, "followers": followers, "counts": counts}
 
 
 func get_telemetry_snapshot() -> Dictionary:
 	var snapshot: Dictionary = super.get_telemetry_snapshot()
 	var live: Dictionary = _get_live_summary()
 	snapshot["live_goal"] = live["goal"]
+	snapshot["live_goals"] = live["goals"]
 	snapshot["audience"] = {"session": live["counts"], "top_supporters": audience.get_top_supporters() if audience != null else []}
 	snapshot["audio"] = {"voices_ready": audio.voices_ready, "voice_status": audio.voice_status} if audio != null else {"voices_ready": false, "voice_status": "inicializando"}
 	(snapshot["audio"] as Dictionary).merge(audio_settings, true)
@@ -606,6 +666,7 @@ func get_telemetry_snapshot() -> Dictionary:
 		"orphan_nodes": int(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT)),
 	}
 	snapshot["gift_visuals"] = gift_visuals.get_cache_stats() if gift_visuals != null else {}
+	snapshot["avatar_visuals"] = avatar_visuals.get_cache_stats() if avatar_visuals != null else {}
 	var platform: String = OS.get_environment("LIVE_PLATFORM").to_lower()
 	snapshot["platform"] = platform if platform in ["tiktok", "kwai"] else "local"
 	return snapshot
@@ -622,6 +683,42 @@ func _on_bus_admin_command(command: String, payload: Dictionary = {}) -> void:
 		live_goal = {"goal_kind": String(payload["goal_kind"]), "goal_target": int(payload["goal_target"]), "goal_label": String(payload["goal_label"]).substr(0, 40)}
 		if live_goal["goal_kind"] == "gift_specific":
 			live_goal["goal_gift_id"] = String(payload["goal_gift_id"])
+		var mapped_slot: String = "likes"
+		if String(live_goal["goal_kind"]) == "follows":
+			mapped_slot = "follows"
+		elif String(live_goal["goal_kind"]) in ["gifts", "coins", "gift_specific"]:
+			mapped_slot = "gifts"
+		var updated_slot: Dictionary = (live_goals.get(mapped_slot, {}) as Dictionary).duplicate(true)
+		updated_slot["goal_kind"] = live_goal["goal_kind"]
+		updated_slot["goal_target"] = live_goal["goal_target"]
+		updated_slot["goal_label"] = live_goal["goal_label"]
+		if live_goal.has("goal_gift_id"):
+			updated_slot["goal_gift_id"] = live_goal["goal_gift_id"]
+		else:
+			updated_slot.erase("goal_gift_id")
+		live_goals[mapped_slot] = updated_slot
+		_update_hud()
+		send_telemetry_now()
+		return
+	if command == "set_live_goals":
+		var incoming: Dictionary = payload.get("goals", {}) as Dictionary
+		for slot: String in ["likes", "gifts", "follows"]:
+			if not incoming.get(slot) is Dictionary:
+				continue
+			var raw_item: Dictionary = incoming[slot] as Dictionary
+			var next_item: Dictionary = {
+				"goal_kind": String(raw_item.get("goal_kind", slot)),
+				"goal_target": maxi(1, int(raw_item.get("goal_target", 1000))),
+				"goal_label": String(raw_item.get("goal_label", "Meta")).substr(0, 40)
+			}
+			if next_item["goal_kind"] == "gift_specific" and raw_item.get("goal_gift_id") is String:
+				next_item["goal_gift_id"] = String(raw_item["goal_gift_id"]).substr(0, 64)
+			if slot == "follows":
+				var base_val: Variant = raw_item.get("follower_baseline", null)
+				next_item["follower_baseline"] = maxi(0, int(base_val)) if (base_val is int or base_val is float) else null
+				next_item["baseline_updated_at"] = String(raw_item["baseline_updated_at"]).substr(0, 64) if raw_item.get("baseline_updated_at") is String else null
+			live_goals[slot] = next_item
+		live_goal = (live_goals["likes"] as Dictionary).duplicate(true)
 		_update_hud()
 		send_telemetry_now()
 		return

@@ -27,6 +27,9 @@ var _distance_markers: Array[Node3D] = []
 var _distance_labels: Array[Label3D] = []
 var _race_progress: float = 0.0
 var _sign_font: FontVariation = null
+var _crest_plate_material: StandardMaterial3D = null
+var _crest_trim_material: StandardMaterial3D = null
+var _year_label_3d: Label3D = null
 
 
 func _ready() -> void:
@@ -157,6 +160,12 @@ func set_round_metadata(metadata: Dictionary) -> void:
 	world_environment.environment.ambient_light_energy = .43 if night else .36
 	if _led_material != null:
 		_led_material.set_shader_parameter("emission_strength", 1.3 if night else .55)
+	if _crest_plate_material != null:
+		_crest_plate_material.emission_energy_multiplier = 0.72 if night else 0.34
+	if _crest_trim_material != null:
+		_crest_trim_material.emission_energy_multiplier = 1.15 if night else 0.52
+	if _year_label_3d != null:
+		_year_label_3d.modulate = Color("fff07a") if night else Color("ffe34d")
 
 
 func _build_light() -> void:
@@ -508,18 +517,52 @@ func _build_monumental_horizon() -> void:
 	palace.name = "PalacioDoPlanalto"
 	palace.position = Vector3(48.0, 0.0, 0.0)
 	add_child(palace)
+	# Placa cênica arquitetônica acima da platibanda do Planalto: garante contraste
+	# nítido para "2027" tanto no céu diurno claro quanto nas rodadas noturnas,
+	# sem encobrir as colunas nem a rampa presidencial.
+	var crest: Node3D = _group("BrasaoPlanalto2027")
+	crest.position = Vector3(47.35, 9.85, 0.0)
+	_crest_plate_material = StandardMaterial3D.new()
+	_crest_plate_material.resource_name = "PlacaAzulPlanalto2027"
+	_crest_plate_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	_crest_plate_material.albedo_color = Color("061844")
+	_crest_plate_material.emission_enabled = true
+	_crest_plate_material.emission = Color("0a2a73")
+	_crest_plate_material.emission_energy_multiplier = 0.34
+	_crest_trim_material = StandardMaterial3D.new()
+	_crest_trim_material.resource_name = "FrisoOuroPlanalto2027"
+	_crest_trim_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	_crest_trim_material.albedo_color = Color("ffcf26")
+	_crest_trim_material.emission_enabled = true
+	_crest_trim_material.emission = Color("ffcf26")
+	_crest_trim_material.emission_energy_multiplier = 0.52
+	_box(crest, "MolduraDourada", Vector3(0.08, 0.0, 0.0), Vector3(0.18, 3.62, 12.6), _crest_trim_material)
+	_box(crest, "FundoMarinho", Vector3(0.0, 0.0, 0.0), Vector3(0.24, 3.36, 12.24), _crest_plate_material)
+	var subtitle: Label3D = Label3D.new()
+	subtitle.name = "LegendaPlanalto"
+	subtitle.text = "BRASÍLIA · PLANALTO"
+	subtitle.font = _get_sign_font()
+	subtitle.font_size = 64
+	subtitle.pixel_size = 0.0115
+	subtitle.outline_size = 8
+	subtitle.modulate = Color("eef7ff")
+	subtitle.outline_modulate = Color("041137")
+	subtitle.position = Vector3(-0.22, 1.02, 0.0)
+	subtitle.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	crest.add_child(subtitle)
 	var year: Label3D = Label3D.new()
 	year.name = "AnoCenografico2027"
 	year.text = "2027"
 	year.font = _get_sign_font()
-	year.font_size = 128
-	year.pixel_size = .010
-	year.outline_size = 9
-	year.modulate = Color("f9e28b")
-	year.outline_modulate = Color("143e72")
-	year.position = Vector3(47.2, 9.4, .0)
+	year.font_size = 184
+	year.pixel_size = 0.0168
+	year.outline_size = 16
+	year.modulate = Color("ffe34d")
+	year.outline_modulate = Color("030e2e")
+	year.position = Vector3(47.06, 9.32, 0.0)
 	year.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	add_child(year)
+	_year_label_3d = year
 	# Luz com sombra restrita à arquitetura: preserva o relevo das lâminas
 	# sem renderizar novamente as malhas densas dos dois personagens.
 	for node: Node in palace.find_children("*", "MeshInstance3D", true, false):

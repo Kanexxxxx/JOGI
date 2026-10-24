@@ -1,10 +1,10 @@
 # CONTINUIDADE.md — Estado Atual do Projeto e Guia de Retomada
 
-**Última atualização**: 2026-10-24 — arena em profundidade e preparação local das lives.
+**Última atualização**: 2026-10-24 — checkpoints contínuos de segurança, painel 3 metas e redesign do HUD 9:16 (ver [docs/AGENT_HANDOFF.md](docs/AGENT_HANDOFF.md)).
 
 ## Estado vigente
 
-Leia primeiro [RETOMADA_IA_2026-10-24.md](RETOMADA_IA_2026-10-24.md), [docs/AGENTE_RETOMADA_PROMPT_MESTRE_2026-10-24.md](docs/AGENTE_RETOMADA_PROMPT_MESTRE_2026-10-24.md), [docs/referencias/HUD_REFERENCIA.md](docs/referencias/HUD_REFERENCIA.md) (PNG conceitual oficial: [docs/referencias/hud-conceito-chatgpt-2026-10-24.png](docs/referencias/hud-conceito-chatgpt-2026-10-24.png)), [docs/ESTADO_ATUAL.md](docs/ESTADO_ATUAL.md) e [INICIAR_JOGO.md](INICIAR_JOGO.md). Esses arquivos prevalecem sobre todo o histórico abaixo.
+Leia primeiro [RETOMADA_IA_2026-10-24.md](RETOMADA_IA_2026-10-24.md), [docs/AGENT_HANDOFF.md](docs/AGENT_HANDOFF.md), [docs/AGENTE_RETOMADA_PROMPT_MESTRE_2026-10-24.md](docs/AGENTE_RETOMADA_PROMPT_MESTRE_2026-10-24.md), [docs/referencias/HUD_REFERENCIA.md](docs/referencias/HUD_REFERENCIA.md) (PNG conceitual oficial: [docs/referencias/hud-conceito-chatgpt-2026-10-24.png](docs/referencias/hud-conceito-chatgpt-2026-10-24.png)), [docs/ESTADO_ATUAL.md](docs/ESTADO_ATUAL.md) e [INICIAR_JOGO.md](INICIAR_JOGO.md). Esses arquivos prevalecem sobre todo o histórico abaixo.
 
 - A cena principal agora é `game/scenes/main/stadium_race.tscn`: câmera atrás dos dois corredores, pista azul-cobalto solicitada pelo usuário, arquibancadas nos dois lados e Palácio do Planalto local em 3D.
 - Capas têm ondulação limitada ao tecido, sincronizada com velocidade/turbo/reação e congelada na pausa; derivações locais preservam os modelos aprovados. Testes e revisão independente passaram. Ver `docs/CAPAS_MOVIMENTO.md`.
