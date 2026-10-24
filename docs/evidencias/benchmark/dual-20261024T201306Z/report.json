@@ -1,0 +1,298 @@
+{
+  "scope": "isolated authenticated loopback bridges; simulated audience; real Vulkan games",
+  "public_live_started": false,
+  "paid_api_calls": 0,
+  "obs_encoding_included": false,
+  "duration_requested_seconds": 5.0,
+  "hardware": {
+    "cpu": "AMD Ryzen 7 5700X 8-Core Processor             ",
+    "logical_processors": 16,
+    "ram_bytes": 17084563456
+  },
+  "output_directory": "docs\\evidencias\\benchmark\\dual-20261024T201306Z",
+  "samples": [
+    {
+      "elapsed": 0.002,
+      "games": {
+        "tiktok": {
+          "pid": 3856,
+          "available": true,
+          "cpu_seconds": 8.8125,
+          "working_set_bytes": 1013100544,
+          "private_bytes": 3345088512,
+          "peak_working_set_bytes": 1034784768
+        },
+        "kwai": {
+          "pid": 43724,
+          "available": true,
+          "cpu_seconds": 8.703125,
+          "working_set_bytes": 1014775808,
+          "private_bytes": 3349725184,
+          "peak_working_set_bytes": 1033375744
+        }
+      },
+      "gpu": {
+        "available": true,
+        "name": "NVIDIA GeForce RTX 4060",
+        "utilization_percent_total": 69,
+        "memory_used_mib_total": 5608,
+        "memory_total_mib": 8188,
+        "temperature_c": 56.05
+      },
+      "bridges": {
+        "tiktok": {
+          "connected_godot": 1,
+          "pending_gifts": 0,
+          "gift_acks": 0,
+          "sqlite_spool_bytes": 86337,
+          "round": 1,
+          "state": "RACING"
+        },
+        "kwai": {
+          "connected_godot": 1,
+          "pending_gifts": 0,
+          "gift_acks": 0,
+          "sqlite_spool_bytes": 86337,
+          "round": 1,
+          "state": "RACING"
+        }
+      }
+    },
+    {
+      "elapsed": 5.092,
+      "games": {
+        "tiktok": {
+          "pid": 3856,
+          "available": true,
+          "cpu_seconds": 10.828125,
+          "working_set_bytes": 1028014080,
+          "private_bytes": 3363446784,
+          "peak_working_set_bytes": 1034817536,
+          "cpu_percent_one_core_scale": 43.24,
+          "cpu_percent_host_capacity": 2.7
+        },
+        "kwai": {
+          "pid": 43724,
+          "available": true,
+          "cpu_seconds": 10.6875,
+          "working_set_bytes": 1029259264,
+          "private_bytes": 3367964672,
+          "peak_working_set_bytes": 1035988992,
+          "cpu_percent_one_core_scale": 42.57,
+          "cpu_percent_host_capacity": 2.66
+        }
+      },
+      "gpu": {
+        "available": true,
+        "name": "NVIDIA GeForce RTX 4060",
+        "utilization_percent_total": 63,
+        "memory_used_mib_total": 5598,
+        "memory_total_mib": 8188,
+        "temperature_c": 55.41
+      },
+      "bridges": {
+        "tiktok": {
+          "connected_godot": 1,
+          "pending_gifts": 0,
+          "gift_acks": 1,
+          "sqlite_spool_bytes": 123417,
+          "round": 1,
+          "state": "RACING"
+        },
+        "kwai": {
+          "connected_godot": 1,
+          "pending_gifts": 0,
+          "gift_acks": 1,
+          "sqlite_spool_bytes": 123417,
+          "round": 1,
+          "state": "RACING"
+        }
+      }
+    }
+  ],
+  "git_head": "18a23b939f4d52fb5e104335bf2bb4e0eb1d6192",
+  "git_dirty_at_start": true,
+  "renderer_pids": {
+    "tiktok": 3856,
+    "kwai": 43724
+  },
+  "launcher_pids": {
+    "tiktok": 3856,
+    "kwai": 43724
+  },
+  "started_utc": "2026-10-24T20:13:21.747136+00:00",
+  "duration_wall_seconds": 7.036389600001712,
+  "exit_codes": {
+    "tiktok": 0,
+    "kwai": 0
+  },
+  "generated_events": {
+    "tiktok": 3,
+    "kwai": 3
+  },
+  "bridges_final": {
+    "tiktok": {
+      "pending_gifts": 0,
+      "gift_acks_total": 1,
+      "connected_godot": 0
+    },
+    "kwai": {
+      "pending_gifts": 0,
+      "gift_acks_total": 1,
+      "connected_godot": 0
+    }
+  },
+  "engines": {
+    "tiktok": {
+      "accepted_events": 4,
+      "capture_error": 0,
+      "channel": "tiktok",
+      "duplicate_events": 0,
+      "duration_seconds": 5.01357,
+      "final_snapshot_saved": true,
+      "finished_unix": 1792872807.207,
+      "flavio_m": 67.3538055419922,
+      "fps_mean": 60.0000000000001,
+      "frames": 181,
+      "frames_over_33ms": 0,
+      "gift_journal_bytes": 575,
+      "lula_m": 60.0651054382324,
+      "mean_frame_ms": 16.6666666666666,
+      "one_percent_low_fps": 60.0,
+      "p95_frame_ms": 16.6666666666667,
+      "p99_frame_ms": 16.6666666666667,
+      "persistence_error": "",
+      "rejected_events": 0,
+      "samples": [
+        {
+          "draw_calls": 301.0,
+          "elapsed": 0.016485,
+          "fps": 1.0,
+          "frame_ms": 15.8433333333343,
+          "gift_journal_bytes": 0,
+          "nodes": 374.0,
+          "orphans": 0.0,
+          "persistence_error": "",
+          "persistence_ready": true,
+          "primitives": 4056778.0,
+          "renderer_memory_bytes": 2351991744.0,
+          "resources": 116.0,
+          "round": 1,
+          "state": "RACING",
+          "static_memory_bytes": 120539416.0
+        }
+      ],
+      "started_unix": 1792872801.752,
+      "viewport_height": 1920.0,
+      "viewport_width": 1080.0,
+      "worst_frame_ms": 16.6666666666667
+    },
+    "kwai": {
+      "accepted_events": 4,
+      "capture_error": 0,
+      "channel": "kwai",
+      "duplicate_events": 0,
+      "duration_seconds": 5.013386,
+      "final_snapshot_saved": true,
+      "finished_unix": 1792872807.207,
+      "flavio_m": 60.219783782959,
+      "fps_mean": 60.0000000000001,
+      "frames": 181,
+      "frames_over_33ms": 0,
+      "gift_journal_bytes": 562,
+      "lula_m": 67.133544921875,
+      "mean_frame_ms": 16.6666666666666,
+      "one_percent_low_fps": 60.0,
+      "p95_frame_ms": 16.6666666666667,
+      "p99_frame_ms": 16.6666666666667,
+      "persistence_error": "",
+      "rejected_events": 0,
+      "samples": [
+        {
+          "draw_calls": 301.0,
+          "elapsed": 0.01239,
+          "fps": 1.0,
+          "frame_ms": 12.502,
+          "gift_journal_bytes": 0,
+          "nodes": 374.0,
+          "orphans": 0.0,
+          "persistence_error": "",
+          "persistence_ready": true,
+          "primitives": 4056778.0,
+          "renderer_memory_bytes": 2351991744.0,
+          "resources": 116.0,
+          "round": 1,
+          "state": "RACING",
+          "static_memory_bytes": 120526768.0
+        },
+        {
+          "draw_calls": 315.0,
+          "elapsed": 5.013386,
+          "fps": 60.0,
+          "frame_ms": 16.6666666666667,
+          "gift_journal_bytes": 562,
+          "nodes": 374.0,
+          "orphans": 0.0,
+          "persistence_error": "",
+          "persistence_ready": true,
+          "primitives": 4066595.0,
+          "renderer_memory_bytes": 2354047728.0,
+          "resources": 116.0,
+          "round": 1,
+          "state": "RACING",
+          "static_memory_bytes": 125504442.0
+        }
+      ],
+      "started_unix": 1792872801.752,
+      "viewport_height": 1920.0,
+      "viewport_width": 1080.0,
+      "worst_frame_ms": 16.6666666666667
+    }
+  },
+  "minimum_simultaneous_engine_duration": 5.013386,
+  "common_render_interval_seconds": 5.454999923706055,
+  "engine_errors": {
+    "tiktok": [],
+    "kwai": []
+  },
+  "quality_checks": {
+    "both_exit_zero": true,
+    "both_render_1080x1920": true,
+    "no_engine_errors": true,
+    "paid_simulation_acked_both": true,
+    "no_rejected_events": true,
+    "private_checkpoints_saved": true
+  },
+  "performance_target_met": true,
+  "ten_minutes_simultaneous_verified": false,
+  "metric_summary": {
+    "tiktok": {
+      "cpu_host_capacity_mean_percent": 2.7,
+      "cpu_host_capacity_peak_percent": 2.7,
+      "working_set_peak_mib": 980.390625,
+      "private_bytes_peak_mib": 3207.6328125,
+      "node_count_min": 374.0,
+      "node_count_max": 374.0,
+      "orphan_nodes_max": 0.0,
+      "renderer_memory_peak_mib": 2243.0341186523438
+    },
+    "kwai": {
+      "cpu_host_capacity_mean_percent": 2.66,
+      "cpu_host_capacity_peak_percent": 2.66,
+      "working_set_peak_mib": 981.578125,
+      "private_bytes_peak_mib": 3211.94140625,
+      "node_count_min": 374.0,
+      "node_count_max": 374.0,
+      "orphan_nodes_max": 0.0,
+      "renderer_memory_peak_mib": 2244.994857788086
+    }
+  },
+  "result": "passed",
+  "limits": [
+    "A 10-minute result does not certify 42 hours.",
+    "GPU utilization/VRAM from nvidia-smi includes all applications on the GPU.",
+    "No OBS encoding or platform event source is included.",
+    "Synthetic events, generated tokens and databases are separate from user sessions."
+  ],
+  "finished_utc": "2026-10-24T20:13:28.857612+00:00"
+}

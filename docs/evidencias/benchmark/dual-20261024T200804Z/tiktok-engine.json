@@ -1,0 +1,36 @@
+{
+  "accepted_events": 4,
+  "capture_error": 0,
+  "channel": "tiktok",
+  "duplicate_events": 0,
+  "duration_seconds": 5.000143,
+  "flavio_m": 67.1258163452148,
+  "fps_mean": 60.0024332478457,
+  "frames": 181,
+  "frames_over_33ms": 0,
+  "lula_m": 59.8724555969238,
+  "mean_frame_ms": 16.6659907918968,
+  "one_percent_low_fps": 60.0,
+  "p95_frame_ms": 16.6666666666667,
+  "p99_frame_ms": 16.6666666666667,
+  "rejected_events": 0,
+  "samples": [
+    {
+      "draw_calls": 301.0,
+      "elapsed": 0.017164,
+      "fps": 1.0,
+      "frame_ms": 16.636,
+      "nodes": 373.0,
+      "orphans": 0.0,
+      "primitives": 4056778.0,
+      "renderer_memory_bytes": 2348846016.0,
+      "resources": 116.0,
+      "round": 1,
+      "state": "RACING",
+      "static_memory_bytes": 117251145.0
+    }
+  ],
+  "viewport_height": 1920.0,
+  "viewport_width": 1080.0,
+  "worst_frame_ms": 16.6666666666667
+}

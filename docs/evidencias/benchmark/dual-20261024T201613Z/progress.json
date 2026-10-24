@@ -1,0 +1,54 @@
+{
+  "elapsed": 620.0307940999992,
+  "sample": {
+    "elapsed": 620.031,
+    "games": {
+      "tiktok": {
+        "pid": 26976,
+        "available": true,
+        "cpu_seconds": 189.25,
+        "working_set_bytes": 1033924608,
+        "private_bytes": 3368497152,
+        "peak_working_set_bytes": 1041653760,
+        "cpu_percent_one_core_scale": 25.68,
+        "cpu_percent_host_capacity": 1.61
+      },
+      "kwai": {
+        "pid": 39408,
+        "available": true,
+        "cpu_seconds": 185.59375,
+        "working_set_bytes": 1031069696,
+        "private_bytes": 3362738176,
+        "peak_working_set_bytes": 1038860288,
+        "cpu_percent_one_core_scale": 26.31,
+        "cpu_percent_host_capacity": 1.64
+      }
+    },
+    "gpu": {
+      "available": true,
+      "name": "NVIDIA GeForce RTX 4060",
+      "utilization_percent_total": 24,
+      "memory_used_mib_total": 5219,
+      "memory_total_mib": 8188,
+      "temperature_c": 60.03
+    },
+    "bridges": {
+      "tiktok": {
+        "connected_godot": 1,
+        "pending_gifts": 0,
+        "gift_acks": 78,
+        "sqlite_spool_bytes": 2768457,
+        "round": 1,
+        "state": "PODIO"
+      },
+      "kwai": {
+        "connected_godot": 1,
+        "pending_gifts": 0,
+        "gift_acks": 78,
+        "sqlite_spool_bytes": 2768457,
+        "round": 1,
+        "state": "PODIO"
+      }
+    }
+  }
+}

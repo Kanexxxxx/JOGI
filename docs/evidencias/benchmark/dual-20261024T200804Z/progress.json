@@ -1,0 +1,47 @@
+{
+  "elapsed": 5.095121300000756,
+  "sample": {
+    "elapsed": 5.095,
+    "games": {
+      "tiktok": {
+        "pid": 33500,
+        "available": true,
+        "cpu_seconds": 0.0,
+        "working_set_bytes": 7290880,
+        "private_bytes": 1302528,
+        "peak_working_set_bytes": 7290880,
+        "cpu_percent_one_core_scale": 0.0,
+        "cpu_percent_host_capacity": 0.0
+      },
+      "kwai": {
+        "pid": 20800,
+        "available": true,
+        "cpu_seconds": 0.0,
+        "working_set_bytes": 7299072,
+        "private_bytes": 1318912,
+        "peak_working_set_bytes": 7299072,
+        "cpu_percent_one_core_scale": 0.0,
+        "cpu_percent_host_capacity": 0.0
+      }
+    },
+    "gpu": {
+      "available": false
+    },
+    "bridges": {
+      "tiktok": {
+        "connected_godot": 1,
+        "pending_gifts": 0,
+        "gift_acks": 1,
+        "round": 1,
+        "state": "RACING"
+      },
+      "kwai": {
+        "connected_godot": 1,
+        "pending_gifts": 0,
+        "gift_acks": 1,
+        "round": 1,
+        "state": "RACING"
+      }
+    }
+  }
+}
