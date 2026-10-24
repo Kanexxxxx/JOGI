@@ -282,6 +282,8 @@ func _valid_live_goals_payload(raw_goals: Variant) -> bool:
 	if not raw_goals is Dictionary:
 		return false
 	var goals: Dictionary = raw_goals as Dictionary
+	if goals.size() != 3:
+		return false
 	for slot: String in ["likes", "gifts", "follows"]:
 		if not goals.get(slot) is Dictionary:
 			return false
@@ -434,6 +436,10 @@ func ingest_envelope(envelope: Dictionary) -> bool:
 		if cmd_check == "set_live_goal":
 			if not payload.get("goal_kind") in ["likes", "follows", "gifts", "coins", "gift_specific"] or not payload.get("goal_label") is String:
 				_reject("invalid_live_goal")
+				return false
+			var label_text: String = String(payload["goal_label"]).strip_edges()
+			if label_text.is_empty() or label_text.length() > 40:
+				_reject("invalid_live_goal_label")
 				return false
 			var goal_target: float = float(payload.get("goal_target", 0.0))
 			if goal_target < 1.0 or goal_target > 1000000000.0 or goal_target != floorf(goal_target):

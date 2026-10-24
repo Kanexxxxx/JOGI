@@ -12,6 +12,16 @@
 - Varredura de padrões conhecidos de credenciais:621arquivos textuais rastreados e691blobs históricos, sem candidatos; não é garantia contra todos os tipos de segredo. Valores nunca impressos.
 - Ainda em execução: correções independentes de cards/2027/crop, filaACKdo coletorKwai/cookiesporporta, QAvisual e benchmarkduplo10min. Nenhuma live pública ou geração paga nesta retomada.
 
+## 2026-10-24 — Codex principal — checkpoint2, correções revisadas
+
+- Checkpoint1 publicado e confirmado: `18a23b9`. Implementações da IA substituta mantidas; correções abaixo foram baseadas em provas independentes e testes, com histórico recuperável.
+- Teste ponta a ponta real em loopback: o builder Python enviou `set_live_goals`, o WebSocket entregou e o Godot confirmou curtidas1500, presenteID`rose_e2e` e seguidores8401/10000(base manual8400 +1follow). ACK de presente recebido; sem sala externa. `services/live_bridge/test_e2e_runner.py` exit0/stderrvazio no Godot.
+- HUD: agrupamento de combo exige mesma equipe; TTL examina todos os slots; máscara dos retratos normaliza UVdoAtlas sem mudar a PNGoriginal. Regressões específicas aprovadas. Ano2027 totalmente visível com contraste/tamanho próximos à referência; captura real `docs/evidencias/estadio/auditoria-hud-planalto-v3.png`. Versão v2 é intermediária com defeito visual e não serve de captura final.
+- Backend: coletorKwai guarda presentes em SQLiteantesdoHTTP e só libera com ACKdurável +IDcorreto; adaptador não deduplica antes de gravar. Testes exercitam401/503/timeout/restart/ACKfalso. Cookies administrativos agora separados por plataforma/porta.
+- Segurança/privacidade: documentação corrigida para cache de imagens no disco comTTL6h e nomes/IDs persistentes para ranking/recuperação. Sem descarte de registros reais. Relatório em `auditorias/AUDITORIA_BACKEND_RETORNO.md`.
+- Validação backend após correções:112testesPython+48subtestes,2avisosSDK;5testesNode. HUD/arte/redesign/cena aprovados no GDA. Suíte ampliadaGodot executou30scripts:29passaram,1teste de memes falhou por depender da configuração real do operador. O teste foi isolado com fixture desligada explícita e passou no rerun, sem mudar a seleção de áudio ou afrouxar a regra de revisão.
+- Pendentes nesta etapa: resultado do benchmark620s simultâneos, capturas nos quatro tamanhos e ajuste posicional final do alerta para liberar pontas dos pés; coleta realTikTok/Kwai e OBS ainda não comprovados. Durante o benchmark o código do jogo está congelado.
+
 > **Aviso de Sessão de Salvamento (24/10/2026):** Esta sessão teve como missão exclusiva a consolidação, documentação e publicação no GitHub de todo o progresso desenvolvido até o momento, preparando o terreno para que o agente principal retome a missão de forma segura, com zero perda de trabalho e histórico transparente.
 
 ---

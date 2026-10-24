@@ -521,7 +521,7 @@ func _build_monumental_horizon() -> void:
 	# nítido para "2027" tanto no céu diurno claro quanto nas rodadas noturnas,
 	# sem encobrir as colunas nem a rampa presidencial.
 	var crest: Node3D = _group("BrasaoPlanalto2027")
-	crest.position = Vector3(47.35, 9.85, 0.0)
+	crest.position = Vector3(47.35, 11.4, 0.0)
 	_crest_plate_material = StandardMaterial3D.new()
 	_crest_plate_material.resource_name = "PlacaAzulPlanalto2027"
 	_crest_plate_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -536,30 +536,32 @@ func _build_monumental_horizon() -> void:
 	_crest_trim_material.emission_enabled = true
 	_crest_trim_material.emission = Color("ffcf26")
 	_crest_trim_material.emission_energy_multiplier = 0.52
-	_box(crest, "MolduraDourada", Vector3(0.08, 0.0, 0.0), Vector3(0.18, 3.62, 12.6), _crest_trim_material)
-	_box(crest, "FundoMarinho", Vector3(0.0, 0.0, 0.0), Vector3(0.24, 3.36, 12.24), _crest_plate_material)
+	_box(crest, "MolduraDourada", Vector3(0.08, 0.0, 0.0), Vector3(0.18, 5.8, 18.8), _crest_trim_material)
+	_box(crest, "FundoMarinho", Vector3(0.0, 0.0, 0.0), Vector3(0.24, 5.54, 18.44), _crest_plate_material)
 	var subtitle: Label3D = Label3D.new()
 	subtitle.name = "LegendaPlanalto"
 	subtitle.text = "BRASÍLIA · PLANALTO"
 	subtitle.font = _get_sign_font()
-	subtitle.font_size = 64
-	subtitle.pixel_size = 0.0115
+	subtitle.font_size = 88
+	subtitle.pixel_size = 0.018
 	subtitle.outline_size = 8
 	subtitle.modulate = Color("eef7ff")
 	subtitle.outline_modulate = Color("041137")
-	subtitle.position = Vector3(-0.22, 1.02, 0.0)
+	# Billboard tilts to the elevated race camera. Leave enough front clearance
+	# for its top vertices, otherwise the backing clips the upper half of text.
+	subtitle.position = Vector3(-1.4, 1.65, 0.0)
 	subtitle.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	crest.add_child(subtitle)
 	var year: Label3D = Label3D.new()
 	year.name = "AnoCenografico2027"
 	year.text = "2027"
 	year.font = _get_sign_font()
-	year.font_size = 184
-	year.pixel_size = 0.0168
+	year.font_size = 224
+	year.pixel_size = 0.020
 	year.outline_size = 16
 	year.modulate = Color("ffe34d")
 	year.outline_modulate = Color("030e2e")
-	year.position = Vector3(47.06, 9.32, 0.0)
+	year.position = Vector3(46.0, 10.4, 0.0)
 	year.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	add_child(year)
 	_year_label_3d = year

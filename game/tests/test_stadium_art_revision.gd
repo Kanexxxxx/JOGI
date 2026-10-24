@@ -24,6 +24,15 @@ func _run() -> void:
 	_check(world.get_node_or_null("BrasaoPlanalto2027") != null, "architectural backing crest for 2027 legibility")
 	var year_lbl: Label3D = world.get_node("AnoCenografico2027") as Label3D
 	_check(year_lbl != null and year_lbl.font_size >= 160 and year_lbl.pixel_size >= 0.015, "2027 has crisp broadcast scale above Planalto")
+	var palace: Node3D = world.get_node("PalacioDoPlanalto") as Node3D
+	var palace_top: float = -INF
+	for node: Node in palace.find_children("*", "MeshInstance3D", true, false):
+		var mesh: MeshInstance3D = node as MeshInstance3D
+		palace_top = maxf(palace_top, (mesh.global_transform * mesh.mesh.get_aabb()).end.y)
+	var crest_plate: MeshInstance3D = world.get_node("BrasaoPlanalto2027/FundoMarinho") as MeshInstance3D
+	var plate_bounds: AABB = crest_plate.global_transform * crest_plate.mesh.get_aabb()
+	_check(plate_bounds.position.y > palace_top + .15, "2027 backing clears the actual palace roof, not just its baseline")
+	_check(year_lbl.global_position.x < plate_bounds.position.x - 1.0, "large billboard text has depth clearance from its backing")
 	# Regressão explícita P2 #1: cruzamento de fronteira 49.9 m -> 50.0 m jamais inverte o lado Z das placas existentes.
 	world.set_race_progress(49.9)
 	var sides_before: Dictionary = {}

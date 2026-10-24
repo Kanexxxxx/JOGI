@@ -24,9 +24,10 @@ O ecossistema local do JOGI comunica o backend Python (`LiveBridge`), a interfac
 1. **Bind Exclusivo em Loopback (`127.0.0.1`)**:
    - Todos os serviços HTTP e WebSockets efetuam bind estritamente no endereço de loopback `127.0.0.1` (portas `8765` para TikTok e `8766` para Kwai). Nenhuma porta de escuta é exposta para `0.0.0.0` ou para redes locais/públicas.
 2. **Token de Sessão Local (`LIVE_BRIDGE_LOCAL_TOKEN`)**:
-   - As rotas administrativas (`/api/admin/*`, `/ws/admin`, `/ws/godot`, `/ws/ingest`) e o acesso ao painel exigem o cabeçalho `X-JOGI-Token` ou cookie HTTP seguro.
+   - Quando `LIVE_BRIDGE_LOCAL_TOKEN` está configurado, as APIs administrativas e `/ws/admin` exigem `X-JOGI-Token` ou cookie administrativo. O HTML de login continua acessível, sem segredos embutidos. O modo padrão do launcher gera apenas um token efêmero de produtor: nesse modo o painel permanece acessível em loopback, protegido por Host/Origin, e os canais do motor/produtor exigem seu token.
+   - `/ws/godot` e `/ws/ingest` aceitam o token de produtor ou o token local quando algum está configurado. A ingestão não aceita envelopes de comandos administrativos por um canal de produtor.
 3. **Cookie Administrativo com Proteção HttpOnly e SameSite**:
-   - O acesso ao painel administrativo web emite cookie de sessão com flags `HttpOnly`, `SameSite=Strict` e restrição ao host local, mitigando ataques de Cross-Site Scripting (XSS) e Cross-Site WebSocket Hijacking (CSWSH).
+   - O acesso autenticado emite cookie com `HttpOnly`, `SameSite=Strict` e nome exclusivo por plataforma e porta. Cookies não são isolados por porta pelo navegador; o nome distinto permite manter os dois painéis autenticados no mesmo host sem um sobrescrever o outro.
 4. **Token de Produtor Confiável (`LIVE_BRIDGE_PRODUCER_TOKEN`)**:
    - Webhooks locais de entrada (ex: ingestão de eventos Kwai em `/webhook/kwai`) exigem validação de token do produtor no cabeçalho `X-JOGI-Token` ou `Authorization: Bearer <token>`, impedindo que agentes não autorizados na máquina injetem presentes ou votos arbitrários.
 
@@ -41,7 +42,10 @@ O ecossistema local do JOGI comunica o backend Python (`LiveBridge`), a interfac
 2. **Adaptador TikTok Live**:
    - Conexão passiva com reconexão exponencial e isolamento em thread de coleta; envelopes recebidos são convertidos no formato formal validado (`schema_version=1.0`).
 3. **Adaptador Kwai Live**:
-   - Webhook passivo local protegido por autenticação e validação rigorosa de payload; eventos duplicados são descartados por deduplicação LRU.
+   - Webhook local autenticado e coletor de página autorizado pelo operador. Isso não comprova compatibilidade com uma sala real do Kwai Brasil; login, sala ativa e metadados de presentes ainda precisam de validação real.
+   - Presentes capturados são guardados antes do envio em `collector_gifts.sqlite3`, fora do repositório, com SQLite WAL e sincronização FULL. A fila retém até 10.000 pendências e até 10.000 IDs confirmados. Não armazena tokens ou URLs de avatar; imagens opcionais ficam em RAM no coletor e podem perder sua associação após reinício, sem perder os valores do presente.
+   - O coletor só remove um presente depois de ACK explícito do mesmo ID bruto, com `accepted` ou `duplicate` da outbox durável da ponte. HTTP 200 isolado não é confirmação. Falhas 401/503 ou timeout mantêm a pendência e geram estado de atenção/repetição.
+   - Fila cheia ou erro de armazenamento suspende a captura automática, preserva pendências anteriores e exige intervenção. Eventos que não puderam ser aceitos nessa capacidade finita não são apresentados como entregues; não há garantia para eventos que ocorram enquanto a coleta estiver suspensa.
 
 ---
 
@@ -72,7 +76,7 @@ Tanto o cache de ícones de presentes (`gift_images.py` / `gift_visual_cache.gd`
 3. **Bloqueio de Redirecionamentos (`max_redirects = 0`)**:
    - Requisições HTTP não seguem redirecionamentos automáticos (respostas `301`, `302`, `307`), impedindo que um endpoint inicial seguro redirecione para um endereço interno ou malicioso.
 4. **Limites Rígidos de Resposta e Recursos**:
-   - Limite máximo de bytes (`512 KB`), timeout de conexão (`2.5 s`) e teto de dimensões de imagem (`2048 px` máx de origem, reduzida para `<= 96 px` no cache de textura).
+   - Avatares: até 512 KiB, timeout de download de 4 s, origem até 2048 px e textura Godot até 96 px. Ícones de presentes: até 1 MiB, timeout de 5 s, origem até 4096 px e textura Godot até 512 px.
    - Validação estrita de cabeçalho MIME (`image/png`, `image/jpeg`, `image/webp`). Cargas SVG, HTML ou XML são prontamente recusadas para evitar ataques de XML External Entity (XXE) ou SVG script execution.
 5. **Rotas Opacas Locais**:
    - O Godot Engine nunca requisita URLs externas diretamente da internet. O Godot comunica-se exclusivamente com as rotas locais opacas do `LiveBridge` local: `/gift-icons/<sha256>` e `/viewer-avatars/<sha256>`.
@@ -81,9 +85,12 @@ Tanto o cache de ícones de presentes (`gift_images.py` / `gift_visual_cache.gd`
 
 ## 6. Privacidade e Tratamento de Dados de Espectadores
 
-1. **Zero Persistência de Dados Pessoais (PII)**:
-   - Fotos de perfil e dados de espectadores são armazenados apenas de forma transitória e efêmera na memória RAM (`AudienceDirector` e `AvatarVisualCache`), com limite estrito de LRU (64 a 256 entradas) e expiração automática por TTL.
-   - O arquivo de checkpoint persistente (`RacePersistence`) e o banco de dados outbox SQLite não armazenam fotos de perfis de espectadores nem links pessoais.
+1. **Persistência mínima, com cache privado e limitado**:
+   - O cache Godot de avatares fica em RAM (LRU de 64 texturas). A ponte pode guardar até 128 imagens de avatar em disco local, nomeadas por hash, com metadados de integridade e validade de seis horas. Esses metadados não contêm URL de origem, ID ou nome do espectador.
+   - O TTL impede servir imagens vencidas; a remoção de arquivos é feita ao carregar o cache, acessar uma entrada vencida ou desalojar entradas pelo limite. Não há promessa de exclusão física exatamente no segundo em que vence o TTL.
+   - Outbox, journal e checkpoint preservam IDs e nomes sanitizados necessários à deduplicação, ranking e recuperação. Não guardam bytes de foto de perfil nem a URL original do avatar; caminhos opacos podem acompanhar eventos pendentes.
+   - A outbox da ponte mantém pendências até confirmação, com capacidade finita; registros confirmados são podados pelo limite de 50.000 e retenção configurada de 36 horas. Isso não é a retenção do checkpoint/journal do jogo: estes preservam o estado da sessão e nomes/IDs do ranking, sem expiração automática equivalente ao TTL das fotos. Limpeza de sessão/dados exige uma ação própria do operador, sem apagar registros para resolver divergência de documentação.
+   - A fila durável do coletor também preserva identificadores, nomes e valores de presentes até sua confirmação. Todas essas pastas são locais, fora do Git; não se deve chamá-las de armazenamento sem dados pessoais.
 2. **Flag de Desativação Rápida (`LIVE_AVATARS_ENABLED`)**:
    - O sistema suporta a variável de ambiente `LIVE_AVATARS_ENABLED=0`, permitindo desativar instantaneamente o download e a exibição de avatares caso desejado, exibindo monogramas com iniciais limpas em seu lugar.
 

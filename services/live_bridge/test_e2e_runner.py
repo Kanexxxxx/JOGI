@@ -8,7 +8,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from protocol import build_gift_envelope, build_vote_envelope
+from protocol import build_admin_command_envelope, build_follow_envelope, build_gift_envelope, build_vote_envelope
 from server import LiveBridgeServer
 from simulator import MockLiveEventSimulator, SimulatorConfig
 
@@ -61,7 +61,16 @@ async def run_e2e_test() -> int:
             proc.kill()
             return 1
 
-        logger.info("Godot conectado! Verificando ACK de presente simulado antes do restante dos eventos...")
+        logger.info("Godot conectado! Enviando metas pelo contrato canônico do backend...")
+        srv.enqueue_envelope(build_admin_command_envelope(command='set_live_goals', live_goals={
+            'likes': {'goal_kind': 'likes', 'goal_target': 1500, 'goal_label': 'Curtidas E2E'},
+            'gifts': {'goal_kind': 'gift_specific', 'goal_target': 300, 'goal_label': 'Rosas E2E', 'goal_gift_id': 'rose_e2e'},
+            'follows': {'goal_kind': 'follows', 'goal_target': 10000, 'goal_label': 'Seguidores E2E',
+                        'follower_baseline': 8400, 'baseline_updated_at': '2026-10-24T15:00:00Z'},
+        }, event_id='evt_e2e_canonical_goals'))
+        srv.enqueue_envelope(build_follow_envelope(user_id='e2e_follower', display_name='Teste local',
+            event_id='evt_e2e_follow_probe', source='simulator'))
+        logger.info("Verificando ACK de presente simulado antes do restante dos eventos...")
         srv.enqueue_envelope(build_gift_envelope(user_id="e2e_probe", display_name="Teste local",
             candidate_slot=1, event_id="evt_e2e_ack_probe", source="simulator"))
         for _ in range(60):

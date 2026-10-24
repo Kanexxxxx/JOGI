@@ -9,9 +9,14 @@ func _run() -> void:
 	var board: RaceMemeBoard = RaceMemeBoard.new()
 	root.add_child(board)
 	board.set_process(false)
-	var passed: bool = not board.enabled and board._clips.is_empty() and not board.play_event("reaction", 0)
 	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(RaceMemeBoard.MANIFEST_PATH)) as Dictionary
-	# Apenas fixture em memória, headless. O manifesto real continua pendente.
+	# Isolar o modo desligado da seleção real configurada pelo operador.
+	# As fixtures abaixo só mudam cópias em memória, nunca o manifesto em disco.
+	data["enabled"] = false
+	for clip: Dictionary in data["clips"]:
+		clip["enabled"] = false
+	board.configure_manifest(data)
+	var passed: bool = not board.enabled and board._clips.is_empty() and not board.play_event("reaction", 0)
 	data["enabled"] = true
 	for clip: Dictionary in data["clips"]:
 		clip["enabled"] = true

@@ -242,8 +242,12 @@ class LiveBridgeServer:
     def _admin_set_cookie_header(self) -> tuple[str, str]:
         return (
             "Set-Cookie",
-            f"{ADMIN_COOKIE_NAME}={self._expected_admin_cookie()}; HttpOnly; SameSite=Strict; Path=/",
+            f"{self._admin_cookie_name()}={self._expected_admin_cookie()}; HttpOnly; SameSite=Strict; Path=/",
         )
+
+    def _admin_cookie_name(self) -> str:
+        # Browser cookies are scoped by host/path, never by TCP port.
+        return f"{ADMIN_COOKIE_NAME}_{self.platform}_{self.bound_port}"
 
     def _extract_header_token(self, headers: Any) -> str:
         direct = str(headers.get("X-JOGI-Token", "") or "").strip()
@@ -274,7 +278,7 @@ class LiveBridgeServer:
             jar.load(raw_cookie)
         except Exception:
             return False
-        morsel = jar.get(ADMIN_COOKIE_NAME)
+        morsel = jar.get(self._admin_cookie_name())
         if morsel is None or not morsel.value:
             return False
         expected = self._expected_admin_cookie()
@@ -364,16 +368,17 @@ class LiveBridgeServer:
             **kwai_meta,
         }
 
-    async def _receive_adapter_event(self, envelope: dict[str, Any]) -> None:
+    async def _receive_adapter_event(self, envelope: dict[str, Any]) -> str:
         self.metrics["adapter_backpressure_pending"] += 1
         try:
             while self._running:
                 outcome = self.enqueue_envelope(envelope)
                 if outcome in ("accepted", "duplicate"):
-                    return
+                    return outcome
                 if outcome != "busy":
                     raise ProtocolValidationError(f"Evento do coletor recusado: {outcome}.")
                 await asyncio.sleep(0.25)
+            raise RuntimeError("Ponte encerrada antes da aceitação durável do evento.")
         finally:
             self.metrics["adapter_backpressure_pending"] -= 1
 
@@ -392,6 +397,7 @@ class LiveBridgeServer:
                 )
             )
             self._live_adapter.on_event(self._receive_adapter_event)
+            self._live_adapter.set_durable_gift_sink(self._receive_adapter_event)
             await self._live_adapter.start()
             return
         if self.platform != "tiktok" or not self.account:

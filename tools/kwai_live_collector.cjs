@@ -8,6 +8,7 @@ const crypto = require('node:crypto');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const { DurableGiftDelivery } = require('./kwai_gift_delivery.cjs');
 
 function parseArgs(argv) {
   const out = {
@@ -287,6 +288,17 @@ async function postWebhook(webhookUrl, payload) {
   return res.ok;
 }
 
+async function postGiftWebhook(webhookUrl, payload) {
+  const res = await fetch(webhookUrl, {
+    method: 'POST', headers: localAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(payload), signal: AbortSignal.timeout(4000),
+  });
+  if (!res.ok) return { acknowledged: false, code: String(res.status) };
+  const response = await res.json();
+  return { acknowledged: response.acknowledged === true, raw_event_id: response.raw_event_id,
+    delivery_status: response.delivery_status, code: response.acknowledged ? '' : 'missing_durable_ack' };
+}
+
 async function fetchTargetUrlFromBridge(bridgeBase, fallbackUrl, allowLocalTestUrl) {
   try {
     const res = await fetch(`${bridgeBase}/api/kwai-collector`, {
@@ -350,15 +362,29 @@ async function main() {
   let page = null;
   let activeTargetUrl = '';
   let lastGotoAt = 0;
+  const delivery = new DurableGiftDelivery(path.join(path.dirname(args.profileDir), 'collector_gifts.sqlite3'), {
+    account: args.account, send: event => postGiftWebhook(webhookUrl, event),
+  });
+  const deliveryPump = setInterval(() => {
+    delivery.flushDue().catch(() => { delivery.attention = 'storage_error'; });
+  }, 250);
 
   const forwardEvent = async rawEvent => {
     if (!rawEvent || typeof rawEvent !== 'object') return;
     const id = String(rawEvent.event_id || '');
     if (!id || seenIds.has(id)) return;
-    seenIds.add(id);
+    if (rawEvent.type === 'gift' || rawEvent.type === 'present') {
+      try {
+        delivery.accept(rawEvent); // FULL-sync SQLite before any network attempt.
+        await delivery.flushDue();
+      } catch (_) {
+        delivery.attention = delivery.attention || 'storage_error';
+      }
+      return;
+    }
     try {
       const ok = await postWebhook(webhookUrl, rawEvent);
-      if (ok) eventsForwarded += 1;
+      if (ok) { seenIds.add(id); eventsForwarded += 1; }
     } catch (_) {}
   };
 
@@ -553,6 +579,11 @@ async function main() {
   };
 
   const inspectPageStatus = async () => {
+    const deliveryState = delivery.stats();
+    if (deliveryState.requires_attention || deliveryState.retrying) {
+      return { status: 'error', detail: `Entrega de presentes requer atenção: ${deliveryState.pending} pendentes; ${deliveryState.attention || deliveryState.last_error}.`,
+        liveUrl: activeTargetUrl || defaultUrl };
+    }
     if (!page) {
       return {
         status: 'waiting_room',
@@ -580,7 +611,7 @@ async function main() {
       if (probe.explicitActive || feedRecent || (probe.isLiveRoute && probe.activeVideo)) {
         return {
           status: 'connected',
-          detail: `Sala Kwai LIVE ativa (${eventsForwarded} eventos encaminhados)`,
+          detail: `Sala Kwai LIVE ativa (${eventsForwarded + delivery.forwarded} eventos confirmados)`,
           liveUrl: probe.href || activeTargetUrl,
         };
       }
@@ -611,6 +642,16 @@ async function main() {
       : await fetchTargetUrlFromBridge(bridgeBase, defaultUrl, args.allowLocalTestUrl);
 
     while (!stopping) {
+      if (['queue_full', 'storage_error'].includes(delivery.attention)) {
+        await closeContext();
+        await postWebhook(webhookUrl, { type: 'collector_status', status: 'error',
+          detail: `Coleta suspensa: ${delivery.stats().pending} presentes preservados; ${delivery.attention}. Verifique a fila e reinicie o coletor.`,
+          live_url: activeTargetUrl || defaultUrl, events_forwarded: eventsForwarded + delivery.forwarded,
+        }).catch(() => {});
+        if (args.once) break;
+        await sleep(args.heartbeatMs);
+        continue;
+      }
       if (!args.headed && isHeadedLoginActive(headedLockPath)) {
         await closeContext();
         await postWebhook(webhookUrl, {
@@ -618,7 +659,7 @@ async function main() {
           status: 'waiting_room',
           detail: 'Navegador visível Kwai aberto para login; feche-o ao concluir para retomar a coleta automática.',
           live_url: activeTargetUrl || defaultUrl,
-          events_forwarded: eventsForwarded,
+          events_forwarded: eventsForwarded + delivery.forwarded,
         }).catch(() => {});
         if (args.once) break;
         await sleep(1200);
@@ -632,7 +673,7 @@ async function main() {
           status: 'waiting_room',
           detail: 'Perfil do navegador Kwai temporariamente ocupado; tentando novamente...',
           live_url: activeTargetUrl || defaultUrl,
-          events_forwarded: eventsForwarded,
+          events_forwarded: eventsForwarded + delivery.forwarded,
         }).catch(() => {});
         if (args.once) break;
         await sleep(args.heartbeatMs);
@@ -659,7 +700,7 @@ async function main() {
             status: 'waiting_room',
             detail: `Aguardando conexão com ${activeTargetUrl}`,
             live_url: activeTargetUrl,
-            events_forwarded: eventsForwarded,
+            events_forwarded: eventsForwarded + delivery.forwarded,
           }).catch(() => {});
         }
       }
@@ -674,19 +715,23 @@ async function main() {
         status: state.status,
         detail: state.detail,
         live_url: state.liveUrl,
-        events_forwarded: eventsForwarded,
+        events_forwarded: eventsForwarded + delivery.forwarded,
       }).catch(() => {});
 
       if (args.once) break;
       await sleep(args.heartbeatMs);
     }
   } finally {
+    clearInterval(deliveryPump);
     await closeContext();
+    await delivery.close();
     cleanupLock();
   }
 }
 
-main().catch(err => {
+if (require.main === module) main().catch(err => {
   console.error('[kwai_live_collector]', err && err.message ? err.message : err);
   process.exit(1);
 });
+
+module.exports = { normalizeFeedPayload, isAllowedNavigationUrl, postGiftWebhook };

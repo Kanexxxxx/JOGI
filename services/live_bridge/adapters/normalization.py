@@ -64,18 +64,19 @@ class ViewerContext:
             self._last_vote_boost.popitem(last=False)
         return True
 
-    def identity(self, event: Any, source: str, kind: str) -> dict[str, Any] | None:
+    def identity(self, event: Any, source: str, kind: str, *, remember: bool = True) -> dict[str, Any] | None:
         packet = raw_packet_id(event)
         now = time.monotonic()
         while self._packets and now - next(iter(self._packets.values())) > 900.0:
             self._packets.popitem(last=False)
         if packet:
             key = f"{source}:{kind}:{packet}"
-            if key in self._packets:
+            if remember and key in self._packets:
                 return None
-            self._packets[key] = now
-            while len(self._packets) > self.max_users:
-                self._packets.popitem(last=False)
+            if remember:
+                self._packets[key] = now
+                while len(self._packets) > self.max_users:
+                    self._packets.popitem(last=False)
             event_id = "evt_" + source + "_" + hashlib.sha256(key.encode()).hexdigest()[:32]
         else:
             event_id = None

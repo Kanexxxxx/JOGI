@@ -680,7 +680,7 @@ func _on_bus_admin_command(command: String, payload: Dictionary = {}) -> void:
 		send_telemetry_now()
 		return
 	if command == "set_live_goal":
-		live_goal = {"goal_kind": String(payload["goal_kind"]), "goal_target": int(payload["goal_target"]), "goal_label": String(payload["goal_label"]).substr(0, 40)}
+		live_goal = {"goal_kind": String(payload["goal_kind"]), "goal_target": int(payload["goal_target"]), "goal_label": String(payload["goal_label"]).strip_edges()}
 		if live_goal["goal_kind"] == "gift_specific":
 			live_goal["goal_gift_id"] = String(payload["goal_gift_id"])
 		var mapped_slot: String = "likes"

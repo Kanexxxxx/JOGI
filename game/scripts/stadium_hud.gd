@@ -280,8 +280,11 @@ func _build() -> void:
 	_circle_shader.code = """shader_type canvas_item;
 uniform vec4 ring_color : source_color = vec4(1.0, 0.87, 0.0, 1.0);
 uniform float ring_width : hint_range(0.0, 0.2) = 0.075;
+uniform vec4 circle_uv_region = vec4(0.0, 0.0, 1.0, 1.0);
 void fragment() {
-	vec2 p = UV - vec2(0.5);
+	// AtlasTexture supplies UV in the full source image, not the cropped face.
+	vec2 local_uv = (UV - circle_uv_region.xy) / circle_uv_region.zw;
+	vec2 p = local_uv - vec2(0.5);
 	float dist = length(p) * 2.0;
 	float outer_alpha = 1.0 - smoothstep(0.95, 1.0, dist);
 	float inner_mix = smoothstep(1.0 - ring_width * 2.0 - 0.03, 1.0 - ring_width * 2.0, dist);
@@ -383,7 +386,12 @@ func _build_team(team: int, y: float) -> void:
 	portrait.position = Vector2(176.0, y + 9.0)
 	portrait.size = Vector2(68.0, 68.0)
 	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	portrait.material = _make_circle_material(RED if is_lula else GOLD, 0.08)
+	var portrait_material: ShaderMaterial = _make_circle_material(RED if is_lula else GOLD, 0.08)
+	var atlas_size: Vector2 = atlas.atlas.get_size()
+	portrait_material.set_shader_parameter("circle_uv_region", Vector4(
+		atlas.region.position.x / atlas_size.x, atlas.region.position.y / atlas_size.y,
+		atlas.region.size.x / atlas_size.x, atlas.region.size.y / atlas_size.y))
+	portrait.material = portrait_material
 	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	frame.add_child(portrait)
 	var cand_name: Label = _label("LULA" if is_lula else "FLÁVIO", Rect2(254.0, y + 8.0, 204.0, 42.0), 33, WHITE if is_lula else GOLD, true)
@@ -833,13 +841,14 @@ func _push_interaction_card(participant: Dictionary, clean_name: String, kind: S
 	# Combina deltas sucessivos do mesmo combo pago na mesma identidade sem duplicar cards.
 	if kind == "gift" and not identity.is_empty():
 		for existing: Dictionary in _interaction_entries:
-			if str(existing.get("identity", "")) == identity and str(existing.get("kind", "")) == "gift" and str(existing.get("gift_id", "")) == gift_id:
+			if str(existing.get("identity", "")) == identity and str(existing.get("kind", "")) == "gift" and str(existing.get("gift_id", "")) == gift_id and int(existing.get("team", 0)) == team:
 				var total_qty: int = int(existing.get("gift_quantity", 1)) + qty
 				existing["gift_quantity"] = total_qty
 				var g_name: String = _sanitize_single_line(str(participant.get("gift_name", "")))
 				if g_name.is_empty():
 					g_name = "Presente"
 				existing["action"] = "enviou %s ×%s" % [g_name, _count_text(total_qty)]
+				existing["display_name"] = clean_name
 				existing["expires"] = _elapsed + INTERACTION_TTL_SECONDS
 				if not avatar_path.is_empty():
 					existing["avatar_icon_path"] = avatar_path
@@ -872,9 +881,12 @@ func _push_interaction_card(participant: Dictionary, clean_name: String, kind: S
 
 func _expire_interactions() -> void:
 	var changed: bool = false
-	while not _interaction_entries.is_empty() and float(_interaction_entries.back()["expires"]) <= _elapsed:
-		_interaction_entries.pop_back()
-		changed = true
+	# Combo updates can extend an older card without moving its position. Expiry
+	# is therefore independent of insertion order; inspect both fixed slots.
+	for index: int in range(_interaction_entries.size() - 1, -1, -1):
+		if float(_interaction_entries[index]["expires"]) <= _elapsed:
+			_interaction_entries.remove_at(index)
+			changed = true
 	if changed:
 		_refresh_interaction_cards()
 
@@ -1097,7 +1109,7 @@ func _make_runner_badge(text: String, color: Color, text_color: Color) -> Contro
 
 func _build_event_ribbon() -> void:
 	var panel: Panel = Panel.new()
-	panel.position = Vector2(140.0, 612.0)
+	panel.position = Vector2(140.0, 1288.0)
 	panel.size = Vector2(800.0, 56.0)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_event_style = StyleBoxFlat.new()
@@ -1224,12 +1236,12 @@ func show_event(text: String, team: int = 0, kind: String = "boost") -> void:
 	_event_style.border_color = RED if team == 1 else (GREEN if team == 2 else GOLD)
 	_event_style.bg_color = Color("650d37", 0.94) if kind == "attack" else Color("071f5e", 0.94)
 	_event_root.visible = true
-	_event_root.position.y = 602.0
+	_event_root.position.y = 1278.0
 	_event_root.modulate.a = 0.0
 	_event_tween = create_tween()
 	_event_tween.set_parallel(true)
 	_event_tween.tween_property(_event_root, "modulate:a", 1.0, 0.16)
-	_event_tween.tween_property(_event_root, "position:y", 612.0, 0.22).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_event_tween.tween_property(_event_root, "position:y", 1288.0, 0.22).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	_event_tween.set_parallel(false)
 	_event_tween.tween_interval(2.2)
 	_event_tween.tween_property(_event_root, "modulate:a", 0.0, 0.30)

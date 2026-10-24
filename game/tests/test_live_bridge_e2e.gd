@@ -74,7 +74,11 @@ func _process(delta: float) -> bool:
 		_step_sim(delta)
 		var r1: CandidateRunner = _race.runners[0]
 		# Wait until we have received at least 4 events (welcome + simulator events for Candidate #1)
-		if _bus.accepted_count >= 4 and r1.boost_timer > 0.0 and r1.current_speed > _baseline_speed:
+		var stadium: StadiumRace = _race as StadiumRace
+		var goals: Dictionary = stadium.get_telemetry_snapshot().get("live_goals", {}) as Dictionary
+		var goals_applied: bool = int((goals.get("likes", {}) as Dictionary).get("goal_target", 0)) == 1500 and String((goals.get("gifts", {}) as Dictionary).get("goal_gift_id", "")) == "rose_e2e" and int((goals.get("follows", {}) as Dictionary).get("value", 0)) == 8401
+		if _bus.accepted_count >= 4 and goals_applied and r1.boost_timer > 0.0 and r1.current_speed > _baseline_speed:
+			print("E2E_CANONICAL_GOALS_APPLIED: likes=1500 gifts=rose_e2e follows=8401/10000")
 			print(
 				"E2E_EVENTS_APPLIED: accepted=%d dup=%d r1_speed=%.2f baseline=%.2f progress=%.2fm" % [
 					_bus.accepted_count,

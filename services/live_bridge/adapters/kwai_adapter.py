@@ -10,7 +10,8 @@ import logging
 import os
 import time
 import urllib.parse
-from typing import Any
+from typing import Any, Awaitable, Callable
+from collections import OrderedDict
 
 from .base import BaseLiveAdapter
 from .normalization import ViewerContext, bounded_int
@@ -45,6 +46,10 @@ DEFAULT_KWAI_WEBHOOK_HOST: str = "127.0.0.1"
 DEFAULT_KWAI_WEBHOOK_PORT: int = 8786
 DEFAULT_KWAI_WEBHOOK_PATH: str = "/webhook/kwai"
 MAX_WEBHOOK_BODY_BYTES: int = 65_536
+
+
+class KwaiDeliveryUnavailable(RuntimeError):
+    """A paid event has not been durably accepted; producer must retain and retry."""
 
 
 def _clean_webhook_token(raw: str | None) -> str:
@@ -94,6 +99,11 @@ class KwaiLiveAdapter(BaseLiveAdapter):
     _collector_seen_at: float | None = field(default=None, init=False, repr=False)
     _collector_events_forwarded: int = field(default=0, init=False, repr=False)
     _last_webhook_event_at: float | None = field(default=None, init=False, repr=False)
+    _durable_gift_sink: Callable[[dict[str, Any]], Awaitable[str]] | None = field(default=None, init=False, repr=False)
+    _gift_delivery_results: OrderedDict[str, str] = field(default_factory=OrderedDict, init=False, repr=False)
+
+    def set_durable_gift_sink(self, sink: Callable[[dict[str, Any]], Awaitable[str]]) -> None:
+        self._durable_gift_sink = sink
 
     def __post_init__(self) -> None:
         if not self.config.enabled:
@@ -175,7 +185,10 @@ class KwaiLiveAdapter(BaseLiveAdapter):
             or "Espectador Kwai"
         )[:256]
         avatar_url = extract_avatar_url(raw_data.get("avatar_url") or user_info)
-        identity = self._viewers.identity(raw_data, "kwai", event_type)
+        # The durable bridge outbox owns paid deduplication. Remembering the raw
+        # ID here before storage would permanently suppress a failed delivery.
+        paid_durable = event_type in ("gift", "present") and self._durable_gift_sink is not None
+        identity = self._viewers.identity(raw_data, "kwai", event_type, remember=not paid_durable)
         if identity is None:
             return None
         slot = self._viewers.team(user_id, self.config.default_candidate_slot)
@@ -263,7 +276,21 @@ class KwaiLiveAdapter(BaseLiveAdapter):
 
         if envelope is not None:
             self._last_webhook_event_at = time.monotonic()
-            await self.emit_envelope(envelope)
+            if paid_durable:
+                try:
+                    result = await asyncio.wait_for(self._durable_gift_sink(envelope), timeout=3.0)
+                except (asyncio.TimeoutError, RuntimeError, OSError) as exc:
+                    raise KwaiDeliveryUnavailable("Presente ainda não aceito pela outbox; tente o mesmo ID.") from exc
+                if result not in ("accepted", "duplicate"):
+                    raise KwaiDeliveryUnavailable("Presente sem confirmação durável; tente o mesmo ID.")
+                self._gift_delivery_results[envelope["event_id"]] = result
+                self._gift_delivery_results.move_to_end(envelope["event_id"])
+                while len(self._gift_delivery_results) > 10000:
+                    self._gift_delivery_results.popitem(last=False)
+                self._events_emitted += 1
+                self._last_event_timestamp = time.time()
+            else:
+                await self.emit_envelope(envelope)
 
         return envelope
 
@@ -409,6 +436,13 @@ class KwaiLiveAdapter(BaseLiveAdapter):
                 "event_id": emitted_envelope.get("event_id") if emitted_envelope else None,
                 "adapter_status": self._effective_status(),
             }
+            if emitted_envelope is not None and emitted_envelope["event_type"] == "gift":
+                delivery = self._gift_delivery_results.get(emitted_envelope["event_id"])
+                resp_payload.update(
+                    acknowledged=delivery in ("accepted", "duplicate"),
+                    delivery_status=delivery or "unconfirmed",
+                    raw_event_id=str(parsed_data.get("event_id") or ""),
+                )
             body_bytes = json.dumps(resp_payload).encode("utf-8")
             response = (
                 b"HTTP/1.1 200 OK\r\n"
@@ -419,6 +453,9 @@ class KwaiLiveAdapter(BaseLiveAdapter):
             writer.write(response)
             await writer.drain()
 
+        except KwaiDeliveryUnavailable:
+            writer.write(b'HTTP/1.1 503 Service Unavailable\r\nContent-Type: application/json\r\nContent-Length: 17\r\nConnection: close\r\n\r\n{"status":"busy"}')
+            await writer.drain()
         except Exception as exc:
             self.record_error(exc)
             logger.error("Erro ao processar requisição webhook do Kwai: %s", exc)
