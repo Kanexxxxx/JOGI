@@ -41,11 +41,26 @@
     <!-- Main Grid Content -->
     <main class="control-room-layout" style="padding: 0; min-height: auto;">
 
+      <!-- Seção de desbloqueio quando LIVE_BRIDGE_LOCAL_TOKEN estiver ativo -->
+      <section class="panel-section auth-unlock-panel" id="auth-unlock-section" aria-labelledby="section-auth-title" hidden>
+        <div class="section-header">
+          <h2 class="section-title" id="section-auth-title">🔒 Sessão Local Protegida (LIVE_BRIDGE_LOCAL_TOKEN)</h2>
+          <span class="sub-label">Cookie HttpOnly · Sem armazenamento em JS</span>
+        </div>
+        <form id="auth-unlock-form" class="goal-controls">
+          <label class="kwai-url-label">Token local do operador
+            <input id="auth-token-input" class="form-select" type="password" autocomplete="off" placeholder="Insira LIVE_BRIDGE_LOCAL_TOKEN" aria-label="Token local do operador">
+          </label>
+          <button type="submit" class="btn btn-primary" id="btn-auth-unlock">Autenticar painel</button>
+        </form>
+        <p class="sub-label" id="auth-unlock-feedback">O servidor exigiu autenticação local antes de liberar comandos e telemetria.</p>
+      </section>
+
       <!-- 1. Seção de Controle da Partida & Tug-of-War -->
       <section class="panel-section" aria-labelledby="section-match-title">
         <div class="section-header">
           <h2 class="section-title" id="section-match-title">
-            <span class="section-title-icon" aria-hidden="true">⏱️</span> Controle da Partida & Vantagem
+            <span class="section-title-icon" aria-hidden="true">⏱️</span> Controle da Partida &amp; Vantagem
           </h2>
           <span class="sub-label">50 rodadas de 10 minutos</span>
         </div>
@@ -112,7 +127,7 @@
           <span class="sub-label tabular-nums" id="kwai-webhook-badge">Webhook: http://127.0.0.1:8786/webhook/kwai</span>
         </div>
         <p class="sub-label" id="kwai-collector-detail">
-          Receptor local passivo + navegador dedicado Playwright sem CORS. Se o Kwai pedir login na primeira vez, execute ABRIR_NAVEGADOR_KWAI.cmd.
+          Receptor local passivo + navegador dedicado Playwright sem CORS (sem API nuvem oficial Kwai Brasil). Se o Kwai pedir login na primeira vez, execute ABRIR_NAVEGADOR_KWAI.cmd.
         </p>
         <form id="kwai-collector-form" class="goal-controls">
           <label class="kwai-url-label">URL pública da live Kwai (opcional; vazio usa @mentalista..)
@@ -123,19 +138,90 @@
         </form>
       </section>
 
+      <!-- Metas da Live (3 simultâneas independentes + compatibilidade unitária) -->
       <section class="panel-section" aria-labelledby="section-goal-title">
-        <div class="section-header"><h2 class="section-title" id="section-goal-title">🎯 Meta da live</h2><span class="sub-label" id="goal-current">Carregando configuração real...</span></div>
-        <form id="goal-form" class="goal-controls">
-          <label>Interação <select id="goal-kind" class="form-select"><option value="likes">Curtidas</option><option value="follows">Novos seguidores</option><option value="gifts">Quantidade de presentes</option><option value="coins">Moedas</option><option value="gift_specific">Presente específico (ex.: rosas)</option></select></label>
-          <label id="goal-gift-wrap" hidden>Presente observado <select id="goal-gift-id" class="form-select"><option value="">Aguardando ID de presente real</option></select></label>
-          <label>Quantidade <input id="goal-target" class="form-select" type="number" min="1" max="1000000000" value="1000" required></label>
-          <label>Nome exibido <input id="goal-label" class="form-select" maxlength="40" value="Meta de curtidas" required></label>
-          <button type="submit" class="btn btn-primary">Aplicar meta</button>
+        <div class="section-header">
+          <h2 class="section-title" id="section-goal-title">🎯 Metas da Live (3 Simultâneas Independentes)</h2>
+          <span class="sub-label" id="goal-current">Carregando configuração real...</span>
+        </div>
+
+        <form id="multi-goals-form" class="multi-goals-grid" aria-label="Configuração das 3 metas simultâneas">
+          <div class="goal-slot-card">
+            <div class="goal-slot-header">
+              <strong>❤️ 1. Meta de Curtidas</strong>
+              <span class="sub-label tabular-nums" id="mg-likes-progress">0 / 1.000</span>
+            </div>
+            <label>Alvo de curtidas
+              <input id="mg-likes-target" class="form-select" type="number" min="1" max="1000000000" value="1000" required>
+            </label>
+            <label>Rótulo no HUD
+              <input id="mg-likes-label" class="form-select" maxlength="40" value="Meta de curtidas" required>
+            </label>
+          </div>
+
+          <div class="goal-slot-card">
+            <div class="goal-slot-header">
+              <strong>🎁 2. Meta de Presentes</strong>
+              <span class="sub-label tabular-nums" id="mg-gifts-progress">0 / 500</span>
+            </div>
+            <label>Unidade de contagem
+              <select id="mg-gifts-kind" class="form-select">
+                <option value="gifts">Unidades de presentes</option>
+                <option value="coins">Moedas acumuladas</option>
+                <option value="gift_specific">Presente específico por ID</option>
+              </select>
+            </label>
+            <label id="mg-gifts-gift-wrap" hidden>ID de presente observado
+              <select id="mg-gifts-gift-id" class="form-select">
+                <option value="">Aguardando ID de presente real</option>
+              </select>
+            </label>
+            <label>Alvo de presentes/moedas
+              <input id="mg-gifts-target" class="form-select" type="number" min="1" max="1000000000" value="500" required>
+            </label>
+            <label>Rótulo no HUD
+              <input id="mg-gifts-label" class="form-select" maxlength="40" value="Meta de presentes" required>
+            </label>
+          </div>
+
+          <div class="goal-slot-card">
+            <div class="goal-slot-header">
+              <strong>👥 3. Meta de Seguidores (10k)</strong>
+              <span class="sub-label tabular-nums" id="mg-follows-progress">+0 na live · Alvo 10.000</span>
+            </div>
+            <label>Alvo de seguidores
+              <input id="mg-follows-target" class="form-select" type="number" min="1" max="1000000000" value="10000" required>
+            </label>
+            <label>Base manual do perfil (opcional; vazio = só novos na live)
+              <input id="mg-follows-baseline" class="form-select" type="number" min="0" max="1000000000" placeholder="Ex.: 8450 (manual)">
+            </label>
+            <label>Rótulo no HUD
+              <input id="mg-follows-label" class="form-select" maxlength="40" value="Meta de seguidores" required>
+            </label>
+          </div>
+
+          <div class="multi-goals-actions">
+            <span class="sub-label" id="multi-goals-note">Sem total real fornecido pela API, a meta 10.000 exibe honestamente novos seguidores da live (+N) ou soma com base manual rotulada.</span>
+            <button type="submit" class="btn btn-primary" id="btn-apply-multi-goals">Aplicar 3 metas simultâneas</button>
+          </div>
         </form>
+
+        <details class="legacy-goal-details" open>
+          <summary class="sub-label" style="cursor: pointer;">Ajuste individual rápido (compatível com meta primária)</summary>
+          <form id="goal-form" class="goal-controls">
+            <label>Interação <select id="goal-kind" class="form-select"><option value="likes">Curtidas</option><option value="follows">Novos seguidores</option><option value="gifts">Quantidade de presentes</option><option value="coins">Moedas</option><option value="gift_specific">Presente específico (ex.: rosas)</option></select></label>
+            <label id="goal-gift-wrap" hidden>Presente observado <select id="goal-gift-id" class="form-select"><option value="">Aguardando ID de presente real</option></select></label>
+            <label>Quantidade <input id="goal-target" class="form-select" type="number" min="1" max="1000000000" value="1000" required></label>
+            <label>Nome exibido <input id="goal-label" class="form-select" maxlength="40" value="Meta de curtidas" required></label>
+            <button type="submit" class="btn btn-primary">Aplicar meta</button>
+          </form>
+        </details>
+
         <p class="sub-label">Configuração exclusiva desta plataforma. Testes do simulador são identificados; não representam presentes ou receita reais.</p>
         <p id="goal-progress-text" class="sub-label">Progresso aguardando telemetria do jogo.</p>
         <p id="audience-totals" class="sub-label">Interações aguardando telemetria.</p>
         <p id="outbox-status" class="sub-label">Fila de presentes: aguardando bridge.</p>
+        <p id="cache-diagnostics" class="sub-label">Caches locais e filas: aguardando bridge.</p>
         <p id="audio-status" class="sub-label">Voz: aguardando telemetria.</p>
         <form id="audio-form" class="goal-controls">
           <label><input id="audio-voices" type="checkbox" disabled> Narração</label>
@@ -145,11 +231,11 @@
           <button id="audio-apply" type="submit" class="btn btn-secondary" disabled>Aplicar áudio</button>
         </form>
         <p id="audio-confirmation" class="sub-label">Controles disponíveis quando o jogo confirmar o estado do áudio.</p>
-        <h3>Top 5 de presentes nesta sessão</h3>
+        <h3>Top 5 de moedas nesta sessão</h3>
         <ol id="top-supporters"><li>Aguardando presentes contabilizados pelo jogo.</li></ol>
       </section>
 
-      <!-- 2. Seção dos Competidores: Lula vs Bolsonaro -->
+      <!-- Catálogo dinâmico de presentes observados -->
       <section class="panel-section" aria-labelledby="section-gifts-title">
         <div class="section-header"><h2 class="section-title" id="section-gifts-title">🎁 Presentes observados e ações</h2><button type="button" id="btn-refresh-gifts" class="btn btn-secondary">Atualizar catálogo</button></div>
         <p class="sub-label">O catálogo aprende os IDs, nomes e valores recebidos. Offline ele pode estar vazio; não é uma tabela oficial pré-carregada. Alterações valem para novos presentes, preservando os totais já registrados.</p>
@@ -252,21 +338,22 @@
         </div>
       </section>
 
-      <!-- 3. Seção Simulador de Eventos da Live -->
+      <!-- 3. Seção Simulador de Eventos da Live (TESTE LOCAL) -->
       <section class="panel-section" aria-labelledby="section-simulator-title">
         <div class="section-header">
           <h2 class="section-title" id="section-simulator-title">
-            <span class="section-title-icon" aria-hidden="true">🎮</span> Simulador de Eventos da Live
+            <span class="section-title-icon" aria-hidden="true">🎮</span> Simulador de Eventos • TESTE LOCAL
           </h2>
           <button type="button" class="btn btn-burst" id="btn-burst-events" aria-label="Disparar rajada de eventos de teste de estresse">
-            💥 Rajada de Eventos / Burst (40x)
+            💥 TESTE: Rajada Burst (40x)
           </button>
         </div>
+        <p class="sub-label">⚠️ SIMULAÇÃO LOCAL EXCLUSIVA: Estes botões enviam eventos sintéticos `source="simulator"` apenas para o jogo local e jamais interagem com contas do TikTok ou Kwai.</p>
 
         <div class="simulator-layout">
           <!-- Bloco A: Votos e Comentários -->
           <div class="sim-box">
-            <span class="sim-box-title">🗳️ Disparar Voto (13 Lula / 22 Flávio)</span>
+            <span class="sim-box-title">🗳️ TESTE: Voto (13 Lula / 22 Flávio)</span>
             <div class="form-group-inline">
               <select class="form-select" id="sim-vote-cand" aria-label="Selecionar candidato para voto">
                 <option value="1">13 Lula</option>
@@ -285,11 +372,12 @@
 
           <!-- Bloco B: Lotes de Curtidas (Likes) -->
           <div class="sim-box">
-            <span class="sim-box-title">❤️ Lote de Curtidas</span>
+            <span class="sim-box-title">❤️ TESTE: Lote de Curtidas</span>
             <div class="form-group-inline">
               <select class="form-select" id="sim-like-cand" aria-label="Selecionar candidato para curtidas">
                 <option value="1">13 Lula</option>
                 <option value="2">22 Flávio</option>
+                <option value="0">Sem time (neutro)</option>
               </select>
             </div>
             <div class="btn-group-row">
@@ -305,13 +393,14 @@
             </div>
           </div>
 
-          <!-- Bloco C: Compartilhamento (Share) -->
+          <!-- Bloco C: Compartilhamento (Share) & Seguidores -->
           <div class="sim-box">
-            <span class="sim-box-title">📢 Compartilhamento</span>
+            <span class="sim-box-title">📢 TESTE: Compartilhamento &amp; Follow</span>
             <div class="form-group-inline">
               <select class="form-select" id="sim-share-cand" aria-label="Selecionar candidato para compartilhamento">
                 <option value="1">13 Lula</option>
                 <option value="2">22 Flávio</option>
+                <option value="0">Sem time (neutro)</option>
               </select>
               <button type="button" class="btn btn-secondary" id="btn-sim-share">
                 Compartilhar
@@ -323,12 +412,13 @@
           <!-- Bloco D: Presentes / Moedas (Gifts T1..T4) -->
           <div class="sim-box" style="grid-column: 1 / -1;">
             <div class="form-group-inline" style="justify-content: space-between;">
-              <span class="sim-box-title">🎁 Disparar Presentes Especiais</span>
+              <span class="sim-box-title">🎁 TESTE: Presentes Especiais</span>
               <div class="form-group-inline" style="flex: 0 0 auto;">
                 <label for="sim-gift-cand" class="sub-label">Alvo:</label>
-                <select class="form-select" id="sim-gift-cand" style="width: 160px;" aria-label="Selecionar candidato alvo do presente">
+                <select class="form-select" id="sim-gift-cand" style="width: 170px;" aria-label="Selecionar candidato alvo do presente">
                   <option value="1">13 Lula</option>
                   <option value="2">22 Flávio</option>
+                  <option value="0">Sem time (neutro)</option>
                 </select>
               </div>
             </div>

@@ -1141,3 +1141,86 @@ html, body {
     scroll-behavior: auto !important;
   }
 }
+
+
+/* Simultaneous 3-Goal Grid & Local Auth Unlock */
+.auth-unlock-panel {
+  border-color: rgba(56, 189, 248, 0.55);
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.08) 0%, var(--bg-surface) 100%);
+}
+
+.multi-goals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 14px;
+  min-width: 0;
+}
+
+.goal-slot-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.goal-slot-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid rgba(71, 85, 105, 0.45);
+  padding-bottom: 8px;
+}
+
+.goal-slot-card label {
+  display: grid;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  min-width: 0;
+}
+
+.goal-slot-card input,
+.goal-slot-card select {
+  width: 100%;
+  max-width: 100%;
+  min-height: 38px;
+  min-width: 0;
+}
+
+.multi-goals-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 4px;
+  min-width: 0;
+}
+
+.multi-goals-actions .sub-label {
+  flex: 1 1 240px;
+  min-width: 0;
+  text-transform: none;
+  letter-spacing: 0.01em;
+}
+
+.legacy-goal-details {
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  min-width: 0;
+}
+
+@media (max-width: 480px) {
+  .multi-goals-actions .btn {
+    width: 100%;
+  }
+}

@@ -11,6 +11,7 @@
     "restart modal",
     "invalid goal blocked by form validation",
     "goal via WS",
+    "simultaneous 3-goals (likes + gifts + 10k follows with manual baseline) via WS",
     "vote",
     "likes, share, follow",
     "real-value gift 42x3=126 once",
@@ -46,8 +47,8 @@
   },
   "web_vitals": {
     "cls": 0,
-    "lcp": 340,
+    "lcp": 1300,
     "inp": "not measured"
   },
-  "packets_received": 18
+  "packets_received": 19
 }

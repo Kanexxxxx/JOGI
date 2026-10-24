@@ -55,6 +55,13 @@ async function until(predicate, timeout=10000) { const end=Date.now()+timeout; w
   interactions.push('invalid goal blocked by form validation'); await page.keyboard.press('Escape'); await page.fill('#goal-target','250');
   await page.locator('#goal-form button').click();
   await until(()=>packets.some(p=>p.payload?.command==='set_live_goal'&&p.payload.goal_target===250)); interactions.push('goal via WS');
+  await page.fill('#mg-likes-target','1500');
+  await page.fill('#mg-gifts-target','300');
+  await page.fill('#mg-follows-target','10000');
+  await page.fill('#mg-follows-baseline','8400');
+  await page.click('#btn-apply-multi-goals');
+  await until(()=>packets.some(p=>p.payload?.command==='set_live_goals'&&p.payload.live_goals?.follows?.goal_target===10000&&p.payload.live_goals?.follows?.follower_baseline===8400));
+  interactions.push('simultaneous 3-goals (likes + gifts + 10k follows with manual baseline) via WS');
   await page.selectOption('#sim-vote-cand','2'); await page.click('#btn-sim-vote');
   await until(()=>packets.some(p=>p.event_type==='vote'&&p.payload.candidate_slot===2)); interactions.push('vote');
   await page.click('#btn-like-50'); await page.click('#btn-sim-share'); await page.click('#btn-sim-follow');
@@ -79,6 +86,7 @@ async function until(predicate, timeout=10000) { const end=Date.now()+timeout; w
   await until(async()=> (await page.locator('#audience-totals').textContent()).includes('Presentes 6'));
   const totals=await page.locator('#audience-totals').textContent();assert(totals.includes('Moedas 56'));assert(totals.includes('Seguidores 3'));interactions.push('gift count/coin count mapped separately from telemetry');
   await page.locator('#goal-progress-text').filter({hasText:'3 / 250'}).waitFor();
+  await page.locator('#mg-follows-progress').filter({hasText:'8.403 / 10.000'}).waitFor();
   // Force only the admin socket offline in a new browser context to exercise supported HTTP fallback.
   const fallback=await browser.newContext({viewport:{width:1440,height:1000}});
   await fallback.addInitScript(()=>{const Native=window.WebSocket;window.WebSocket=class extends Native {constructor(url,...rest){super(url,...rest);this.addEventListener('open',()=>this.close());}};});
@@ -88,13 +96,14 @@ async function until(predicate, timeout=10000) { const end=Date.now()+timeout; w
   await fallbackPage.click('#btn-sim-follow');await sleep(150);interactions.push('HTTP follow receipt');
   await fallback.close();
   const vitals=await page.evaluate(()=>window.__qaVitals);
-  const labelAudit=await page.evaluate(()=>Array.from(document.querySelectorAll('input,select,button')).filter(e=>!e.disabled&&!e.closest('[hidden]')).filter(e=>!(e.getAttribute('aria-label')||e.labels?.length||e.textContent.trim())).map(e=>e.id||e.tagName));
+  const labelAudit=await page.evaluate(()=>Array.from(document.querySelector('body').querySelectorAll('input,select,button')).filter(e=>!e.disabled&&!e.closest('[hidden]')).filter(e=>!(e.getAttribute('aria-label')||e.labels?.length||e.textContent.trim())).map(e=>e.id||e.tagName));
   for(const width of [375,768,1440]) {
     await page.setViewportSize({width,height:1000});await sleep(150);
     const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth+1);
     const file=`admin-${width}.png`;await page.screenshot({path:path.join(output,file),fullPage:true});visuals.push({width,overflow,screenshot:file});
   }
   assert.equal(errors.length,0,JSON.stringify(errors));assert.equal(failed.length,0,JSON.stringify(failed));assert.equal(labelAudit.length,0,JSON.stringify(labelAudit));
+  assert.equal(visuals.some(v=>v.overflow),false,JSON.stringify(visuals));
   const report={result:visuals.some(v=>v.overflow)?'SHIP_WITH_FIXES':'FUNCTIONAL_PASS',verdict:'INCONCLUSIVE',verdict_reason:'Functional checks passed; no approved visual baseline and no full WCAG audit.',scope:'ephemeral loopback; test consumer/seeded telemetry; no actual platform live',
     interactions,console_errors:errors,network_errors:failed,visuals,visual_regression:'INCONCLUSIVE: no approved screenshot baseline',
     accessibility:{audit:'DOM label/name checks only, not full WCAG/axe',missing_labels:labelAudit},web_vitals:{...vitals,inp:'not measured'},packets_received:packets.length};
