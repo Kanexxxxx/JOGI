@@ -1,0 +1,12 @@
+# Lula — referência única com estrela na capa
+
+23/10/2026. Arquivo: lula-capa-estrela-v1.png. Gerado com imagegen integrada a partir de assets/concepts/lula-v3-social-faixa.png, para teste manual no Tripo H2.5. Não houve geração 3D nem gasto de créditos Tripo nesta etapa.
+
+Inspeção: um personagem inteiro, rosto visível olhando sobre o ombro, capa vermelha com estrela branca completamente visível. Terno social e faixa preservados. Pose de três quartos não é T-pose; portanto a geração e o rig podem exigir correções. A referência mostra a estrela, mas não garante que o H2.5 a reproduza na textura. Caso falhe, aplicar a estrela à textura do modelo exportado, preservando a malha aprovada.
+
+No Studio: Imagem para 3D → Modelo HD → H2.5 Clássico → Geometria e textura; manter extras opcionais desligados e conferir o custo exibido antes de gerar. Exportação H2.5 deve ser verificada no plano da conta. Sem compras ou assinaturas.
+
+## Prompt
+
+Edit the approved Lula game character reference into a SINGLE isolated full-body character image for image-to-3D reconstruction, NOT a sheet and NOT several people. Preserve his approved recognizable facial likeness, white hair/beard, navy formal suit, white shirt, red tie, red gold-edged diagonal ceremonial sash, black shoes, compact chibi proportions and detailed 3D render style. Critical new requirement: show BOTH his recognizable face and the OUTSIDE of his RED CAPE with one LARGE crisp WHITE FIVE-POINTED STAR clearly visible and completely unobstructed. Pose the single character in a natural rear three-quarter stance, torso turned about 110 degrees from camera, looking gently over shoulder toward camera so face readable. Cape hangs from shoulders and sweeps gently to camera-facing side, exposing its broad back surface and centered white star; cape must remain physically connected and drape naturally. Feet apart, arms slightly away from torso in relaxed A-pose, hands visible, no twisted anatomy, no duplicate body or face. No front/back composite, no split view, no portrait inset, no labels or text. All of the single character and cape including shoes and fingers in frame with generous margin. Neutral uniform light gray background and even studio lighting for 3D reconstruction. Match approved character identity as closely as possible; do not redesign face or outfit. The cape star is the main visible graphic and must not be hidden by body or folds. Exactly one person.
+

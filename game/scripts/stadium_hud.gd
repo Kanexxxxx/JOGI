@@ -504,6 +504,8 @@ func set_gift_legend(entries: Array[Dictionary]) -> void:
 		if not title.is_empty():
 			_gift_captions[index].text = title
 			_fit_line(_gift_captions[index], 18)
+	if _artwork != null:
+		_artwork.queue_redraw()
 
 
 func get_display_order() -> Array[int]:

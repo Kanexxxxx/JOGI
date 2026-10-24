@@ -1,0 +1,47 @@
+{
+  "name": "Palacio do Planalto estilizado",
+  "version": "v1",
+  "source": "assets\\environments\\planalto\\v1\\planalto_v1.blend",
+  "glb": "assets\\environments\\planalto\\v1\\planalto_v1.glb",
+  "game_copy": "game\\assets\\environments\\planalto\\planalto_v1.glb",
+  "triangles": 42752,
+  "meshes": 12,
+  "surfaces": 12,
+  "materials": 12,
+  "bounds_godot_min": [
+    -15.975000381469727,
+    0.0,
+    -19.700000762939453
+  ],
+  "bounds_godot_max": [
+    5.75,
+    8.170000076293945,
+    19.700000762939453
+  ],
+  "dimensions_godot_xyz": [
+    21.725000381469727,
+    8.170000076293945,
+    39.400001525878906
+  ],
+  "building_body_xyz": [
+    10.5,
+    8.17,
+    38.4
+  ],
+  "front_direction": "-X",
+  "up_axis": "Y",
+  "width_axis": "Z",
+  "origin": "center of building at ground level; ramp and reflecting pools extend toward -X",
+  "front_columns": 9,
+  "rear_columns": 9,
+  "glb_bytes": 2548172,
+  "sha256": "d231380da5cc3688de80e7df66d400162efae290d33fe69c1d143ef875f49732",
+  "external_textures": 0,
+  "sources": [
+    "https://www.gov.br/casacivil/pt-br/assuntos/centrais-de-conteudo/imagens/destaques-area-de-imprensa/fotos-do-palacio-do-planalto",
+    "https://www.oscarniemeyer.org.br/obra/pro081/"
+  ],
+  "modeling_notes": "Stylized architectural reconstruction from official photographs, not a measured survey. Curved blades, recessed glass box, cantilever roof, civic ramp, parlor balcony and reflecting pools are modeled geometry.",
+  "render_only": "Preview grass floor, lights and camera are saved in .blend but excluded from game GLB.",
+  "limitations": "Static architectural set; no collision, automatic reflection probes, LOD or production FPS claim. Water is opaque reflective PBR, without runtime waves."
+}

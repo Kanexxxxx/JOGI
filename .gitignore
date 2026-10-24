@@ -42,13 +42,3 @@ Thumbs.db
 .tripo/
 docs/*UPLOAD*.json
 .tools/
-
-# Iterações brutas intermediárias de modelagem (>2.9 GB locais preservados em disco, fora do limite LFS do GitHub)
-/assets/
-game/assets/characters/preview-v1/
-game/assets/characters/preview-v2/
-game/assets/characters/preview-v3/
-game/assets/characters/preview-v4/
-game/assets/characters/preview-v5/
-game/assets/characters/preview-v6/
-game/assets/characters/api-original-v1/

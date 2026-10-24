@@ -1,0 +1,19 @@
+{
+  "source": "assets\\environments\\stadium\\tripo-grandstand-v1\\model.glb",
+  "bounds_blender": [
+    [
+      -0.18630561232566833,
+      -0.5,
+      -0.23475335538387299
+    ],
+    [
+      0.18630561232566833,
+      0.5,
+      0.23475335538387299
+    ]
+  ],
+  "source_triangles": 1457186,
+  "output": "assets\\environments\\stadium\\derived-grandstand-v1\\grandstand_100k.glb",
+  "width_meters": 8.0,
+  "triangles": 100000
+}

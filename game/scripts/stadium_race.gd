@@ -21,6 +21,8 @@ var persistence: RacePersistence = null
 var sound_effects: RaceSoundEffects = null
 var ambience: RaceAmbience = null
 var memes: RaceMemeBoard = null
+var gift_visuals: GiftVisualCache = null
+var _observed_gift_actions: Dictionary = {}
 var _stage_shadows: Array[MeshInstance3D] = []
 var _attack_visuals: Array[Area3D] = []
 var _attack_slots: Array[int] = []
@@ -63,6 +65,10 @@ func _ready() -> void:
 	add_child(ambience)
 	memes = RaceMemeBoard.new()
 	add_child(memes)
+	gift_visuals = GiftVisualCache.new()
+	gift_visuals.name = "CacheDeIconesPresentes"
+	add_child(gift_visuals)
+	gift_visuals.icon_ready.connect(_on_gift_icon_ready)
 	_setup_finish_line()
 	for runner: CandidateRunner in runners:
 		runner.runner_stumbled.connect(_on_runner_stumbled)
@@ -271,11 +277,12 @@ func _on_audience_moment(kind: String, team: int, _display_name: String) -> void
 
 
 func _on_show_event(envelope: Dictionary) -> void:
+	if str(envelope.get("event_type", "")) != "gift":
+		return
+	_observe_gift_visual(envelope)
 	if current_state in [RaceState.PHOTO_FINISH, RaceState.PODIO]:
 		return
 	if bool(get_meta("restoring_session", false)):
-		return
-	if envelope.get("event_type") != "gift":
 		return
 	var payload: Dictionary = envelope.get("payload", {}) as Dictionary
 	if payload.has("coin_value") and float(payload["coin_value"]) <= 0.0:
@@ -284,6 +291,64 @@ func _on_show_event(envelope: Dictionary) -> void:
 		var team: int = int(payload.get("candidate_slot", 0))
 		if team in [1, 2]:
 			_begin_super_turbo.call_deferred(team)
+
+
+func _observe_gift_visual(envelope: Dictionary) -> void:
+	if gift_visuals == null:
+		return
+	var payload: Dictionary = envelope.get("payload", {}) as Dictionary
+	if payload.has("coin_value") and float(payload["coin_value"]) <= 0.0:
+		return
+	var gift_id: String = str(payload.get("gift_id", "")).strip_edges()
+	var action: String = _resolve_gift_legend_action(payload)
+	if not gift_id.is_empty() and not action.is_empty():
+		for existing_action: String in ["boost", "shield", "attack", "super_turbo"]:
+			if existing_action != action and str(_observed_gift_actions.get(existing_action, "")) == gift_id:
+				_observed_gift_actions.erase(existing_action)
+		_observed_gift_actions[action] = gift_id
+	gift_visuals.register_event(envelope)
+	_refresh_gift_legend()
+
+
+func _resolve_gift_legend_action(payload: Dictionary) -> String:
+	var action_id: String = str(payload.get("action_id", "")).strip_edges()
+	match action_id:
+		"gift_t1_turbo", "boost":
+			return "boost"
+		"gift_t2_shield_or_obstacle", "gift_t2_shield", "shield":
+			return "shield"
+		"gift_t3_attack", "attack":
+			return "attack"
+		"gift_t4_super_rally", "super_turbo":
+			return "super_turbo"
+	match str(payload.get("gift_tier", "")).strip_edges().to_upper():
+		"T1":
+			return "boost"
+		"T2":
+			return "shield"
+		"T3":
+			return "attack"
+		"T4":
+			return "super_turbo"
+	return ""
+
+
+func _on_gift_icon_ready(_gift_id: String, _texture: Texture2D) -> void:
+	_refresh_gift_legend()
+
+
+func _refresh_gift_legend() -> void:
+	if stadium_hud == null or gift_visuals == null:
+		return
+	var entries: Array[Dictionary] = []
+	for action: String in ["boost", "shield", "attack", "super_turbo"]:
+		var gift_id: String = str(_observed_gift_actions.get(action, ""))
+		if gift_id.is_empty():
+			continue
+		var icon: Texture2D = gift_visuals.get_icon(gift_id)
+		if icon != null:
+			entries.append({"action": action, "texture": icon})
+	stadium_hud.set_gift_legend(entries)
 
 
 func _begin_super_turbo(team: int) -> void:
@@ -531,6 +596,16 @@ func get_telemetry_snapshot() -> Dictionary:
 	snapshot["audio"] = {"voices_ready": audio.voices_ready, "voice_status": audio.voice_status} if audio != null else {"voices_ready": false, "voice_status": "inicializando"}
 	(snapshot["audio"] as Dictionary).merge(audio_settings, true)
 	snapshot["next_round_in"] = get_next_round_in()
+	snapshot["performance"] = {
+		"fps": roundf(Performance.get_monitor(Performance.TIME_FPS) * 10.0) / 10.0,
+		"frame_ms": roundf(Performance.get_monitor(Performance.TIME_PROCESS) * 100000.0) / 100.0,
+		"physics_ms": roundf(Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 100000.0) / 100.0,
+		"static_mem_mb": roundf(Performance.get_monitor(Performance.MEMORY_STATIC) / 10485.76) / 100.0,
+		"draw_calls": int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)),
+		"nodes": int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT)),
+		"orphan_nodes": int(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT)),
+	}
+	snapshot["gift_visuals"] = gift_visuals.get_cache_stats() if gift_visuals != null else {}
 	var platform: String = OS.get_environment("LIVE_PLATFORM").to_lower()
 	snapshot["platform"] = platform if platform in ["tiktok", "kwai"] else "local"
 	return snapshot

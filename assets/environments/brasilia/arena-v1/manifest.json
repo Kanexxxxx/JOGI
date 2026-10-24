@@ -1,0 +1,14 @@
+{
+  "name": "Brasilia estilizada - Arena v1",
+  "source": "C:\\Users\\Kanex\\OneDrive\\Desktop\\JOGI\\assets\\environments\\brasilia\\arena-v1\\brasilia_arena_v1.blend",
+  "glb": "C:\\Users\\Kanex\\OneDrive\\Desktop\\JOGI\\assets\\environments\\brasilia\\arena-v1\\brasilia_arena_v1.glb",
+  "game_copy": "C:\\Users\\Kanex\\OneDrive\\Desktop\\JOGI\\game\\assets\\environments\\brasilia\\arena_v1.glb",
+  "triangles_evaluated": 46880,
+  "objects": 294,
+  "materials": 13,
+  "glb_bytes": 2181832,
+  "external_textures": 0,
+  "coordinate_contract": "Blender -Y = Godot +Z; Blender Z = Godot Y; corridor x[-4,4] clear",
+  "render_only": "Beauty renders include a demonstrative road and ground; GLB excludes these, lights and camera.",
+  "limitations": "Static stylized architecture; no collision, LODs, crowds, production FPS measurement or animation."
+}
