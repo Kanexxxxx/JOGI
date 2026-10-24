@@ -62,7 +62,7 @@ O projeto é um **jogo 3D de transmissão vertical (9:16) em Godot**, uma corrid
 
 A arte conceitual **gerada nesta conversa** deve ser considerada **referência de estilo/composição**, não tela aprovada pixel a pixel, nem screenshot de Godot, nem prova de funcionalidades. Sua composição mostra três metas no topo, placares, 2027 grande, pista/corredores, cards de presentes/comentários e Top 5 com fotos. **Ela também contém exageros e possíveis conflitos com overlays nativos** (cards excessivos e blocos na região inferior); o design final deverá melhorar a própria referência.
 
-**Arquivo fornecido ao agente pelo usuário:** `HUD_CONCEITO_CHATGPT_2026-10-24.png` (anexar/copiar na pasta do projeto, após a configuração da referência; se ainda ausente, informar isso como dependência e usar a especificação abaixo). O agente deverá versioná-la em `docs/referencias/hud-conceito-chatgpt-2026-10-24.png`, acompanhada de `docs/referencias/HUD_REFERENCIA.md`, e atualizar links nos documentos. **Não substitua imagens do jogo ou ativos produzidos pela IA anterior.**
+**Arquivo fornecido ao agente pelo usuário (já publicado no repositório):** [docs/referencias/hud-conceito-chatgpt-2026-10-24.png](referencias/hud-conceito-chatgpt-2026-10-24.png), acompanhado de [docs/referencias/HUD_REFERENCIA.md](referencias/HUD_REFERENCIA.md) e [docs/referencias/HUD_REFERENCIA_2026-10-24.md](referencias/HUD_REFERENCIA_2026-10-24.md). **Não substitua imagens do jogo ou ativos produzidos pela IA anterior.**
 
 Preferir PNG de referência em resolução original, não uma versão artificialmente reduzida. Se houver limites Git de tamanho, tratar corretamente Git LFS conforme `.gitattributes`; não subir base64 bruto em Markdown. Caso a imagem já esteja no repositório, reutilizar e não duplicar.
 
@@ -304,7 +304,7 @@ Mantenha `CONTINUIDADE.md` e `docs/ESTADO_ATUAL.md` como verdade viva. Crie ou a
 - `docs/AGENT_HANDOFF.md`: tabela cronológica de sessões de agentes (identificador, início/fim, commit base/final, arquivos/funcionalidades, limitações, próximo passo exato, testes com outputs e links).
 - `docs/CHECKLIST_ENTREGA.md`: `VALIDADO / IMPLEMENTADO, NÃO VALIDADO / PENDENTE / BLOQUEADO / REGRESSÃO` com IDs de evidência, sem percentuais arbitrários.
 - `docs/auditorias/AUDITORIA_RETOMADA_<data>.md`: escopo, fontes, testes, achados P0–P3 e riscos.
-- `docs/referencias/HUD_REFERENCIA.md`: link para PNG versionado e regras de interpretação (conceitual, não captura real); layout e restrições de overlay.
+- [docs/referencias/HUD_REFERENCIA.md](referencias/HUD_REFERENCIA.md) e [docs/referencias/hud-conceito-chatgpt-2026-10-24.png](referencias/hud-conceito-chatgpt-2026-10-24.png): link para PNG versionado e regras de interpretação (conceitual, não captura real); layout e restrições de overlay.
 - `docs/TESTES_FINAIS.md`: comandos, ambiente, versões, hardware, hashes, duração, resultado real, prints/logs sanitizados e falhas.
 
 **Não criar outro `CONTINUIDADE_IA.md` concorrente se `CONTINUIDADE.md` já é a fonte oficial.** Se o usuário exigir tal nome, fazer arquivo curto apontando para a fonte real, evitando divergência. Um futuro agente deve começar pela sequência `AGENTS.md` → `CONTINUIDADE.md` → `docs/ESTADO_ATUAL.md` → `docs/AGENT_HANDOFF.md` → `docs/REVISAO_ESTREIA_24.md` → testes/código.
@@ -407,7 +407,7 @@ A resposta final deve ser compreensível, estruturada e baseada no **que de fato
 
 1. Abrir a pasta e conferir `git status`, `master`/HEAD, os dois commits antigos e qualquer novo commit.
 2. Ler `AGENTS.md`, `CONTINUIDADE.md`, `docs/ESTADO_ATUAL.md`, `docs/REVISAO_ESTREIA_24.md`, `services/live_bridge/KWAI_EVENTOS_PENDENTES.md`, `services/live_bridge/GIFT_VISUALS_CONTRACT.md`, `services/live_bridge/AUDIENCE_CONTRACT.md` e `docs/REVISAO_INDEPENDENTE_POLIMENTO_2026-10-24.md`.
-3. Conferir presença de `docs/referencias/hud-conceito-chatgpt-2026-10-24.png` e versionar a **imagem exata fornecida pelo usuário**, sem recriá-la. Se não houver arquivo local, solicitar a imagem, mas continuar auditoria técnica.
+3. Conferir presença de [docs/referencias/hud-conceito-chatgpt-2026-10-24.png](referencias/hud-conceito-chatgpt-2026-10-24.png) e manter versionada a **imagem exata fornecida pelo usuário**, sem recriá-la.
 4. Reproduzir prévia do Godot e exames de testes. Fazer baseline de screenshot, avisos e performance.
 5. Verificar primeiro a integração do `GiftVisualCache` **já presente**, a meta única do HUD e a ausência de avatar. Atualizar backlog com P0–P3.
 6. Implementar modelo/painel de metas múltiplas com testes e compatibilidade, depois o layout e cards/avatares; iterar com imagem real do jogo, sem tocar nos rigs aprovados.
