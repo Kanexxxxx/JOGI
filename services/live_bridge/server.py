@@ -148,6 +148,7 @@ class LiveBridgeServer:
         kwai_webhook_port: int = 8786,
         local_token: str | None = None,
         producer_token: str | None = None,
+        engine_token: str | None = None,
         runtime_mode: str | None = None,
         end_at: str | None = None,
         wall_clock: Any = time.time,
@@ -178,14 +179,45 @@ class LiveBridgeServer:
         )
         self.local_token: str = normalize_secret_token(raw_local_token)
         self.producer_token: str = normalize_secret_token(raw_producer_token)
+        raw_engine_token = os.environ.get("LIVE_BRIDGE_ENGINE_TOKEN", "") if engine_token is None else engine_token
+        self.engine_token: str = normalize_secret_token(raw_engine_token)
+        if self.runtime_mode == "production":
+            if not self.engine_token:
+                self.engine_token = secrets.token_urlsafe(32)
+            if self.producer_token and (self.producer_token == self.engine_token or self.producer_token == self.local_token):
+                raise ValueError("Credenciais de produtor, motor e administrador devem ser distintas em produção.")
         self._cookie_secret: bytes = (
             (self.local_token or self.producer_token).encode("utf-8")
             if (self.local_token or self.producer_token)
             else secrets.token_bytes(32)
         )
 
-        self.outbox = GiftOutbox(outbox_path, platform=platform, capacity=gift_capacity)
+        if self.account and outbox_path is not None and outbox_path.exists():
+            # Check before GiftOutbox performs recovery/pruning on an old DB.
+            check_db = sqlite3.connect(outbox_path.resolve().as_uri() + "?mode=ro", uri=True)
+            try:
+                tables = {row[0] for row in check_db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+                stored = check_db.execute("SELECT value FROM metadata WHERE key='account'").fetchone() if "metadata" in tables else None
+                if stored is not None and stored[0] != self.account.lower():
+                    raise ValueError("Outbox pertence a outra conta; dados preservados.")
+                if stored is None and "gifts" in tables and check_db.execute("SELECT 1 FROM gifts LIMIT 1").fetchone():
+                    raise ValueError("Outbox antiga sem conta contém presentes e requer revisão manual; dados preservados.")
+            finally:
+                check_db.close()
+        self.outbox = GiftOutbox(outbox_path, platform=platform, capacity=gift_capacity, account=self.account)
         try:
+            # Empty-account local fixtures keep their historical compatibility.
+            # Real accounts can never inherit another broadcaster's paid queue.
+            if self.account:
+                account_identity = self.account.lower()
+                stored = self.outbox.db.execute("SELECT value FROM metadata WHERE key='account'").fetchone()
+                if stored is not None and stored[0] != account_identity:
+                    raise ValueError("Outbox pertence a outra conta; dados preservados. Use o diretório isolado correto.")
+                if stored is None:
+                    if self.outbox.db.execute("SELECT 1 FROM gifts LIMIT 1").fetchone() is not None:
+                        raise ValueError("Outbox antiga sem conta contém presentes e requer revisão manual; dados preservados.")
+                    with self.outbox.db:
+                        self.outbox.db.execute("INSERT INTO metadata (key, value) VALUES ('account', ?)", (account_identity,))
             self.gift_catalog = GiftCatalog(self.outbox.db)
             self.live_goal = LiveGoalSettings(outbox_path.parent / "live_goal.json" if outbox_path else None)
             self.gift_images = GiftImageCache(outbox_path.parent / "gift-icons" if outbox_path else None)
@@ -311,10 +343,19 @@ class LiveBridgeServer:
             return True
         return self._has_valid_header_token(headers, allow_producer=False) or self._has_valid_admin_cookie(headers)
 
+    def _is_engine_authorized(self, headers: Any) -> bool:
+        candidate = self._extract_header_token(headers)
+        if candidate and self.engine_token and hmac.compare_digest(candidate.encode("utf-8"), self.engine_token.encode("utf-8")):
+            return True
+        if self._has_valid_header_token(headers, allow_producer=False):
+            return True
+        # Explicit development keeps legacy diagnostic fixtures compatible.
+        return self.runtime_mode == "development" and self._is_producer_authorized(headers)
+
     def _is_media_authorized(self, headers: Any) -> bool:
         if not self.local_token and not self.producer_token:
             return True
-        if self._has_valid_header_token(headers, allow_producer=True) or self._has_valid_admin_cookie(headers):
+        if self._has_valid_header_token(headers, allow_producer=True) or self._has_valid_admin_cookie(headers) or self._is_engine_authorized(headers):
             return True
         # When only producer_token is active (no explicit operator LIVE_BRIDGE_LOCAL_TOKEN),
         # loopback readers stay permitted while LIVE_BRIDGE_LOCAL_TOKEN locks media strictly.
@@ -849,6 +890,9 @@ class LiveBridgeServer:
             if path_only.startswith("/ws/admin"):
                 if not self._is_admin_authorized(request.headers):
                     return self._unauthorized_response(cors_headers, "Sessão administrativa não autenticada.")
+            elif path_only == "/ws/godot":
+                if not self._is_engine_authorized(request.headers):
+                    return self._unauthorized_response(cors_headers, "Canal do motor exige sua credencial dedicada.")
             else:
                 if not self._is_producer_authorized(request.headers):
                     return self._unauthorized_response(cors_headers, "Canal produtor/motor exige X-JOGI-Token válido.")
@@ -1954,12 +1998,15 @@ class LiveBridgeServer:
                         st = {"type": "state_update", **self._build_admin_state_payload()}
                         await self.broadcast_to_admin(st)
                         continue
+                    if isinstance(parsed, dict) and parsed.get("type") == "ping":
+                        await ws.send(json.dumps({"type": "pong"}))
+                        continue
                 except json.JSONDecodeError:
                     pass
-
-                ack = self.ingest_raw_json(raw_message)
-                if ack.get("status") == "pong":
-                    await ws.send(json.dumps(ack, ensure_ascii=False))
+                # A consumer channel is never a second producer/admin ingress.
+                self.metrics["invalid_rejected"] += 1
+                await ws.send(json.dumps({"type": "engine_frame_rejected", "status": "rejected",
+                                          "code": "UNSUPPORTED_ENGINE_FRAME"}))
         except websockets.ConnectionClosed:
             pass
         finally:

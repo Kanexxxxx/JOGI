@@ -117,21 +117,25 @@
     const data=state.snapshot;
     const backendReady=state.online && !state.authRequired;
     const gameReady=backendReady && data.godot_connected===true && data.telemetry_fresh===true;
+    const persistenceBlocked=gameReady && data.runtime_mode==='production' && data.telemetry?.persistence?.ready!==true;
     const ended=data.operational_shutdown?.ended===true || data.telemetry?.experience_ended===true;
     const commands = {'btn-start-race':'start_race','btn-skip-lobby':'skip_lobby','btn-pause-race':'pause_race','btn-resume-race':'resume_race','btn-restart-race':'restart_race','btn-reset-dedup':'reset_dedup','btn-end-experience':'end_experience','btn-apply-multi-goals':'set_live_goals','audio-apply':'set_audio_settings'};
     for(const [id,command] of Object.entries(commands)) {
       const el=get(id);if(!el) continue;
       const config=['set_live_goal','set_live_goals','set_audio_settings'].includes(command);
       el.disabled=!gameReady || (ended && !config) || commandPending(command);
+      if(persistenceBlocked && !config && !['pause_race','end_experience'].includes(command)) el.disabled=true;
+      if(command==='end_experience') el.disabled=!backendReady || ended || commandPending(command);
       if(id==='audio-apply') el.disabled ||= !['voices_enabled','sfx_enabled','crowd_enabled','memes_enabled'].every(k=>typeof data.audio?.[k]==='boolean');
-      el.title=!backendReady?'Conexão autenticada indisponível':!gameReady?'Aguardando telemetria atual do jogo':ended&&!config?'Experiência encerrada definitivamente':commandPending(command)?'Aguardando confirmação deste comando':'';
+      el.title=!backendReady?'Conexão autenticada indisponível':persistenceBlocked?'Armazenamento do jogo exige recuperação':!gameReady?'Aguardando telemetria atual do jogo':ended&&!config?'Experiência encerrada definitivamente':commandPending(command)?'Aguardando confirmação deste comando':'';
     }
-    for(const el of document.querySelectorAll('#goal-form button[type="submit"], #candidates-grid button[data-action]')) { const action=el.dataset.action; const pending=action ? (action==='turbo'?'boost':action) : 'set_live_goal';el.disabled=!gameReady || Boolean(ended && el.closest('#candidates-grid')) || commandPending(pending); }
+    for(const el of document.querySelectorAll('#goal-form button[type="submit"], #candidates-grid button[data-action]')) { const action=el.dataset.action; const pending=action ? (action==='turbo'?'boost':action) : 'set_live_goal';el.disabled=!gameReady || Boolean((ended || persistenceBlocked) && el.closest('#candidates-grid')) || commandPending(pending); }
     for(const el of document.querySelectorAll('#simulator-section button')) el.disabled=!gameReady || ended || data.simulation_allowed!==true;
     for(const el of document.querySelectorAll('#gift-catalog-list select, #kwai-collector-form button')) el.disabled=!backendReady;
     const simulator=get('simulator-section');if(simulator) simulator.hidden=data.simulation_allowed!==true;
     const mode=data.runtime_mode==='development'?'DESENVOLVIMENTO · eventos sintéticos permitidos':'PRODUÇÃO · simulação bloqueada';
     text('runtime-mode',mode);
+    text('storage-attention',persistenceBlocked?'ATENÇÃO: a persistência do jogo está indisponível. A corrida permanece bloqueada; presentes aguardam confirmação. Recupere os dados antes de continuar.':'');
   }
   function safeCachedImage(value,kind) {
     const pattern=kind==='avatar'?/^\/viewer-avatars\/[a-f0-9]{64}$/:/^\/gift-icons\/[a-f0-9]{64}$/;
@@ -636,7 +640,7 @@
     const commandName=message.command || (message.action==='turbo'?'boost':message.action);
     if(!state.online || state.authRequired) { feedback('Conexão autenticada indisponível. Nenhum comando enviado.','error');return false; }
     if(simulation && state.snapshot.simulation_allowed!==true) { feedback('Simulação bloqueada no modo de produção.','error');return false; }
-    if(!state.snapshot.godot_connected || !state.snapshot.telemetry_fresh) { feedback('Aguardando telemetria atual do jogo. Nenhum comando enviado.','error');return false; }
+    if(commandName!=='end_experience' && (!state.snapshot.godot_connected || !state.snapshot.telemetry_fresh)) { feedback('Aguardando telemetria atual do jogo. Nenhum comando enviado.','error');return false; }
     if(commandName && commandPending(commandName)) { feedback('Este comando já está aguardando confirmação.','pending');return false; }
     if(commandName) {state.inFlightCommands.add(commandName);updateControls();}
     try {

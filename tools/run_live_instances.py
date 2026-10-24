@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 from contextlib import closing
 import json
 import os
@@ -10,6 +11,7 @@ from pathlib import Path
 import secrets
 import shutil
 import sqlite3
+import socket
 import subprocess
 import sys
 import time
@@ -23,7 +25,8 @@ BRIDGE_DIR = ROOT / "services" / "live_bridge"
 if str(BRIDGE_DIR) not in sys.path:
     sys.path.insert(0, str(BRIDGE_DIR))
 from operational_shutdown import normalize_end_at
-PUBLIC_ACCOUNTS = {"tiktok": "nostalgiia.br", "kwai": "mentalista.."}
+from server import normalize_secret_token
+PUBLIC_ACCOUNTS = {"tiktok": "xinka_", "kwai": "mentalista.."}
 PORTS = {"tiktok": 8765, "kwai": 8766}
 KWAI_WEBHOOK_PORT = 8786
 DEFAULT_GODOT = Path(r"C:\Users\Kanex\Downloads\Godot_v4.7.2-stable_win64.exe\Godot_v4.7.2-stable_win64.exe")
@@ -51,7 +54,10 @@ def build_plan(
         raise ValueError("JOGI_MODE deve ser production ou development.")
     end_at = os.environ.get("JOGI_END_AT", "2026-10-26T07:00:00-03:00")
     end_at, _ = normalize_end_at(end_at)
-    state_dir = Path(os.environ.get("LOCALAPPDATA", str(Path.home() / ".local"))) / "JOGI" / "live_bridge" / platform / mode
+    platform_dir = Path(os.environ.get("LOCALAPPDATA", str(Path.home() / ".local"))) / "JOGI" / "live_bridge" / platform
+    account = PUBLIC_ACCOUNTS[platform].strip().lstrip("@").lower()
+    account_key = hashlib.sha256(account.encode("utf-8")).hexdigest()[:16]
+    state_dir = platform_dir / mode / "accounts" / account_key
     return {
         "platform": platform,
         "account": PUBLIC_ACCOUNTS[platform],
@@ -61,12 +67,14 @@ def build_plan(
         "python": str(BRIDGE_DIR / ".venv" / "Scripts" / "python.exe"),
         "bridge_script": str(BRIDGE_DIR / "server.py"),
         "state_dir": str(state_dir),
-        "legacy_state_dir": str(state_dir.parent),
+        "legacy_state_dir": str(platform_dir),
+        "legacy_mode_state_dir": str(platform_dir / mode),
         "godot": str(godot),
         "project": str(ROOT / "game"),
         "scene": scene,
         "godot_environment": {
             "LIVE_PLATFORM": platform,
+            "LIVE_ACCOUNT": account,
             "LIVE_BRIDGE_WS_URL": f"ws://127.0.0.1:{port}/ws/godot",
             "JOGI_MODE": mode,
             "JOGI_END_AT": end_at,
@@ -85,14 +93,91 @@ def legacy_pending_gifts(plan: dict) -> int:
     """Never silently strand previously accepted gifts when introducing mode isolation."""
     if plan.get("runtime_mode") != "production":
         return 0
-    path = Path(plan["legacy_state_dir"]) / "gifts.sqlite3"
-    if not path.exists():
-        return 0
+    pending = 0
+    directories = {Path(plan["legacy_state_dir"]), Path(plan.get("legacy_mode_state_dir", Path(plan["legacy_state_dir"]) / plan["runtime_mode"]))}
+    for directory in directories:
+        path = directory / "gifts.sqlite3"
+        if not path.exists():
+            continue
+        try:
+            with closing(sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True, timeout=1)) as db:
+                pending += int(db.execute("SELECT COUNT(*) FROM gifts WHERE completed_ms IS NULL").fetchone()[0])
+        except sqlite3.Error as error:
+            raise RuntimeError("Outbox anterior requer verificação antes de abrir produção; nenhum dado foi alterado.") from error
+    return pending
+
+
+class LauncherLock:
+    """OS-owned lock survives for launcher lifetime and releases after crashes."""
+    def __init__(self, directory: Path):
+        directory.mkdir(parents=True, exist_ok=True)
+        self.handle = (directory / "launcher.lock").open("a+b")
+        self.handle.seek(0)
+        try:
+            if os.name == "nt":
+                import msvcrt
+                if self.handle.read(1) == b"":
+                    self.handle.write(b"0")
+                    self.handle.flush()
+                self.handle.seek(0)
+                msvcrt.locking(self.handle.fileno(), msvcrt.LK_NBLCK, 1)
+            else:
+                import fcntl
+                fcntl.flock(self.handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError as error:
+            self.handle.close()
+            raise RuntimeError("Outra inicialização já controla esta sessão. Credenciais preservadas.") from error
+
+    def close(self) -> None:
+        self.handle.close()
+
+
+def port_available(port: int) -> bool:
+    """Probe only the loopback bind; never stop or send data to an existing service."""
     try:
-        with closing(sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True, timeout=1)) as db:
-            return int(db.execute("SELECT COUNT(*) FROM gifts WHERE completed_ms IS NULL").fetchone()[0])
-    except sqlite3.Error as error:
-        raise RuntimeError("Outbox anterior requer verificação antes de abrir produção; nenhum dado foi alterado.") from error
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+            probe.bind(("127.0.0.1", port))
+        return True
+    except OSError:
+        return False
+
+
+def prepare_operator_credentials(plan: dict, environment: dict[str, str], *, port_free: bool) -> tuple[str, Path | None]:
+    """Keep manual credentials, or create an owner-only local production bootstrap file."""
+    configured = normalize_secret_token(environment.get("LIVE_BRIDGE_LOCAL_TOKEN", ""))
+    if configured or plan["runtime_mode"] != "production" or not port_free:
+        return configured, None
+    directory = Path(plan["state_dir"]).resolve()
+    target = directory / "operator-token.key"
+    if directory.is_relative_to(ROOT.resolve()) or target.resolve().is_relative_to(ROOT.resolve()):
+        raise RuntimeError("A credencial administrativa deve ficar fora da pasta versionada do projeto.")
+    directory.mkdir(parents=True, exist_ok=True)
+    token = secrets.token_urlsafe(32)
+    temporary = directory / ("operator-token." + secrets.token_hex(8) + ".tmp")
+    try:
+        descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            handle.write(token + "\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, target)
+    except OSError as error:
+        try:
+            temporary.unlink(missing_ok=True)
+        except OSError:
+            pass
+        raise RuntimeError("Não foi possível preparar a credencial administrativa local.") from error
+    return token, target
+
+
+def cleanup_operator_credentials(path: Path, token: str) -> None:
+    """Do not remove a credential file changed by another launcher/operator."""
+    try:
+        if path.read_text(encoding="utf-8").strip() == token:
+            path.unlink()
+    except (OSError, UnicodeError):
+        # A crash or busy file may leave a stale token; next free launch replaces it.
+        pass
 
 
 def launch(plans: list[dict], *, bridge_only: bool = False) -> int:
@@ -100,9 +185,14 @@ def launch(plans: list[dict], *, bridge_only: bool = False) -> int:
     handles = []
     state_dirs = {}
     supervisor = None
+    generated_operator_credentials: list[tuple[Path, str]] = []
+    launcher_locks: list[LauncherLock] = []
     try:
         for plan in plans:
+            launcher_locks.append(LauncherLock(Path(plan["state_dir"])))
             existing = health(plan["port"])
+            if existing is None and not port_available(plan["port"]):
+                existing = {"status": "port_already_in_use"}
             if existing is None and legacy_pending_gifts(plan):
                 raise RuntimeError(f"{plan['platform']}: há presentes pendentes na sessão anterior. Recupere-os antes de abrir produção.")
             state_dir = Path(plan["state_dir"])
@@ -113,11 +203,20 @@ def launch(plans: list[dict], *, bridge_only: bool = False) -> int:
             log_file = (state_dir / f"bridge-{time.strftime('%Y%m%d-%H%M%S')}.log").open("ab")
             handles.append(log_file)
 
-            # Ephemeral per-instance producer token binds bridge, Godot, and Kwai collector
-            # without storing secrets in git or HTML. Operator LIVE_BRIDGE_LOCAL_TOKEN is preserved if set.
+            # Distinct ephemeral capabilities: a collector cannot impersonate the engine.
             instance_producer_token = secrets.token_urlsafe(32)
+            instance_engine_token = secrets.token_urlsafe(32)
             shared_env = os.environ.copy()
+            operator_token, operator_file = prepare_operator_credentials(plan, shared_env, port_free=existing is None)
+            if operator_token:
+                shared_env["LIVE_BRIDGE_LOCAL_TOKEN"] = operator_token
+            else:
+                shared_env.pop("LIVE_BRIDGE_LOCAL_TOKEN", None)
+            if operator_file is not None:
+                generated_operator_credentials.append((operator_file, operator_token))
+                print(f"{plan['platform']}: chave administrativa local em {operator_file}. Copie somente no painel local.", flush=True)
             shared_env["LIVE_BRIDGE_PRODUCER_TOKEN"] = instance_producer_token
+            shared_env["LIVE_BRIDGE_ENGINE_TOKEN"] = instance_engine_token
             shared_env["JOGI_MODE"] = plan["runtime_mode"]
             shared_env["JOGI_END_AT"] = plan["end_at"]
 
@@ -153,6 +252,8 @@ def launch(plans: list[dict], *, bridge_only: bool = False) -> int:
             children.append(bridge)
             if not bridge_only:
                 game_env = dict(shared_env)
+                game_env.pop("LIVE_BRIDGE_LOCAL_TOKEN", None)
+                game_env.pop("LIVE_BRIDGE_PRODUCER_TOKEN", None)
                 game_env.update(plan["godot_environment"])
                 # The game is intentionally visible for OBS/TikTok Studio capture.
                 game = ManagedChild(
@@ -188,10 +289,13 @@ def launch(plans: list[dict], *, bridge_only: bool = False) -> int:
                     "--webhook",
                     f"http://127.0.0.1:{webhook_port}/webhook/kwai",
                 ]
+                collector_env = dict(shared_env)
+                collector_env.pop("LIVE_BRIDGE_LOCAL_TOKEN", None)
+                collector_env.pop("LIVE_BRIDGE_ENGINE_TOKEN", None)
                 collector = ManagedChild(
                     plan["platform"],
                     "collector",
-                    lambda command=collector_args, log=collector_log, creation_flags=flags, environment=shared_env: subprocess.Popen(
+                    lambda command=collector_args, log=collector_log, creation_flags=flags, environment=collector_env: subprocess.Popen(
                         command, cwd=ROOT, env=environment, stdout=log, stderr=log, creationflags=creation_flags
                     ),
                     ready=lambda dependency=bridge, port=plan["port"]: (
@@ -222,6 +326,10 @@ def launch(plans: list[dict], *, bridge_only: bool = False) -> int:
             supervisor.shutdown()
         for handle in handles:
             handle.close()
+        for path, token in generated_operator_credentials:
+            cleanup_operator_credentials(path, token)
+        for launcher_lock in reversed(launcher_locks):
+            launcher_lock.close()
 
 
 def main() -> int:

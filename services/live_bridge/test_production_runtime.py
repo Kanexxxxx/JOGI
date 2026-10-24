@@ -1,6 +1,7 @@
 """Production boundaries, honest command receipts, sticky absolute shutdown."""
 import asyncio
 import json
+import sqlite3
 from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import urlopen
@@ -11,6 +12,27 @@ import websockets
 from operational_shutdown import OperationalShutdown, normalize_end_at
 from protocol import build_admin_command_envelope, build_gift_envelope, build_vote_envelope
 from server import LiveBridgeServer
+
+
+def test_outbox_account_binding_and_legacy_gifts_preserved(tmp_path):
+    path = tmp_path / "gifts.sqlite3"
+    bridge = LiveBridgeServer(platform="tiktok", account="@XINKA_", outbox_path=path)
+    bridge.outbox.close()
+    restored = LiveBridgeServer(platform="tiktok", account="xinka_", outbox_path=path)
+    restored.outbox.close()
+    before = path.read_bytes()
+    with pytest.raises(ValueError, match="outra conta"):
+        LiveBridgeServer(platform="tiktok", account="old_account", outbox_path=path)
+    assert path.read_bytes() == before
+    with sqlite3.connect(path) as db:
+        db.execute("DELETE FROM metadata WHERE key='account'")
+        db.execute("INSERT INTO gifts VALUES ('old-paid', '{}', 1, NULL, 0, 0)")
+    before = path.read_bytes()
+    with pytest.raises(ValueError, match="revisão manual"):
+        LiveBridgeServer(platform="tiktok", account="xinka_", outbox_path=path)
+    assert path.read_bytes() == before
+    with sqlite3.connect(path) as db:
+        assert db.execute("SELECT event_id FROM gifts").fetchall() == [("old-paid",)]
 
 
 def test_production_is_default_and_real_unknown_gift_is_not_priced(monkeypatch):
@@ -72,11 +94,11 @@ async def test_production_blocks_both_simulation_routes_and_offline_race_command
 @pytest.mark.asyncio
 async def test_command_requires_correlated_godot_result_never_queue_success():
     bridge = LiveBridgeServer(port=0, runtime_mode="production", local_token="operator-fixture",
-                             producer_token="producer-fixture")
+                             producer_token="producer-fixture", engine_token="engine-fixture")
     await bridge.start()
     try:
         base = f"ws://127.0.0.1:{bridge.bound_port}"
-        async with websockets.connect(base + "/ws/godot", additional_headers={"X-JOGI-Token": "producer-fixture"}) as game:
+        async with websockets.connect(base + "/ws/godot", additional_headers={"X-JOGI-Token": "engine-fixture"}) as game:
             await game.recv()
             async with websockets.connect(base + "/ws/admin", additional_headers={"X-JOGI-Token": "operator-fixture"}) as admin:
                 await admin.recv()
@@ -185,7 +207,7 @@ def test_real_game_timer_uses_canonical_match_time_remaining():
 
 @pytest.mark.asyncio
 async def test_offline_settings_replay_preserves_latest_request_correlation():
-    bridge = LiveBridgeServer(port=0, runtime_mode="production", producer_token="producer-fixture")
+    bridge = LiveBridgeServer(port=0, runtime_mode="production", producer_token="producer-fixture", engine_token="engine-fixture")
     first = build_admin_command_envelope(command="set_live_goal", goal_kind="likes", goal_target=100,
                                          event_id="evt_setting_superseded")
     latest = build_admin_command_envelope(command="set_live_goal", goal_kind="likes", goal_target=200,
@@ -194,7 +216,7 @@ async def test_offline_settings_replay_preserves_latest_request_correlation():
     await bridge.start()
     try:
         async with websockets.connect(f"ws://127.0.0.1:{bridge.bound_port}/ws/godot",
-            additional_headers={"X-JOGI-Token": "producer-fixture"}) as game:
+            additional_headers={"X-JOGI-Token": "engine-fixture"}) as game:
             await game.recv()
             replay = json.loads(await game.recv())
             assert replay["event_id"] == latest["event_id"]
@@ -205,6 +227,69 @@ async def test_offline_settings_replay_preserves_latest_request_correlation():
             assert bridge.recent_commands[latest["event_id"]]["status"] == "applied"
     finally:
         await bridge.stop()
+
+
+@pytest.mark.asyncio
+async def test_production_producer_cannot_occupy_engine_or_admin_channel():
+    bridge = LiveBridgeServer(port=0, runtime_mode="production", local_token="operator-fixture",
+                             producer_token="producer-fixture", engine_token="engine-fixture")
+    await bridge.start()
+    try:
+        for route in ("godot", "admin"):
+            with pytest.raises(websockets.exceptions.InvalidStatus) as rejected:
+                async with websockets.connect(f"ws://127.0.0.1:{bridge.bound_port}/ws/{route}",
+                        additional_headers={"X-JOGI-Token": "producer-fixture"}):
+                    pass
+            assert rejected.value.response.status_code == 401
+        assert not bridge.godot_clients and not bridge.admin_clients
+        assert bridge.metrics["unauthorized_rejected"] == 2
+    finally:
+        await bridge.stop()
+
+
+@pytest.mark.asyncio
+async def test_engine_cannot_inject_commands_but_can_confirm_durable_gift():
+    bridge = LiveBridgeServer(port=0, platform="tiktok", runtime_mode="production",
+        local_token="operator-fixture", producer_token="producer-fixture", engine_token="engine-fixture")
+    await bridge.start()
+    try:
+        base = f"ws://127.0.0.1:{bridge.bound_port}"
+        async with websockets.connect(base + "/ws/godot", additional_headers={"X-JOGI-Token": "engine-fixture"}) as game:
+            await game.recv()
+            await game.send(json.dumps(build_admin_command_envelope(command="end_experience")))
+            result = json.loads(await game.recv())
+            assert result["code"] == "UNSUPPORTED_ENGINE_FRAME"
+            assert not bridge.operational_shutdown.ended and not bridge.recent_commands
+            gift = build_gift_envelope(user_id="fixture", display_name="Fixture", candidate_slot=1,
+                source="tiktok", unit_coin_value=5, event_id="evt_engine_separated_gift")
+            assert bridge.enqueue_envelope(gift) == "accepted"
+            received = json.loads(await game.recv())
+            assert received["event_id"] == gift["event_id"]
+            await game.send(json.dumps({"type": "event_ack", "event_id": gift["event_id"]}))
+            for _ in range(30):
+                if bridge.outbox.pending_count() == 0:
+                    break
+                await asyncio.sleep(.01)
+            assert bridge.outbox.pending_count() == 0 and bridge.metrics["gift_acks_total"] == 1
+        async with websockets.connect(base + "/ws/ingest", additional_headers={"X-JOGI-Token": "producer-fixture"}) as producer:
+            await producer.send(json.dumps(build_admin_command_envelope(command="end_experience")))
+            assert json.loads(await producer.recv())["code"] == "UNAUTHORIZED_SOURCE"
+            assert not bridge.operational_shutdown.ended
+    finally:
+        await bridge.stop()
+
+
+def test_production_engine_defaults_closed_and_rejects_shared_producer_capability(monkeypatch):
+    monkeypatch.delenv("LIVE_BRIDGE_ENGINE_TOKEN", raising=False)
+    bridge = LiveBridgeServer(port=0, runtime_mode="production", producer_token="producer-fixture")
+    try:
+        assert bridge.engine_token and bridge.engine_token != bridge.producer_token
+        assert not bridge._is_engine_authorized({})
+        assert not bridge._is_engine_authorized({"X-JOGI-Token": "producer-fixture"})
+    finally:
+        bridge.outbox.close()
+    with pytest.raises(ValueError, match="distintas"):
+        LiveBridgeServer(port=0, runtime_mode="production", producer_token="same-fixture", engine_token="same-fixture")
 
 
 @pytest.mark.asyncio

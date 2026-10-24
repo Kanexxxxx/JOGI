@@ -10,7 +10,7 @@ from typing import Any
 
 
 class GiftOutbox:
-    def __init__(self, path: Path | None, *, platform: str, capacity: int = 5000,
+    def __init__(self, path: Path | None, *, platform: str, capacity: int = 5000, account: str = "",
                  retained_limit: int = 50_000, retention_hours: float = 36.0) -> None:
         self.capacity = max(1, capacity)
         self.retained_limit = max(1, retained_limit)
@@ -36,6 +36,17 @@ class GiftOutbox:
                 event_id TEXT PRIMARY KEY, envelope TEXT NOT NULL, created_ms INTEGER NOT NULL,
                 completed_ms INTEGER, retry_ms INTEGER NOT NULL DEFAULT 0, attempts INTEGER NOT NULL DEFAULT 0
             )""")
+            # The file lock is already owned: bind before recovery/pruning so a
+            # concurrent account switch cannot mutate another paid queue.
+            identity = account.strip().lstrip("@").lower()[:64]
+            if identity:
+                stored = self.db.execute("SELECT value FROM metadata WHERE key='account'").fetchone()
+                if stored is not None and stored[0] != identity:
+                    raise ValueError("Outbox pertence a outra conta; dados preservados.")
+                if stored is None:
+                    if self.db.execute("SELECT 1 FROM gifts LIMIT 1").fetchone():
+                        raise ValueError("Outbox antiga sem conta contém presentes e requer revisão manual; dados preservados.")
+                    self.db.execute("INSERT INTO metadata (key, value) VALUES ('account', ?)", (identity,))
             self.db.execute("CREATE INDEX IF NOT EXISTS pending_gifts ON gifts(completed_ms, retry_ms, created_ms)")
             self.db.execute("UPDATE gifts SET retry_ms=0 WHERE completed_ms IS NULL")
             self.db.commit()

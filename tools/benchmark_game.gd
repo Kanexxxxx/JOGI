@@ -21,8 +21,15 @@ func _initialize() -> void:
 
 
 func _setup() -> void:
+	var isolated_root: String = OS.get_environment("GDA_USER_DATA_ROOT").replace("\\", "/").simplify_path().to_lower()
+	var actual_root: String = ProjectSettings.globalize_path("user://").replace("\\", "/").simplify_path().to_lower()
+	if isolated_root.is_empty() or not actual_root.begins_with(isolated_root + "/"):
+		printerr("BENCHMARK_REQUIRES_ISOLATED_USER_DATA")
+		quit(1)
+		return
 	output_dir = OS.get_environment("JOGI_BENCH_OUTPUT").replace("\\", "/")
 	channel = OS.get_environment("LIVE_PLATFORM")
+	DisplayServer.window_set_title("JOGI QA LOCAL | " + channel.to_upper())
 	duration_seconds = clampf(OS.get_environment("JOGI_BENCH_SECONDS").to_float(), 5.0, 660.0)
 	var allowed: String = ProjectSettings.globalize_path("res://../docs/evidencias/benchmark/").simplify_path()
 	if not output_dir.is_absolute_path() or not output_dir.simplify_path().begins_with(allowed) or channel not in ["tiktok", "kwai"]:

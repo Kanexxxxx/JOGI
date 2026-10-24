@@ -15,12 +15,15 @@ import json
 import hashlib
 import logging
 import os
+import random
+from collections import Counter
 from pathlib import Path
 import secrets
 import statistics
 import subprocess
 import sys
 import time
+import websockets
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'services/live_bridge'))
@@ -37,7 +40,8 @@ def source_hashes() -> dict[str, str]:
     files = [*sorted((ROOT / 'game/scripts').glob('*.gd')),
              *sorted((ROOT / 'game/shaders').glob('*.gdshader')),
              ROOT / 'game/project.godot', ROOT / 'game/scenes/main/stadium_race.tscn',
-             ROOT / 'tools/benchmark_game.gd', ROOT / 'tools/benchmark_dual_game.py']
+             ROOT / 'tools/benchmark_game.gd', ROOT / 'tools/benchmark_dual_game.py',
+             *sorted((ROOT / 'services/live_bridge').glob('*.py'))]
     return {str(path.relative_to(ROOT)).replace('\\', '/'): hashlib.sha256(path.read_bytes()).hexdigest() for path in files}
 
 
@@ -101,6 +105,50 @@ def hardware() -> dict:
         return {}
 
 
+async def load_burst(bridge: LiveBridgeServer, token: str, channel: str,
+                     users: int, gifts: int) -> dict:
+    """Synthetic identities over the real authenticated producer socket, never a live room."""
+    events = []
+    expected_coins = expected_units = 0
+    now_ms = int(time.time() * 1000)
+    for index in range(users):
+        common = dict(user_id=f'load_{channel}_{index:04d}', display_name=f'TESTE {index:04d}',
+                      candidate_slot=index % 2 + 1, source='simulator',
+                      timestamp_ms=now_ms - (index % 13) * 100)
+        events.append(build_vote_envelope(**common, event_id=f'load_vote_{channel}_{index:04d}'))
+        events.append(build_like_batch_envelope(**common, like_count=10,
+                                               event_id=f'load_like_{channel}_{index:04d}'))
+        if index % 10 == 0:
+            events.append(build_follow_envelope(**common, event_id=f'load_follow_{channel}_{index:04d}'))
+        if index < gifts:
+            count, unit = index % 5 + 1, (1, 10, 50, 100)[index % 4]
+            gift = build_gift_envelope(**common, repeat_count=count, unit_coin_value=unit,
+                gift_id=f'load_gift_{index % 4}', gift_name='PRESENTE DE TESTE',
+                event_id=f'load_gift_{channel}_{index:04d}')
+            events.extend((gift, gift))  # replay/duplicate, including combos
+            expected_units += count
+            expected_coins += count * unit
+    random.Random(77).shuffle(events)  # intentionally out of timestamp order
+    receipts: Counter = Counter()
+    receipt_ms = []
+    started = time.monotonic()
+    async with websockets.connect(f'ws://127.0.0.1:{bridge.bound_port}/ws/ingest',
+                                 additional_headers={'X-JOGI-Token': token}) as ws:
+        for envelope in events:
+            before = time.monotonic()
+            await ws.send(json.dumps(envelope, ensure_ascii=False))
+            reply = json.loads(await asyncio.wait_for(ws.recv(), 10))
+            receipts[reply.get('status', 'missing')] += 1
+            receipt_ms.append((time.monotonic() - before) * 1000)
+    receipt_ms.sort()
+    return {'synthetic_identities': users, 'submitted_packets': len(events),
+            'unique_gifts': gifts, 'gift_units': expected_units, 'gift_coins': expected_coins,
+            'duplicate_gift_packets': gifts, 'receipts': dict(receipts),
+            'ingress_seconds': time.monotonic() - started,
+            'receipt_p95_ms': receipt_ms[int((len(receipt_ms) - 1) * .95)],
+            'limits': 'Receipt latency is producer-to-durable-bridge, not game application latency.'}
+
+
 async def run(args: argparse.Namespace) -> int:
     stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
     output = ROOT / 'docs/evidencias/benchmark' / f'dual-{stamp}'
@@ -108,12 +156,14 @@ async def run(args: argparse.Namespace) -> int:
     runtime = Path(os.environ['LOCALAPPDATA']) / 'JOGI' / 'benchmarks' / stamp
     runtime.mkdir(parents=True, exist_ok=False)
     bridges, games, handles, tokens, renderer_pids = {}, {}, [], {}, {}
+    load_tasks = {}
     samples, generated = [], {channel: 0 for channel in CHANNELS}
     started = None
     previous_cpu = {}
     result = {'scope': 'isolated authenticated loopback bridges; simulated audience; real Vulkan games',
               'public_live_started': False, 'paid_api_calls': 0, 'obs_encoding_included': False,
-              'duration_requested_seconds': args.seconds, 'hardware': await asyncio.to_thread(hardware),
+              'duration_requested_seconds': args.seconds, 'load_users_per_platform': args.load_users,
+              'hardware': await asyncio.to_thread(hardware),
               'output_directory': str(output.relative_to(ROOT)), 'samples': samples}
     result['git_head'] = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
     result['git_dirty_at_start'] = bool(subprocess.check_output(['git', 'status', '--porcelain'], cwd=ROOT, text=True).strip())
@@ -121,14 +171,18 @@ async def run(args: argparse.Namespace) -> int:
     try:
         for channel in CHANNELS:
             tokens[channel] = secrets.token_urlsafe(32)
-            bridge = LiveBridgeServer(port=0, platform=channel, account='benchmark_local',
+            bridge = LiveBridgeServer(port=0, platform=channel, account='benchmark_local', runtime_mode='development',
                 outbox_path=runtime / channel / 'gifts.sqlite3',
                 local_token=secrets.token_urlsafe(32), producer_token=tokens[channel], rate_limit_per_sec=100)
             await bridge.start()
             bridges[channel] = bridge
             env = os.environ.copy()
+            appdata = runtime / channel / 'appdata'
+            appdata.mkdir(parents=True, exist_ok=True)
             # Explicit per-child values override any real user configuration.
             env.update(LIVE_PLATFORM=channel, LIVE_BRIDGE_WS_URL=f'ws://127.0.0.1:{bridge.bound_port}/ws/godot',
+                       APPDATA=str(appdata), GDA_USER_DATA_ROOT=str(appdata),
+                       JOGI_MODE='development', JOGI_END_AT='2099-01-01T00:00:00Z',
                        LIVE_BRIDGE_PRODUCER_TOKEN=tokens[channel], LIVE_BRIDGE_LOCAL_TOKEN='',
                        JOGI_BENCH_OUTPUT=str(output), JOGI_BENCH_SECONDS=str(args.seconds),
                        JOGI_BENCH_ID=stamp, LIVE_AVATARS_ENABLED='0')
@@ -155,6 +209,9 @@ async def run(args: argparse.Namespace) -> int:
         next_event, next_sample, next_progress, step = 1.0, 0.0, 30.0, 0
         while any(game.poll() is None for game in games.values()):
             elapsed = time.monotonic() - started
+            if args.load_users and elapsed >= 5 and not load_tasks:
+                load_tasks = {channel: asyncio.create_task(load_burst(bridges[channel], tokens[channel],
+                    channel, args.load_users, args.load_gifts)) for channel in CHANNELS}
             if elapsed > args.seconds + 25:
                 raise RuntimeError('game_finish_timeout')
             if elapsed < args.seconds - .5 and any(game.poll() is not None for game in games.values()):
@@ -195,6 +252,9 @@ async def run(args: argparse.Namespace) -> int:
                     bridge = bridges[channel]
                     row['bridges'][channel] = {'connected_godot': len(bridge.godot_clients),
                         'pending_gifts': bridge.outbox.pending_count(), 'gift_acks': bridge.metrics['gift_acks_total'],
+                        'p0_queue': bridge.p0_queue.qsize(), 'p1_queue': bridge.p1_queue.qsize(),
+                        'p2_queue': bridge.p2_queue.qsize(), 'p1_shed': bridge.metrics['p1_shed_dropped'],
+                        'p2_shed': bridge.metrics['p2_shed_dropped'],
                         'sqlite_spool_bytes': sum(path.stat().st_size for path in (runtime / channel).glob('gifts.sqlite3*') if path.is_file()),
                         'round': bridge.latest_telemetry.get('current_round'),
                         'state': bridge.latest_telemetry.get('state_name')}
@@ -208,6 +268,17 @@ async def run(args: argparse.Namespace) -> int:
         result['duration_wall_seconds'] = time.monotonic() - started
         result['exit_codes'] = {channel: game.returncode for channel, game in games.items()}
         result['generated_events'] = generated
+        result['load'] = {channel: await task for channel, task in load_tasks.items()}
+        for channel, load in result['load'].items():
+            rows = bridges[channel].outbox.db.execute(
+                "SELECT envelope,created_ms,completed_ms FROM gifts WHERE event_id LIKE ?",
+                (f'load_gift_{channel}_%',)).fetchall()
+            confirmed = [row for row in rows if row[2] is not None]
+            latency = sorted(row[2] - row[1] for row in confirmed)
+            load.update(durable_unique_gifts=len(rows), confirmed_by_game=len(confirmed),
+                confirmed_coin_total=sum(json.loads(row[0])['payload']['coin_value'] for row in confirmed),
+                bridge_to_game_ack_p95_ms=latency[int((len(latency) - 1) * .95)] if latency else None,
+                bridge_metrics=dict(bridges[channel].metrics))
         result['bridges_final'] = {channel: {'pending_gifts': bridge.outbox.pending_count(),
             'gift_acks_total': bridge.metrics['gift_acks_total'],
             'connected_godot': len(bridge.godot_clients)} for channel, bridge in bridges.items()}
@@ -217,6 +288,7 @@ async def run(args: argparse.Namespace) -> int:
         result['engine_errors'] = {channel: [line for line in (output / f'{channel}-godot.log').read_text(encoding='utf-8', errors='replace').splitlines()
             if any(marker in line for marker in ('SCRIPT ERROR:', 'ERROR:', 'CrashHandlerException'))] for channel in CHANNELS}
         result['quality_checks'] = {
+            'sources_unchanged': source_hashes() == result['source_hashes_at_start'],
             'both_exit_zero': all(code == 0 for code in result['exit_codes'].values()),
             'both_render_1080x1920': all(engine['viewport_width'] == 1080 and engine['viewport_height'] == 1920 for engine in result['engines'].values()),
             'no_engine_errors': not any(result['engine_errors'].values()),
@@ -224,6 +296,12 @@ async def run(args: argparse.Namespace) -> int:
             'no_rejected_events': all(engine['rejected_events'] == 0 for engine in result['engines'].values()),
             'private_checkpoints_saved': all(engine['final_snapshot_saved'] and not engine['persistence_error'] for engine in result['engines'].values()),
         }
+        if args.load_users:
+            result['quality_checks']['all_load_gifts_durable_and_acked_once'] = all(
+                item['durable_unique_gifts'] == item['unique_gifts'] == item['confirmed_by_game']
+                and item['confirmed_coin_total'] == item['gift_coins']
+                and item['receipts'].get('duplicate', 0) == item['duplicate_gift_packets']
+                and set(item['receipts']) <= {'accepted', 'duplicate'} for item in result['load'].values())
         result['performance_target_met'] = all(engine['fps_mean'] >= 59 and engine['p95_frame_ms'] <= 18.5 for engine in result['engines'].values())
         result['ten_minutes_simultaneous_verified'] = result['common_render_interval_seconds'] >= 600
         summaries = {}
@@ -255,6 +333,11 @@ async def run(args: argparse.Namespace) -> int:
         print('BENCHMARK_FAILED ' + result['error'], flush=True)
         return 1
     finally:
+        for task in load_tasks.values():
+            if not task.done():
+                task.cancel()
+        if load_tasks:
+            await asyncio.gather(*load_tasks.values(), return_exceptions=True)
         # Only processes created in this invocation are terminated.
         for game in games.values():
             if game.poll() is None:
@@ -278,9 +361,15 @@ async def run(args: argparse.Namespace) -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--seconds', type=float, default=620.0)
+    parser.add_argument('--load-users', type=int, default=0, help='Synthetic identities per platform; 0 disables burst.')
+    parser.add_argument('--load-gifts', type=int, default=200, help='Unique gifts per platform in the burst, each repeated once.')
     args = parser.parse_args()
     if not 5 <= args.seconds <= 660:
         parser.error('--seconds must be between 5 and 660')
+    if not 0 <= args.load_users <= 10000 or (args.load_users and not 0 <= args.load_gifts <= args.load_users):
+        parser.error('load-users must be 0..10000; load-gifts must be 0..load-users')
+    if args.load_users and args.seconds < 60:
+        parser.error('load tests need at least 60 seconds to drain the bounded queues')
     logging.basicConfig(level=logging.WARNING)
     return asyncio.run(run(args))
 
