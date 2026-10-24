@@ -21,6 +21,20 @@ func _run() -> void:
 	root.add_child(world)
 	_check(world._distance_markers.size() == 6, "exactly six recycled metre markers")
 	_check(world.get_node_or_null("AnoCenografico2027") != null, "discrete 2027 scenic label")
+	_check(world.get_node_or_null("BrasaoPlanalto2027") != null, "architectural backing crest for 2027 legibility")
+	var year_lbl: Label3D = world.get_node("AnoCenografico2027") as Label3D
+	_check(year_lbl != null and year_lbl.font_size >= 160 and year_lbl.pixel_size >= 0.015, "2027 has crisp broadcast scale above Planalto")
+	# Regressão explícita P2 #1: cruzamento de fronteira 49.9 m -> 50.0 m jamais inverte o lado Z das placas existentes.
+	world.set_race_progress(49.9)
+	var sides_before: Dictionary = {}
+	for idx_m: int in range(world._distance_markers.size()):
+		var mark_m: int = int(world._distance_markers[idx_m].get_meta("distance_m", -1))
+		sides_before[mark_m] = signf(world._distance_labels[idx_m].position.z)
+	world.set_race_progress(50.0)
+	for idx_m: int in range(world._distance_markers.size()):
+		var mark_after: int = int(world._distance_markers[idx_m].get_meta("distance_m", -1))
+		if sides_before.has(mark_after):
+			_check(is_equal_approx(float(sides_before[mark_after]), signf(world._distance_labels[idx_m].position.z)), "crossing 50m boundary keeps lateral Z side coherent for %d m" % mark_after)
 	world.set_race_progress(125.0)
 	_check(world._distance_labels[0].text == "100 m" and world._distance_labels[5].text == "350 m", "labels use real simulation metres")
 	var old: float = world._distance_markers[2].position.x

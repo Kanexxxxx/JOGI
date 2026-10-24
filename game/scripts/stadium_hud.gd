@@ -295,7 +295,6 @@ void fragment() {
 	frame.name = "StadiumSafeFrame"
 	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	frame.size = Vector2(1080.0, 1920.0)
 	add_child(frame)
 
 	_artwork = StadiumArtwork.new()

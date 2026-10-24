@@ -53,6 +53,30 @@ func cancel_pending() -> void:
 		_http.cancel_request()
 
 
+func cancel_pending_requests() -> void:
+	cancel_pending()
+
+
+func register_event(envelope: Dictionary) -> void:
+	if not enabled:
+		return
+	var user_val: Variant = envelope.get("user")
+	if not user_val is Dictionary:
+		return
+	var user_dict: Dictionary = user_val as Dictionary
+	var raw_path: Variant = user_dict.get("avatar_icon_path", "")
+	if raw_path is String and is_safe_avatar_path(String(raw_path)):
+		request_avatar(String(raw_path))
+
+
+func get_avatar_by_path(avatar_path: String) -> Texture2D:
+	return request_avatar(avatar_path)
+
+
+func _decode_avatar(body: PackedByteArray) -> Texture2D:
+	return decode_avatar_buffer(body)
+
+
 func get_avatar(avatar_path: String) -> Texture2D:
 	if not enabled or not is_safe_avatar_path(avatar_path):
 		return null
