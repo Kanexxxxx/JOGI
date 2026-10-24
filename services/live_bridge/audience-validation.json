@@ -1,0 +1,8 @@
+{
+  "command": ".venv\\Scripts\\python.exe -m pytest -q -p no:cacheprovider",
+  "date": "2026-10-24",
+  "result": "38 passed, 24 subtests passed in 21.55s",
+  "exit_code": 0,
+  "network_scope": "loopback only; no live opened",
+  "connected_platforms_verified": false
+}

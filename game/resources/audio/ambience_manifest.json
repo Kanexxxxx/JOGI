@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "pack_kind": "arena_ambience",
+  "status": "generated_pending_listening_review",
+  "model_id": "eleven_text_to_sound_v2",
+  "provenance": "Original generated sports arena atmosphere. No music, lyrics, recognizable chants, speeches or sampled broadcasts.",
+  "clips": [
+    {
+      "kind": "crowd",
+      "duration_seconds": 10.0,
+      "prompt": "Seamless looping sports stadium atmosphere: a large lively crowd in open air, soft layered cheering, scattered claps and distant wordless excited calls. Natural wide ambience, steady medium energy with gentle variations. No intelligible words, no chants, no music, no instruments, no commentary, no recognizable recordings. Smooth continuous background for a friendly running video game.",
+      "clip_path": "res://assets/audio/elevenlabs-sfx/37a811b3d4798e01acb28722e3190f30fee82af62b13bae6d8541a5080d545c3.mp3",
+      "cache_key": "37a811b3d4798e01acb28722e3190f30fee82af62b13bae6d8541a5080d545c3"
+    }
+  ]
+}

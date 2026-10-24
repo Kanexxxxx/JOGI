@@ -1,0 +1,22 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/race_main.gd" id="1_eq7un"]
+[ext_resource type="Script" path="res://scripts/race_camera.gd" id="1_f1kjb"]
+
+[node name="RaceMain" type="Node3D" unique_id=480165296]
+script = ExtResource("1_eq7un")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1073335853]
+
+[node name="SunLight" type="DirectionalLight3D" parent="." unique_id=579770800]
+
+[node name="TrackRoot" type="Node3D" parent="." unique_id=1339184555]
+
+[node name="ObstaclesRoot" type="Node3D" parent="TrackRoot" unique_id=1642910412]
+
+[node name="RunnersRoot" type="Node3D" parent="." unique_id=1247464181]
+
+[node name="RaceCamera" type="Camera3D" parent="." unique_id=1854403590]
+script = ExtResource("1_f1kjb")
+
+[node name="BroadcastHUD" type="CanvasLayer" parent="." unique_id=1147240317]

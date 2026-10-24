@@ -1,0 +1,16 @@
+{
+  "capture": "identical skeleton and camera; only explicit cloth phase differs",
+  "resolution": [
+    1024,
+    1024
+  ],
+  "phase_changed_pixels": 64537,
+  "pause_changed_pixels": 0,
+  "phase_bbox_pixels_top_left": [
+    95,
+    434,
+    973,
+    646
+  ],
+  "pause_exact_rgba_match": true
+}

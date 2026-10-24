@@ -1,0 +1,11 @@
+{
+	"adapter": "NVIDIA GeForce RTX 4060",
+	"average_fps": 60.0067854594673,
+	"frame_ms_p95": 16.825,
+	"frames": 601,
+	"max_fps": 60,
+	"orphan_nodes": 0.0,
+	"resolution": "(1080.0, 1920.0)",
+	"scope": "Bancada de dois personagens; sem pista, efeitos, OBS ou segunda sessão",
+	"seconds": 10.015534
+}

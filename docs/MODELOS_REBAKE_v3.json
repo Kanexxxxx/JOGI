@@ -1,0 +1,18 @@
+{
+  "lula": {
+    "output": "assets\\models\\lula\\derived-v3\\lula_lod15k_2k_v3.glb",
+    "triangles": 15000,
+    "bytes": 9065636,
+    "textures": "2048x2048 rebaked",
+    "rigged": false,
+    "status": "evaluation only; visual and deformation checks pending"
+  },
+  "flavio": {
+    "output": "assets\\models\\flavio\\derived-v3\\flavio_lod15k_2k_v3.glb",
+    "triangles": 14999,
+    "bytes": 8619036,
+    "textures": "2048x2048 rebaked",
+    "rigged": false,
+    "status": "evaluation only; visual and deformation checks pending"
+  }
+}

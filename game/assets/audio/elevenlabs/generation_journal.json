@@ -1,0 +1,299 @@
+{
+  "schema_version": 1,
+  "entries": {
+    "40928dc4735cc5b68e2cd7b8d2abe6f55a5d36709869b7de8a44f37ea1ac808b": {
+      "state": "complete",
+      "clip_id": "start_a",
+      "characters": 32,
+      "created_unix": 1792815713,
+      "audio_sha256": "66c80829ce0fe6d1465ed9338fe16c73b3d0ef0ebe298e822082d05d253d932a"
+    },
+    "218987be123b29fd2eaa5de43fc46472bf73f6b9bee01f6b078ad5f2e8720fe7": {
+      "state": "complete",
+      "clip_id": "start_b",
+      "characters": 32,
+      "created_unix": 1792815714,
+      "audio_sha256": "66ced122cedb96eacec006c82c5f34568665726408c0cd7d5d673f7b1051e006"
+    },
+    "7cd7e8561105bee27407fe810f663928e8e1827ba031c64b5c03f4a683b463d3": {
+      "state": "complete",
+      "clip_id": "tie_a",
+      "characters": 32,
+      "created_unix": 1792815715,
+      "audio_sha256": "b9b3d88657124a86cd3b77b092e4056428c1b1ad3cb227c1cc9a8b455863b5d6"
+    },
+    "88ba0ef8094d95d515ff2ed0d1522d6e001372f81df088631b986a3572186604": {
+      "state": "complete",
+      "clip_id": "tie_b",
+      "characters": 29,
+      "created_unix": 1792815717,
+      "audio_sha256": "9a2b21e38ddd798ad793945471ef065ad523f7ee1175f9d085542cfa00733681"
+    },
+    "a897612383b6c5c40d242be08c6c6c269ee885bd1ccf51916321aa83f3a15fa1": {
+      "state": "complete",
+      "clip_id": "boost_1a",
+      "characters": 31,
+      "created_unix": 1792815718,
+      "audio_sha256": "99654301ac503996d9e0c47f517cd0b0c9705f86a5857529c4ca26a64cd6a9c7"
+    },
+    "decc0f7ac7e244fd371be9811cb77c9a87d923b4fecfe98ac3ae405ca2766188": {
+      "state": "complete",
+      "clip_id": "boost_1b",
+      "characters": 28,
+      "created_unix": 1792815719,
+      "audio_sha256": "13a1696bfdf1f913e37d35521256cd9924f6298f9ad703c80584880c3dcc07ba"
+    },
+    "fbe608fbf7baf9c4615791810d1ec84143af0e909e014e2377c7b36e7c329f85": {
+      "state": "complete",
+      "clip_id": "boost_1c",
+      "characters": 34,
+      "created_unix": 1792815720,
+      "audio_sha256": "cabb84edd9545563926404179e6311600977406ada2119809f8bf11d946cfe53"
+    },
+    "eb1dc0c24e74bde7f76357710f396f8d25f2636c7079bc08a1c0ba27a1b454ac": {
+      "state": "complete",
+      "clip_id": "shield_1a",
+      "characters": 34,
+      "created_unix": 1792815721,
+      "audio_sha256": "d2e105f45fb5a2ce09419925da812a21af309982a45fbd051c4c9a257d940982"
+    },
+    "d21933a47877887f8cfed324eb85e4dee3eec1b30d5dd2d0945b5491322df733": {
+      "state": "complete",
+      "clip_id": "shield_1b",
+      "characters": 27,
+      "created_unix": 1792815723,
+      "audio_sha256": "62013c7d0e3b5eeaba6c2719ea3fd6d5e529e7cdc3c37c476600fe77a69a8aa0"
+    },
+    "9a63de34df2d2a7e0932e3571507d0aa331df755425308e54c0587428aedbed4": {
+      "state": "complete",
+      "clip_id": "attack_1a",
+      "characters": 28,
+      "created_unix": 1792815724,
+      "audio_sha256": "263a59e9c9dd9334c7fd2c8c2c75b1393f9377b086a807ba536278c48d58401d"
+    },
+    "7250e151edffcada6be5e3970677d4c74ba26b2a37add949dba7601bb3982a09": {
+      "state": "complete",
+      "clip_id": "attack_1b",
+      "characters": 31,
+      "created_unix": 1792815725,
+      "audio_sha256": "448e0cc4763c68fe0035c7c7024207eb8981e1cff237a7c3b46defcfd2909a0b"
+    },
+    "af9061201aeb9a9939932b125ce496a53ad5a83ad397038b75426de55b522786": {
+      "state": "complete",
+      "clip_id": "super_1a",
+      "characters": 34,
+      "created_unix": 1792815726,
+      "audio_sha256": "359d3f6e4639cb5b45e9a1b921182ad12af6c4c2ad8adfaf79548848e93e5870"
+    },
+    "d0f31002934658d813c085f698194607ab6c3c2ba3b096bc060b968af5350eeb": {
+      "state": "complete",
+      "clip_id": "super_1b",
+      "characters": 34,
+      "created_unix": 1792815728,
+      "audio_sha256": "85906f6fff47211351c8dced88af8f30a720d20acace768a86c2159ec8c11c56"
+    },
+    "6cc60765ed04655db0823765086a367ccf34f414d5fff1ef1904b2314fc1646b": {
+      "state": "complete",
+      "clip_id": "podium_1a",
+      "characters": 40,
+      "created_unix": 1792815729,
+      "audio_sha256": "7ce86ba08bc8860479430b825f50d30333e6c9257ec371cbe58ef31f5c6a0d43"
+    },
+    "1dfcd91606f3a505bb31ec64b7aa9f818603c5d7440c5501c764ed7162f83904": {
+      "state": "complete",
+      "clip_id": "podium_1b",
+      "characters": 36,
+      "created_unix": 1792815730,
+      "audio_sha256": "dc35562464124acfb7c2bd851814af48aeb3aed261843e6e5034761e9bda07dc"
+    },
+    "1f44eaa489024c74a77912b5787327aa34abd4c7b494d6206ae71ea07f6b9566": {
+      "state": "complete",
+      "clip_id": "vote_1a",
+      "characters": 26,
+      "created_unix": 1792815732,
+      "audio_sha256": "cf1460b67ad0840fa2658050c8f0236eaa6276743e145e07d898aa5991480a17"
+    },
+    "17e07229f5ef651c76618bb0ba9ff35e2ed7e97677b18e5c1ea65650bc20fdff": {
+      "state": "complete",
+      "clip_id": "vote_1b",
+      "characters": 33,
+      "created_unix": 1792815733,
+      "audio_sha256": "d509893d66fc4a9443d3868713ed5bf7de348d9b24a12f47d6a2da1e30e5ec8f"
+    },
+    "c47b2b56e867157dc1879edc9c6dc7b2bc09288db33c27b9c8b6926e4eba459d": {
+      "state": "complete",
+      "clip_id": "boost_2a",
+      "characters": 29,
+      "created_unix": 1792815734,
+      "audio_sha256": "d00d0bfa6cfdd0b518cc6158d7cd9e988ee074a12a007205d287c463d97107d9"
+    },
+    "4fe29129955a2dbf6ada7fe79daa2e93fa178c92a5d82b9185443661f60ef8bb": {
+      "state": "complete",
+      "clip_id": "boost_2b",
+      "characters": 26,
+      "created_unix": 1792815735,
+      "audio_sha256": "c25491b721b4a788ee751798354b94a25faff041e6b6fdc7dae76b8a74fb7331"
+    },
+    "d964f517806205212262c161953e860643b8e0d69d3bfe532b39683179eccc3b": {
+      "state": "complete",
+      "clip_id": "boost_2c",
+      "characters": 32,
+      "created_unix": 1792815736,
+      "audio_sha256": "9658e88432f3dbb9004b3c92922296864c7bf8b34fd28cd98df5d1d97aadd256"
+    },
+    "a5302c5d8b1f70eec4812eb96813710933ade6256c8ec67c11f12364485adb4a": {
+      "state": "complete",
+      "clip_id": "shield_2a",
+      "characters": 32,
+      "created_unix": 1792815738,
+      "audio_sha256": "7ef28c329996cf1ce0f0904c8730ac0bc6fbad6ed77f9c9b53dde2a0391e4c2b"
+    },
+    "99e4ff2251e3af6d4b27a969d80c9c254afbd5750495992231c6e476a258a74b": {
+      "state": "complete",
+      "clip_id": "shield_2b",
+      "characters": 25,
+      "created_unix": 1792815739,
+      "audio_sha256": "978ff546e77772e91a196c19787001d313d03ebafb4338933e7962cd6a60e06e"
+    },
+    "f8cc8b4e2b5b141cc579facc57f30e1d280a510a7892f29ea80795098348b663": {
+      "state": "complete",
+      "clip_id": "attack_2a",
+      "characters": 26,
+      "created_unix": 1792815740,
+      "audio_sha256": "077fbb692d3a073e968f7636093ecd8333b849c12b8c125de99f322bb6b9c3ab"
+    },
+    "4e84a48a214c0385b8c1aa6d042c3001f495e1edc63d29f43ec564e9f5b09b1b": {
+      "state": "complete",
+      "clip_id": "attack_2b",
+      "characters": 29,
+      "created_unix": 1792815741,
+      "audio_sha256": "030b823222a6843b50fc20a7d63a540b8c3b815f10be50d793505f2c4c7ec3f2"
+    },
+    "d229417f5353607282c20e94b190d21b32f8f8b5a6ac5f594fb7b81b81e5331a": {
+      "state": "complete",
+      "clip_id": "super_2a",
+      "characters": 32,
+      "created_unix": 1792815743,
+      "audio_sha256": "99cb026e89b994b85f2fb8ce3c100e9611ad43b71a60bfae9ab4dbfe19d7952a"
+    },
+    "93eade5e820c9574d130c61c008c7385fc690996ce5908389e60cb15997d7c19": {
+      "state": "complete",
+      "clip_id": "super_2b",
+      "characters": 32,
+      "created_unix": 1792815744,
+      "audio_sha256": "de4d7b8af493d3e7b5e4b0177772140c474e00ed44b96d8af8c1f1f0537dd2ca"
+    },
+    "d20dcc3963f99668863f67564f4c8cd6e807dfe686f6dde0ed1a38a811c01a73": {
+      "state": "complete",
+      "clip_id": "podium_2a",
+      "characters": 38,
+      "created_unix": 1792815745,
+      "audio_sha256": "1088150460d48559990934b2b1fc8b298731c0adba34f997e0fc6ef63c50ec75"
+    },
+    "0da5e5f292b3d4d0b4e909cfa4da0bf47fedd95508de3c4f9436df8fe126f0d3": {
+      "state": "complete",
+      "clip_id": "podium_2b",
+      "characters": 34,
+      "created_unix": 1792815746,
+      "audio_sha256": "a6441d6536500102fca8fc7f53cd778e7cefc47e1c5e45ad082ee16d7d96e016"
+    },
+    "aae6e1c52d19c670eb60e862072f572c9b3a22921cd97cd8ab79df65ec8e2ec2": {
+      "state": "complete",
+      "clip_id": "vote_2a",
+      "characters": 24,
+      "created_unix": 1792815748,
+      "audio_sha256": "6010ad3690bb3c55ff08535b2ba2ddc3a11116b87dc18ec58650ad5de2ee417e"
+    },
+    "f27414afcc4f6a2a07630c7b1919a1d241c5dd7c6ea85c3cbf652c8a11fdb905": {
+      "state": "complete",
+      "clip_id": "vote_2b",
+      "characters": 31,
+      "created_unix": 1792815749,
+      "audio_sha256": "5abd607bf6f2bfbe8c16ff6ac4d3fc133c9285ae81cb4b7cea0f7ef33e18d15e"
+    },
+    "f11fa2d52d748d09d9730cb6ca0459556e8f9d878e268598a3c21caae2939cec": {
+      "state": "complete",
+      "clip_id": "podium_1a",
+      "characters": 35,
+      "created_unix": 1792855843,
+      "audio_sha256": "04dab255c828639269e51ed4e48970f4b747aa70de98264a062a16d7d976c3f6"
+    },
+    "1eb965b252116d7a1d6d781feb6b759246432ae98832fb1cc06bbdce786727fd": {
+      "state": "complete",
+      "clip_id": "podium_1b",
+      "characters": 38,
+      "created_unix": 1792855845,
+      "audio_sha256": "d52392b81463315858ddf6ef4ddbca5810312e77da7abdedfadc39f212c1c32b"
+    },
+    "9d55dae566c35a53ec3623ecbdf5e53eeb30cfae352d7ab1bedba49d936aa185": {
+      "state": "complete",
+      "clip_id": "podium_2a",
+      "characters": 44,
+      "created_unix": 1792855846,
+      "audio_sha256": "d4f73bd736127d024362ddf4f502d3f6680e7c73ae509064ec1cb7bb79184515"
+    },
+    "b9bb24dc9c8b5b7bb2815cf27a43ae6cc9f26cbe39c433bf7d90c9ffa15964af": {
+      "state": "complete",
+      "clip_id": "podium_2b",
+      "characters": 47,
+      "created_unix": 1792855847,
+      "audio_sha256": "e5acd3ebdc2b342af6352ebec2553c610e033722b7e997b1cff9979a42820e92"
+    },
+    "5122fed77a4f54668963a52a4eb0a44392991eb8b2c7ac060c997a3e038c50ef": {
+      "state": "complete",
+      "clip_id": "overtake_1a",
+      "characters": 32,
+      "created_unix": 1792855849,
+      "audio_sha256": "61c21a535be2704d7dfbb410a55d55a3fb58dd784ec2a61732ef30ca2ad6467e"
+    },
+    "e7663c6c47a211e162b53723a312f7d9111735408a5b75ebbce56ee1484aaab3": {
+      "state": "complete",
+      "clip_id": "overtake_1b",
+      "characters": 36,
+      "created_unix": 1792855850,
+      "audio_sha256": "a46a579ebd503a4fb58d20e05605a1c5d3ab2c26c8596bdef73ef2f55bf2152c"
+    },
+    "15ec2bb0aed2a501f100a2461422a73d191e7c40c0c61cd6f11bf598aec88eda": {
+      "state": "complete",
+      "clip_id": "overtake_2a",
+      "characters": 39,
+      "created_unix": 1792855851,
+      "audio_sha256": "c40b22ccff687990d6fdeac91311587e184b57bbb79da8fe2fb78617d3818d9f"
+    },
+    "2f7fa8926377b189f395a681b2411e80b06ad25f904aca4716ec2e448fe5ae65": {
+      "state": "complete",
+      "clip_id": "overtake_2b",
+      "characters": 45,
+      "created_unix": 1792855853,
+      "audio_sha256": "33ccae5e0c65445ce76bfcb5a22d44254e3c1743086ce00d36b9ccb583183a0c"
+    },
+    "3a9ad315acbc33eb7bf752b807684fa143b7e67415a500dc207cd1103410ed24": {
+      "state": "complete",
+      "clip_id": "final_stretch_a",
+      "characters": 48,
+      "created_unix": 1792855854,
+      "audio_sha256": "7421fa4ae36e46e893cb24ec394bcd50e20c1bbbf4a7e2b59700c5d572a4992b"
+    },
+    "bba1056f5961479afa87d3e08fb5c33936fddbd100c43a6c92905538be632345": {
+      "state": "complete",
+      "clip_id": "final_stretch_b",
+      "characters": 41,
+      "created_unix": 1792855856,
+      "audio_sha256": "fe2a461dfb4836bcd3c17dc997fe8d3efd3975b84b3e3f6ba3058a088f5dc700"
+    },
+    "fda4f58f3eb9e015ac3c707384c5de98ed5c8d942169f87b841921719e68738f": {
+      "state": "complete",
+      "clip_id": "next_round_a",
+      "characters": 51,
+      "created_unix": 1792855857,
+      "audio_sha256": "491f816bc50a6329e7a76423e6b51d2ee4634215036412347320091493530008"
+    },
+    "38de347a9cd3c3564885379f6302f017cf4c2611820e90b169534739498525f1": {
+      "state": "complete",
+      "clip_id": "next_round_b",
+      "characters": 52,
+      "created_unix": 1792855858,
+      "audio_sha256": "a369170fbc6bc2aadb3abb2129d2fdeb94e41ef7d3116ac96979a1e150cd6869"
+    }
+  }
+}

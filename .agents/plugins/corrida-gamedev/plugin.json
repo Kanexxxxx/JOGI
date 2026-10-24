@@ -1,0 +1,6 @@
+{
+  "name": "corrida-gamedev",
+  "version": "1.0.0",
+  "description": "Workspace plugin for Corrida dos Candidatos bundling Godot Agent MCP (gda-mcp) and Tripo 3D MCP configurations.",
+  "mcpServers": "./mcp_config.json"
+}

@@ -1,0 +1,18 @@
+{
+  "result": "passed",
+  "godot_exit_code": 0,
+  "gift_acks_total": 1,
+  "pending_gifts_at_end": 2,
+  "network_scope": "isolated loopback; simulator only",
+  "gda_result": {
+    "path": "res://tests/test_live_bridge_e2e.gd",
+    "exit_status": 0,
+    "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nE2E_WS_CONNECTED: ws://127.0.0.1:49852/ws/godot\r\nE2E_TELEMETRY_SENT: true\r\nE2E_EVENTS_APPLIED: accepted=4 dup=0 r1_speed=16.09 baseline=12.30 progress=6.43m\r\nTEST_LIVE_BRIDGE_E2E_PASSED\r\n",
+    "stderr": "WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details).\r\n   at: cleanup (core/object/object.cpp:2536)\r\n",
+    "stdout_bytes": 262,
+    "stdout_truncated": false,
+    "stdout_file": null,
+    "diagnostics": [],
+    "engine_data_path": "C:\\Users\\Kanex\\AppData\\Roaming"
+  }
+}

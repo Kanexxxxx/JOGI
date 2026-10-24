@@ -1,0 +1,13 @@
+{
+  "command": ".venv\\Scripts\\python.exe -m pytest -q -p no:cacheprovider",
+  "date": "2026-10-24",
+  "result": "61 passed, 2 SDK deprecation warnings, 27 subtests passed in 39.04s",
+  "exit_code": 0,
+  "launcher_check": "run_live_instances.py --both --check: valid true, no processes started",
+  "sdk": "TikTokLive 7.0.1 installed locally via uv extra tiktok; configured nostalgiia.br; fake lifecycle tests passed",
+  "e2e": "test_e2e_runner.py at 06:54 BRT: Godot/GDA strict exit0, diagnostics[], event_ack confirmed",
+  "browser_qa": "qa-panel/report.json",
+  "continuous_32h_verified": false,
+  "real_platform_events_verified": false,
+  "user_confirmed_live_and_gifts_eligibility": true
+}

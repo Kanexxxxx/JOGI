@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "status": "generated_pending_listening_review",
+  "model_id": "eleven_text_to_sound_v2",
+  "credit_ceiling": 1000,
+  "clips": [
+    {
+      "kind": "boost",
+      "name": "Impulso",
+      "duration_seconds": 1.0,
+      "priority": 30,
+      "cooldown_seconds": 0.3,
+      "clip_path": "res://assets/audio/elevenlabs-sfx/1acf2d55de2f8720c227b315e273c93f0151cef93cc674e33e9e132b1d9bc553.mp3",
+      "prompt": "One short premium arcade racing turbo ignition whoosh, quick rising airy sweep with a tight energetic electronic accent and a clean bright finish. No voice, no speech, no crowd, no music, no ambience. Isolated game UI one-shot.",
+      "cache_key": "1acf2d55de2f8720c227b315e273c93f0151cef93cc674e33e9e132b1d9bc553"
+    },
+    {
+      "kind": "shield",
+      "name": "Escudo",
+      "duration_seconds": 1.2,
+      "priority": 40,
+      "cooldown_seconds": 0.35,
+      "clip_path": "res://assets/audio/elevenlabs-sfx/c8566c9db2d88631de372388703ab36668f40003442e18066f90faaf99a68a4c.mp3",
+      "prompt": "Crystal-clear protective shield activation chime, two soft upward glass bell tones with a tiny shimmering tail. Polished friendly arcade game sound. No voice, no speech, no background, no ambience. Isolated one-shot.",
+      "cache_key": "c8566c9db2d88631de372388703ab36668f40003442e18066f90faaf99a68a4c"
+    },
+    {
+      "kind": "impact",
+      "name": "Impacto de desenho",
+      "duration_seconds": 0.8,
+      "priority": 50,
+      "cooldown_seconds": 0.25,
+      "clip_path": "res://assets/audio/elevenlabs-sfx/d03ddd51bc95aa032b9adac1e730c1eab7e972a8b87de84fa1229b4b221566f6.mp3",
+      "prompt": "Playful cartoon tumble impact, one short rubbery thump and a soft springy pop, light comic energy. No human vocalizations, no violent realistic crunch, no music, no ambience. Isolated game sound effect.",
+      "cache_key": "d03ddd51bc95aa032b9adac1e730c1eab7e972a8b87de84fa1229b4b221566f6"
+    },
+    {
+      "kind": "victory",
+      "name": "Festa da rodada",
+      "duration_seconds": 3.0,
+      "priority": 90,
+      "cooldown_seconds": 4.0,
+      "clip_path": "res://assets/audio/elevenlabs-sfx/272c4e68d028e85f7697c181d68a453c0eead329f476821c08db9834da9ff3a7.mp3",
+      "prompt": "Original very short triumphant arcade racing victory fanfare: bright brass-like synth stab and a rising three-note sparkling finish, upbeat Brazilian sporting festival mood. No recognizable tune, no voice, no crowd, no ambience. Isolated game cue.",
+      "cache_key": "272c4e68d028e85f7697c181d68a453c0eead329f476821c08db9834da9ff3a7"
+    }
+  ]
+}

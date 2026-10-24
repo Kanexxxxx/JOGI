@@ -1,0 +1,156 @@
+{
+  "model": "faster-whisper small int8 local CPU",
+  "clips": [
+    {
+      "id": "254d22681d247fcf5ce058a2b47a3eedfc1abd2d86699b299d6d876dff21e506",
+      "source_names": [
+        "lula-pergunta-simples.mp3"
+      ],
+      "duration": 8.5290625,
+      "language_probability": 1,
+      "text": "Só uma simples pergunta, de si ou não. Por que você cortou praticamente e toma a beba dos programas que proteja as mulheres?",
+      "review": "automatic transcript only; music/rights not certified"
+    },
+    {
+      "id": "1296f90d75d6b62bccabb9cbb15526eb3ed2e49bbf0e31a92f5ba3d3fc119c36",
+      "source_names": [
+        "chega-de-frescura-e-mimimi.mp3"
+      ],
+      "duration": 6.576,
+      "language_probability": 1,
+      "text": "Chega de frescura e de mimimi? Vamos ficar chorando até quando?",
+      "review": "automatic transcript only; music/rights not certified"
+    },
+    {
+      "id": "f6a216503bcd130211976283c12977847b5dbcd5187f3b36706da8721cf5bf0e",
+      "source_names": [
+        "explica.mp3"
+      ],
+      "duration": 4.146,
+      "language_probability": 1,
+      "text": "Já expliquei? Explica! Já expliquei!",
+      "review": "automatic transcript only; music/rights not certified"
+    },
+    {
+      "id": "39d217489d165610e221eb4491c9da15d2da38d1b1782018a8f691dce1de60b6",
+      "source_names": [
+        "bolsonaro-acabou-porra.mp3"
+      ],
+      "duration": 1.24775,
+      "language_probability": 1,
+      "text": "Acabou, porra!",
+      "review": "automatic transcript only; music/rights not certified"
+    },
+    {
+      "id": "59cdc61fd3d429e34a12e2247342a2fa5f766c60bd42dece0ff831f59842ba4a",
+      "source_names": [
+        "vai-novinha-lula-e-bolsonaro.mp3"
+      ],
+      "duration": 7.537,
+      "language_probability": 1,
+      "text": "Não vinha a ser da pampa Para vinha todo mundo sabe disso Para vinha",
+      "review": "automatic transcript only; music/rights not certified"
+    },
+    {
+      "id": "60954d5a24551b83f6c706917e4d7714eb167b491a908358d53507b4649cefa5",
+      "source_names": [
+        "bolsonaro-pegaram-meu-telefone.mp3"
+      ],
+      "duration": 4.5743125,
+      "language_probability": 1,
+      "text": "Ninguém vai pegar meu telefone! Pegaram meu telefone?",
+      "review": "automatic transcript only; music/rights not certified"
+    },
+    {
+      "id": "3cd57b5148c3818f3331eefcbd0d5f18747bcc4ea763367e2022893b8cb018d1",
+      "source_names": [
+        "bolsonaro-risada.mp3"
+      ],
+      "duration": 6.5248125,
+      "language_probability": 1,
+      "text": "Um forte abraço!",
+      "review": "automatic transcript only; music/rights not certified"
+    },
+    {
+      "id": "cd25d3ad9b29ef1920e3828e66c9e11cb7c818d2b6a28ce2549cfe61a1545cb3",
+      "source_names": [
+        "cade-o-ze-gotinha.mp3"
+      ],
+      "duration": 6.0604375,
+      "language_probability": 1,
+      "text": "Cadê o Zé Gotinha? Cadê o nosso querido Zé Gotinha?",
+      "review": "automatic transcript only; music/rights not certified"
+    },
+    {
+      "id": "af69dda1653d66fc1892c86229c39aaddb3415eb79e02cb3f6d9fcdb88f78472",
+      "source_names": [
+        "lula-e-pra-apanhar-e-ficar-calado.mp3"
+      ],
+      "duration": 8.76,
+      "language_probability": 1,
+      "text": "Papoiai fica acalado. Papoiai fica acalado. Não vou devendo explicar só que em grupo não. Papoiao ficou acalado.",
+      "review": "automatic transcript only; music/rights not certified"
+    },
+    {
+      "id": "e6dc2d56272a66d5c796c21167ace8581a02efc2957ffe05684c06e7aa96e738",
+      "source_names": [
+        "sem-h-calanguinho.mp3"
+      ],
+      "duration": 21.5045,
+      "language_probability": 1,
+      "text": "Eu comia calango quando era menino. A gente saía correndo atrás dos calanguinho, calanguinho, calanguinho, pegava o calanguinho. E eu comia com o ovo. Eu sou um alfabeto. Minha mãe era alfabeta. Meus irmãos são alfabeto. Meus primas alfabeto. Meus cunhados eram alfabeto. Meu caço é alfabeto. Meu gato é alfabeto. E eu meu gulho disto.",
+      "review": "automatic transcript only; music/rights not certified"
+    },
+    {
+      "id": "01365e0e108baa24d80e7d26eb7e9ccc73d89eb6abef1ac774cebe2a6b89a50b",
+      "source_names": [
+        "lula-bora-pra-rua-gente.mp3"
+      ],
+      "duration": 1.6950625,
+      "language_probability": 1,
+      "text": "Bora gente pra rua!",
+      "review": "automatic transcript only; music/rights not certified"
+    },
+    {
+      "id": "2cc23f4c3f48bf17d0377fb9f388cb02d4f3c3fa2369b5299accb27517f4c560",
+      "source_names": [
+        "faz-o-l-vinheta.mp3"
+      ],
+      "duration": 4.0170625,
+      "language_probability": 1,
+      "text": "Faz o L!",
+      "review": "automatic transcript only; music/rights not certified"
+    },
+    {
+      "id": "d9c724055264c7ee4e7476c761a3effad05fe6cfd62b31ecb41cff0204a20dde",
+      "source_names": [
+        "lula-bom-dia-motivacional-meme-kkkkkk.mp3"
+      ],
+      "duration": 15.9085625,
+      "language_probability": 1,
+      "text": "Bom dia, como vocês amanheceu o meu filho. Bom trabalho pra vocês todos, um abraço do papai Lula. Vou roubar vocês de montão. Quer dizer um pobre e mora no meu coração. Pense no Lula. O bagulho é louco, Manolo!",
+      "review": "automatic transcript only; music/rights not certified"
+    },
+    {
+      "id": "da603d41443ab9e62a1d52b60b8237f4228db7d8e14af21c04f2ffeb9f4aebf4",
+      "source_names": [
+        "setembro-vai-entrar-o-grosso-lula (1).mp3",
+        "setembro-vai-entrar-o-grosso-lula.mp3"
+      ],
+      "duration": 8.184,
+      "language_probability": 1,
+      "text": "E agora em setembro vai entrar o grosso, então o grosso vai começar a crescer dentro de cada trabalhador com mais força.",
+      "review": "automatic transcript only; music/rights not certified"
+    },
+    {
+      "id": "12d6ade6cdb5e20731f49095c95629cfc14be68d99aeaa8aa3caf7572768972b",
+      "source_names": [
+        "ah-lula-meu-presidente.mp3"
+      ],
+      "duration": 33.8808125,
+      "language_probability": 1,
+      "text": "A Lula, meu presidente, eu não aguento mais esperar aquilo que tu me prometeu, não os prometeu, principalmente aqui no nosso Nordeste, que é um lugar mais carente. O sonho do Nordeste, porque aqui a comida, o prato típico daqui é o ovo, que tem uma condiçãozinha como um frango.",
+      "review": "automatic transcript only; music/rights not certified"
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+{"error":"network error: fetch failed","exit_code":7,"suggestion":"the task keeps running server-side and is billed if it succeeds; resume with \"tripo task watch 8bbe10bc-8a27-4ce4-8081-430fd4afacf3 --download\" instead of resubmitting"}

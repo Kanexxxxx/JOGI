@@ -1,0 +1,96 @@
+{
+  "lula": {
+    "imported": true,
+    "mesh_objects": 1,
+    "polygons": 1960784,
+    "vertices": 1020355,
+    "armatures": 0,
+    "actions": 0,
+    "bounds_min": [
+      -0.4849853515625,
+      -0.1864013522863388,
+      0.0
+    ],
+    "bounds_max": [
+      0.4849853515625,
+      0.1864013522863388,
+      0.980072021484375
+    ],
+    "images": [
+      {
+        "name": "lula_base_v1.glb_basecolor.jpg",
+        "size": [
+          4096,
+          4096
+        ],
+        "packed": true
+      },
+      {
+        "name": "lula_base_v1.glb_normal.png",
+        "size": [
+          4096,
+          4096
+        ],
+        "packed": true
+      },
+      {
+        "name": "lula_base_v1.glb_rm.jpg",
+        "size": [
+          4096,
+          4096
+        ],
+        "packed": true
+      }
+    ],
+    "material_names": [
+      "tripo_material_912ded9e-0ad6-4b5d-a81c-10d39c68fa06"
+    ]
+  },
+  "flavio": {
+    "imported": true,
+    "mesh_objects": 1,
+    "polygons": 1978479,
+    "vertices": 1027439,
+    "armatures": 0,
+    "actions": 0,
+    "bounds_min": [
+      -0.4634552001953125,
+      -0.18170166015625,
+      0.0
+    ],
+    "bounds_max": [
+      0.4634552001953125,
+      0.18170166015625,
+      0.9803466796875
+    ],
+    "images": [
+      {
+        "name": "flavio_base_v1.glb_basecolor.jpg",
+        "size": [
+          4096,
+          4096
+        ],
+        "packed": true
+      },
+      {
+        "name": "flavio_base_v1.glb_normal.png",
+        "size": [
+          4096,
+          4096
+        ],
+        "packed": true
+      },
+      {
+        "name": "flavio_base_v1.glb_rm.jpg",
+        "size": [
+          4096,
+          4096
+        ],
+        "packed": true
+      }
+    ],
+    "material_names": [
+      "tripo_material_5b7aa59a-3195-4ebf-8045-06b519808237"
+    ]
+  }
+}

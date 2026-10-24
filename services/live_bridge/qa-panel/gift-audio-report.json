@@ -1,0 +1,31 @@
+{
+  "result": "FUNCTIONAL_PASS",
+  "scope": "Ephemeral local bridge; fixture telemetry and synthetic events only; no actual live, audio playback, or platform purchase",
+  "journeys": [
+    "Audio controls disabled without actual game telemetry; gift selector hidden for ordinary goal",
+    "Audio checkboxes reflect explicitly seeded telemetry, never an invented enabled state",
+    "Specific goal uses the selected exact observed ID despite duplicate gift names, with confirmed progress",
+    "All four independent audio flags delivered by WebSocket and confirmed by telemetry fixture",
+    "HTTP fallback transmits strict boolean audio switches without an admin WebSocket"
+  ],
+  "views": [
+    {
+      "width": 375,
+      "overflow": false,
+      "screenshot": "gift-audio-375.png"
+    },
+    {
+      "width": 768,
+      "overflow": false,
+      "screenshot": "gift-audio-768.png"
+    },
+    {
+      "width": 1440,
+      "overflow": false,
+      "screenshot": "gift-audio-1440.png"
+    }
+  ],
+  "console_errors": [],
+  "network_errors": [],
+  "visual_baseline": "Not compared; functional responsive inspection only"
+}

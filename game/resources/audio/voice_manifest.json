@@ -1,0 +1,448 @@
+{
+  "schema_version": 1,
+  "status": "generated_pending_listening_review",
+  "language": "pt-BR",
+  "model_id": "eleven_multilingual_v2",
+  "initial_character_limit": 2000,
+  "voice_policy": "Vozes originais sintéticas de narrador e equipes fictícias; sem clonagem ou imitação dos candidatos.",
+  "voice_settings": {
+    "stability": 0.45,
+    "similarity_boost": 0.75,
+    "style": 0.2,
+    "use_speaker_boost": true
+  },
+  "voices": {
+    "narrator": {
+      "voice_id": "onwK4e9ZLuTAKqWW03F9",
+      "original_synthetic": true
+    },
+    "team1": {
+      "voice_id": "IKne3meq5aSn9XLyUdCD",
+      "original_synthetic": true
+    },
+    "team2": {
+      "voice_id": "TX3LPaxmHKxFdv7VOQHJ",
+      "original_synthetic": true
+    }
+  },
+  "clips": [
+    {
+      "id": "start_a",
+      "kind": "start",
+      "team": 0,
+      "voice_role": "narrator",
+      "text": "Valendo! Dez minutos de corrida!",
+      "priority": 90,
+      "cooldown_seconds": 8,
+      "clip_path": "res://assets/audio/elevenlabs/40928dc4735cc5b68e2cd7b8d2abe6f55a5d36709869b7de8a44f37ea1ac808b.mp3",
+      "cache_key": "40928dc4735cc5b68e2cd7b8d2abe6f55a5d36709869b7de8a44f37ea1ac808b"
+    },
+    {
+      "id": "start_b",
+      "kind": "start",
+      "team": 0,
+      "voice_role": "narrator",
+      "text": "Largou! A torcida entra em ação!",
+      "priority": 90,
+      "cooldown_seconds": 8,
+      "clip_path": "res://assets/audio/elevenlabs/218987be123b29fd2eaa5de43fc46472bf73f6b9bee01f6b078ad5f2e8720fe7.mp3",
+      "cache_key": "218987be123b29fd2eaa5de43fc46472bf73f6b9bee01f6b078ad5f2e8720fe7"
+    },
+    {
+      "id": "tie_a",
+      "kind": "tie",
+      "team": 0,
+      "voice_role": "narrator",
+      "text": "Empate! Que disputa equilibrada!",
+      "priority": 100,
+      "cooldown_seconds": 8,
+      "clip_path": "res://assets/audio/elevenlabs/7cd7e8561105bee27407fe810f663928e8e1827ba031c64b5c03f4a683b463d3.mp3",
+      "cache_key": "7cd7e8561105bee27407fe810f663928e8e1827ba031c64b5c03f4a683b463d3"
+    },
+    {
+      "id": "tie_b",
+      "kind": "tie",
+      "team": 0,
+      "voice_role": "narrator",
+      "text": "Que disputa! Rodada empatada!",
+      "priority": 100,
+      "cooldown_seconds": 8,
+      "clip_path": "res://assets/audio/elevenlabs/88ba0ef8094d95d515ff2ed0d1522d6e001372f81df088631b986a3572186604.mp3",
+      "cache_key": "88ba0ef8094d95d515ff2ed0d1522d6e001372f81df088631b986a3572186604"
+    },
+    {
+      "id": "boost_1a",
+      "kind": "boost",
+      "team": 1,
+      "voice_role": "team1",
+      "text": "Impulso para a equipe vermelha!",
+      "priority": 40,
+      "cooldown_seconds": 6,
+      "clip_path": "res://assets/audio/elevenlabs/a897612383b6c5c40d242be08c6c6c269ee885bd1ccf51916321aa83f3a15fa1.mp3",
+      "cache_key": "a897612383b6c5c40d242be08c6c6c269ee885bd1ccf51916321aa83f3a15fa1"
+    },
+    {
+      "id": "boost_1b",
+      "kind": "boost",
+      "team": 1,
+      "voice_role": "team1",
+      "text": "A torcida vermelha acelerou!",
+      "priority": 40,
+      "cooldown_seconds": 6,
+      "clip_path": "res://assets/audio/elevenlabs/decc0f7ac7e244fd371be9811cb77c9a87d923b4fecfe98ac3ae405ca2766188.mp3",
+      "cache_key": "decc0f7ac7e244fd371be9811cb77c9a87d923b4fecfe98ac3ae405ca2766188"
+    },
+    {
+      "id": "boost_1c",
+      "kind": "boost",
+      "team": 1,
+      "voice_role": "team1",
+      "text": "Mais velocidade na faixa vermelha!",
+      "priority": 40,
+      "cooldown_seconds": 6,
+      "clip_path": "res://assets/audio/elevenlabs/fbe608fbf7baf9c4615791810d1ec84143af0e909e014e2377c7b36e7c329f85.mp3",
+      "cache_key": "fbe608fbf7baf9c4615791810d1ec84143af0e909e014e2377c7b36e7c329f85"
+    },
+    {
+      "id": "shield_1a",
+      "kind": "shield",
+      "team": 1,
+      "voice_role": "team1",
+      "text": "Escudo da equipe vermelha ativado!",
+      "priority": 55,
+      "cooldown_seconds": 7,
+      "clip_path": "res://assets/audio/elevenlabs/eb1dc0c24e74bde7f76357710f396f8d25f2636c7079bc08a1c0ba27a1b454ac.mp3",
+      "cache_key": "eb1dc0c24e74bde7f76357710f396f8d25f2636c7079bc08a1c0ba27a1b454ac"
+    },
+    {
+      "id": "shield_1b",
+      "kind": "shield",
+      "team": 1,
+      "voice_role": "team1",
+      "text": "Proteção na faixa vermelha!",
+      "priority": 55,
+      "cooldown_seconds": 7,
+      "clip_path": "res://assets/audio/elevenlabs/d21933a47877887f8cfed324eb85e4dee3eec1b30d5dd2d0945b5491322df733.mp3",
+      "cache_key": "d21933a47877887f8cfed324eb85e4dee3eec1b30d5dd2d0945b5491322df733"
+    },
+    {
+      "id": "attack_1a",
+      "kind": "attack",
+      "team": 1,
+      "voice_role": "team1",
+      "text": "Obstáculo na faixa vermelha!",
+      "priority": 60,
+      "cooldown_seconds": 7,
+      "clip_path": "res://assets/audio/elevenlabs/9a63de34df2d2a7e0932e3571507d0aa331df755425308e54c0587428aedbed4.mp3",
+      "cache_key": "9a63de34df2d2a7e0932e3571507d0aa331df755425308e54c0587428aedbed4"
+    },
+    {
+      "id": "attack_1b",
+      "kind": "attack",
+      "team": 1,
+      "voice_role": "team1",
+      "text": "Desafio para a equipe vermelha!",
+      "priority": 60,
+      "cooldown_seconds": 7,
+      "clip_path": "res://assets/audio/elevenlabs/7250e151edffcada6be5e3970677d4c74ba26b2a37add949dba7601bb3982a09.mp3",
+      "cache_key": "7250e151edffcada6be5e3970677d4c74ba26b2a37add949dba7601bb3982a09"
+    },
+    {
+      "id": "super_1a",
+      "kind": "super_turbo",
+      "team": 1,
+      "voice_role": "team1",
+      "text": "Super turbo vermelho! Segura essa!",
+      "priority": 80,
+      "cooldown_seconds": 10,
+      "clip_path": "res://assets/audio/elevenlabs/af9061201aeb9a9939932b125ce496a53ad5a83ad397038b75426de55b522786.mp3",
+      "cache_key": "af9061201aeb9a9939932b125ce496a53ad5a83ad397038b75426de55b522786"
+    },
+    {
+      "id": "super_1b",
+      "kind": "super_turbo",
+      "team": 1,
+      "voice_role": "team1",
+      "text": "Potência máxima na faixa vermelha!",
+      "priority": 80,
+      "cooldown_seconds": 10,
+      "clip_path": "res://assets/audio/elevenlabs/d0f31002934658d813c085f698194607ab6c3c2ba3b096bc060b968af5350eeb.mp3",
+      "cache_key": "d0f31002934658d813c085f698194607ab6c3c2ba3b096bc060b968af5350eeb"
+    },
+    {
+      "id": "podium_1a",
+      "kind": "podium",
+      "team": 1,
+      "voice_role": "narrator",
+      "text": "Treze venceu! Lula ganhou a rodada!",
+      "priority": 100,
+      "cooldown_seconds": 8,
+      "clip_path": "res://assets/audio/elevenlabs/f11fa2d52d748d09d9730cb6ca0459556e8f9d878e268598a3c21caae2939cec.mp3",
+      "cache_key": "f11fa2d52d748d09d9730cb6ca0459556e8f9d878e268598a3c21caae2939cec"
+    },
+    {
+      "id": "podium_1b",
+      "kind": "podium",
+      "team": 1,
+      "voice_role": "narrator",
+      "text": "Vitória do treze! Lula foi mais longe!",
+      "priority": 100,
+      "cooldown_seconds": 8,
+      "clip_path": "res://assets/audio/elevenlabs/1eb965b252116d7a1d6d781feb6b759246432ae98832fb1cc06bbdce786727fd.mp3",
+      "cache_key": "1eb965b252116d7a1d6d781feb6b759246432ae98832fb1cc06bbdce786727fd"
+    },
+    {
+      "id": "vote_1a",
+      "kind": "vote",
+      "team": 1,
+      "voice_role": "team1",
+      "text": "Torcida vermelha na pista!",
+      "priority": 10,
+      "cooldown_seconds": 15,
+      "clip_path": "res://assets/audio/elevenlabs/1f44eaa489024c74a77912b5787327aa34abd4c7b494d6206ae71ea07f6b9566.mp3",
+      "cache_key": "1f44eaa489024c74a77912b5787327aa34abd4c7b494d6206ae71ea07f6b9566"
+    },
+    {
+      "id": "vote_1b",
+      "kind": "vote",
+      "team": 1,
+      "voice_role": "team1",
+      "text": "A equipe vermelha ganhou torcida!",
+      "priority": 10,
+      "cooldown_seconds": 15,
+      "clip_path": "res://assets/audio/elevenlabs/17e07229f5ef651c76618bb0ba9ff35e2ed7e97677b18e5c1ea65650bc20fdff.mp3",
+      "cache_key": "17e07229f5ef651c76618bb0ba9ff35e2ed7e97677b18e5c1ea65650bc20fdff"
+    },
+    {
+      "id": "boost_2a",
+      "kind": "boost",
+      "team": 2,
+      "voice_role": "team2",
+      "text": "Impulso para a equipe Brasil!",
+      "priority": 40,
+      "cooldown_seconds": 6,
+      "clip_path": "res://assets/audio/elevenlabs/c47b2b56e867157dc1879edc9c6dc7b2bc09288db33c27b9c8b6926e4eba459d.mp3",
+      "cache_key": "c47b2b56e867157dc1879edc9c6dc7b2bc09288db33c27b9c8b6926e4eba459d"
+    },
+    {
+      "id": "boost_2b",
+      "kind": "boost",
+      "team": 2,
+      "voice_role": "team2",
+      "text": "A torcida Brasil acelerou!",
+      "priority": 40,
+      "cooldown_seconds": 6,
+      "clip_path": "res://assets/audio/elevenlabs/4fe29129955a2dbf6ada7fe79daa2e93fa178c92a5d82b9185443661f60ef8bb.mp3",
+      "cache_key": "4fe29129955a2dbf6ada7fe79daa2e93fa178c92a5d82b9185443661f60ef8bb"
+    },
+    {
+      "id": "boost_2c",
+      "kind": "boost",
+      "team": 2,
+      "voice_role": "team2",
+      "text": "Mais velocidade na faixa Brasil!",
+      "priority": 40,
+      "cooldown_seconds": 6,
+      "clip_path": "res://assets/audio/elevenlabs/d964f517806205212262c161953e860643b8e0d69d3bfe532b39683179eccc3b.mp3",
+      "cache_key": "d964f517806205212262c161953e860643b8e0d69d3bfe532b39683179eccc3b"
+    },
+    {
+      "id": "shield_2a",
+      "kind": "shield",
+      "team": 2,
+      "voice_role": "team2",
+      "text": "Escudo da equipe Brasil ativado!",
+      "priority": 55,
+      "cooldown_seconds": 7,
+      "clip_path": "res://assets/audio/elevenlabs/a5302c5d8b1f70eec4812eb96813710933ade6256c8ec67c11f12364485adb4a.mp3",
+      "cache_key": "a5302c5d8b1f70eec4812eb96813710933ade6256c8ec67c11f12364485adb4a"
+    },
+    {
+      "id": "shield_2b",
+      "kind": "shield",
+      "team": 2,
+      "voice_role": "team2",
+      "text": "Proteção na faixa Brasil!",
+      "priority": 55,
+      "cooldown_seconds": 7,
+      "clip_path": "res://assets/audio/elevenlabs/99e4ff2251e3af6d4b27a969d80c9c254afbd5750495992231c6e476a258a74b.mp3",
+      "cache_key": "99e4ff2251e3af6d4b27a969d80c9c254afbd5750495992231c6e476a258a74b"
+    },
+    {
+      "id": "attack_2a",
+      "kind": "attack",
+      "team": 2,
+      "voice_role": "team2",
+      "text": "Obstáculo na faixa Brasil!",
+      "priority": 60,
+      "cooldown_seconds": 7,
+      "clip_path": "res://assets/audio/elevenlabs/f8cc8b4e2b5b141cc579facc57f30e1d280a510a7892f29ea80795098348b663.mp3",
+      "cache_key": "f8cc8b4e2b5b141cc579facc57f30e1d280a510a7892f29ea80795098348b663"
+    },
+    {
+      "id": "attack_2b",
+      "kind": "attack",
+      "team": 2,
+      "voice_role": "team2",
+      "text": "Desafio para a equipe Brasil!",
+      "priority": 60,
+      "cooldown_seconds": 7,
+      "clip_path": "res://assets/audio/elevenlabs/4e84a48a214c0385b8c1aa6d042c3001f495e1edc63d29f43ec564e9f5b09b1b.mp3",
+      "cache_key": "4e84a48a214c0385b8c1aa6d042c3001f495e1edc63d29f43ec564e9f5b09b1b"
+    },
+    {
+      "id": "super_2a",
+      "kind": "super_turbo",
+      "team": 2,
+      "voice_role": "team2",
+      "text": "Super turbo Brasil! Segura essa!",
+      "priority": 80,
+      "cooldown_seconds": 10,
+      "clip_path": "res://assets/audio/elevenlabs/d229417f5353607282c20e94b190d21b32f8f8b5a6ac5f594fb7b81b81e5331a.mp3",
+      "cache_key": "d229417f5353607282c20e94b190d21b32f8f8b5a6ac5f594fb7b81b81e5331a"
+    },
+    {
+      "id": "super_2b",
+      "kind": "super_turbo",
+      "team": 2,
+      "voice_role": "team2",
+      "text": "Potência máxima na faixa Brasil!",
+      "priority": 80,
+      "cooldown_seconds": 10,
+      "clip_path": "res://assets/audio/elevenlabs/93eade5e820c9574d130c61c008c7385fc690996ce5908389e60cb15997d7c19.mp3",
+      "cache_key": "93eade5e820c9574d130c61c008c7385fc690996ce5908389e60cb15997d7c19"
+    },
+    {
+      "id": "podium_2a",
+      "kind": "podium",
+      "team": 2,
+      "voice_role": "narrator",
+      "text": "Vinte e dois venceu! Flávio ganhou a rodada!",
+      "priority": 100,
+      "cooldown_seconds": 8,
+      "clip_path": "res://assets/audio/elevenlabs/9d55dae566c35a53ec3623ecbdf5e53eeb30cfae352d7ab1bedba49d936aa185.mp3",
+      "cache_key": "9d55dae566c35a53ec3623ecbdf5e53eeb30cfae352d7ab1bedba49d936aa185"
+    },
+    {
+      "id": "podium_2b",
+      "kind": "podium",
+      "team": 2,
+      "voice_role": "narrator",
+      "text": "Vitória do vinte e dois! Flávio foi mais longe!",
+      "priority": 100,
+      "cooldown_seconds": 8,
+      "clip_path": "res://assets/audio/elevenlabs/b9bb24dc9c8b5b7bb2815cf27a43ae6cc9f26cbe39c433bf7d90c9ffa15964af.mp3",
+      "cache_key": "b9bb24dc9c8b5b7bb2815cf27a43ae6cc9f26cbe39c433bf7d90c9ffa15964af"
+    },
+    {
+      "id": "vote_2a",
+      "kind": "vote",
+      "team": 2,
+      "voice_role": "team2",
+      "text": "Torcida Brasil na pista!",
+      "priority": 10,
+      "cooldown_seconds": 15,
+      "clip_path": "res://assets/audio/elevenlabs/aae6e1c52d19c670eb60e862072f572c9b3a22921cd97cd8ab79df65ec8e2ec2.mp3",
+      "cache_key": "aae6e1c52d19c670eb60e862072f572c9b3a22921cd97cd8ab79df65ec8e2ec2"
+    },
+    {
+      "id": "vote_2b",
+      "kind": "vote",
+      "team": 2,
+      "voice_role": "team2",
+      "text": "A equipe Brasil ganhou torcida!",
+      "priority": 10,
+      "cooldown_seconds": 15,
+      "clip_path": "res://assets/audio/elevenlabs/f27414afcc4f6a2a07630c7b1919a1d241c5dd7c6ea85c3cbf652c8a11fdb905.mp3",
+      "cache_key": "f27414afcc4f6a2a07630c7b1919a1d241c5dd7c6ea85c3cbf652c8a11fdb905"
+    },
+    {
+      "id": "overtake_1a",
+      "kind": "overtake",
+      "team": 1,
+      "voice_role": "narrator",
+      "text": "Ultrapassou! Treze na liderança!",
+      "priority": 80,
+      "cooldown_seconds": 8,
+      "clip_path": "res://assets/audio/elevenlabs/5122fed77a4f54668963a52a4eb0a44392991eb8b2c7ac060c997a3e038c50ef.mp3",
+      "cache_key": "5122fed77a4f54668963a52a4eb0a44392991eb8b2c7ac060c997a3e038c50ef"
+    },
+    {
+      "id": "overtake_1b",
+      "kind": "overtake",
+      "team": 1,
+      "voice_role": "narrator",
+      "text": "Lula tomou a ponta! Treze na frente!",
+      "priority": 80,
+      "cooldown_seconds": 8,
+      "clip_path": "res://assets/audio/elevenlabs/e7663c6c47a211e162b53723a312f7d9111735408a5b75ebbce56ee1484aaab3.mp3",
+      "cache_key": "e7663c6c47a211e162b53723a312f7d9111735408a5b75ebbce56ee1484aaab3"
+    },
+    {
+      "id": "overtake_2a",
+      "kind": "overtake",
+      "team": 2,
+      "voice_role": "narrator",
+      "text": "Ultrapassou! Vinte e dois na liderança!",
+      "priority": 80,
+      "cooldown_seconds": 8,
+      "clip_path": "res://assets/audio/elevenlabs/15ec2bb0aed2a501f100a2461422a73d191e7c40c0c61cd6f11bf598aec88eda.mp3",
+      "cache_key": "15ec2bb0aed2a501f100a2461422a73d191e7c40c0c61cd6f11bf598aec88eda"
+    },
+    {
+      "id": "overtake_2b",
+      "kind": "overtake",
+      "team": 2,
+      "voice_role": "narrator",
+      "text": "Flávio tomou a ponta! Vinte e dois na frente!",
+      "priority": 80,
+      "cooldown_seconds": 8,
+      "clip_path": "res://assets/audio/elevenlabs/2f7fa8926377b189f395a681b2411e80b06ad25f904aca4716ec2e448fe5ae65.mp3",
+      "cache_key": "2f7fa8926377b189f395a681b2411e80b06ad25f904aca4716ec2e448fe5ae65"
+    },
+    {
+      "id": "final_stretch_a",
+      "kind": "final_stretch",
+      "team": 0,
+      "voice_role": "narrator",
+      "text": "Últimos trinta segundos! Agora vale a arrancada!",
+      "priority": 85,
+      "cooldown_seconds": 60,
+      "clip_path": "res://assets/audio/elevenlabs/3a9ad315acbc33eb7bf752b807684fa143b7e67415a500dc207cd1103410ed24.mp3",
+      "cache_key": "3a9ad315acbc33eb7bf752b807684fa143b7e67415a500dc207cd1103410ed24"
+    },
+    {
+      "id": "final_stretch_b",
+      "kind": "final_stretch",
+      "team": 0,
+      "voice_role": "narrator",
+      "text": "Reta final! Trinta segundos para decidir!",
+      "priority": 85,
+      "cooldown_seconds": 60,
+      "clip_path": "res://assets/audio/elevenlabs/bba1056f5961479afa87d3e08fb5c33936fddbd100c43a6c92905538be632345.mp3",
+      "cache_key": "bba1056f5961479afa87d3e08fb5c33936fddbd100c43a6c92905538be632345"
+    },
+    {
+      "id": "next_round_a",
+      "kind": "next_round",
+      "team": 0,
+      "voice_role": "narrator",
+      "text": "Prepare a torcida! A próxima rodada já vai começar!",
+      "priority": 70,
+      "cooldown_seconds": 20,
+      "clip_path": "res://assets/audio/elevenlabs/fda4f58f3eb9e015ac3c707384c5de98ed5c8d942169f87b841921719e68738f.mp3",
+      "cache_key": "fda4f58f3eb9e015ac3c707384c5de98ed5c8d942169f87b841921719e68738f"
+    },
+    {
+      "id": "next_round_b",
+      "kind": "next_round",
+      "team": 0,
+      "voice_role": "narrator",
+      "text": "Nova rodada chegando! Escolha treze ou vinte e dois!",
+      "priority": 70,
+      "cooldown_seconds": 20,
+      "clip_path": "res://assets/audio/elevenlabs/38de347a9cd3c3564885379f6302f017cf4c2611820e90b169534739498525f1.mp3",
+      "cache_key": "38de347a9cd3c3564885379f6302f017cf4c2611820e90b169534739498525f1"
+    }
+  ]
+}

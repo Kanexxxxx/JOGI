@@ -1,0 +1,130 @@
+{
+  "lula": {
+    "source": "assets\\models\\lula\\lula_base_v1.glb",
+    "output": "assets\\models\\lula\\derived-v4\\lula_lod60k_v4.glb",
+    "source_triangles": 1960784,
+    "output_triangles": 60000,
+    "source_bounds": [
+      [
+        -0.4849853515625,
+        -0.1864013522863388,
+        0.0
+      ],
+      [
+        0.4849853515625,
+        0.1864013522863388,
+        0.980072021484375
+      ]
+    ],
+    "output_bounds": [
+      [
+        -0.48485955595970154,
+        -0.18647097051143646,
+        2.1305171685526147e-05
+      ],
+      [
+        0.48501041531562805,
+        0.1863911896944046,
+        0.9802514314651489
+      ]
+    ],
+    "uv_layers": 1,
+    "components": [
+      {
+        "vertices": 29989,
+        "min": [
+          -0.48485955595970154,
+          -0.18647097051143646,
+          2.1305171685526147e-05
+        ],
+        "max": [
+          0.48501041531562805,
+          0.1863911896944046,
+          0.9802514314651489
+        ]
+      }
+    ],
+    "texture_sizes": [
+      [
+        4096,
+        4096
+      ],
+      [
+        4096,
+        4096
+      ],
+      [
+        4096,
+        4096
+      ]
+    ],
+    "rigged": false,
+    "method": "Blender collapse decimation; not deformation-ready retopology",
+    "weld_threshold": 5e-06,
+    "output_bytes": 10091328
+  },
+  "flavio": {
+    "source": "assets\\models\\flavio\\flavio_base_v1.glb",
+    "output": "assets\\models\\flavio\\derived-v4\\flavio_lod60k_v4.glb",
+    "source_triangles": 1978479,
+    "output_triangles": 59999,
+    "source_bounds": [
+      [
+        -0.4634552001953125,
+        -0.18170166015625,
+        0.0
+      ],
+      [
+        0.4634552001953125,
+        0.18170166015625,
+        0.9803466796875
+      ]
+    ],
+    "output_bounds": [
+      [
+        -0.46356910467147827,
+        -0.1816825270652771,
+        -3.2639050914440304e-05
+      ],
+      [
+        0.46342384815216064,
+        0.18180952966213226,
+        0.9802112579345703
+      ]
+    ],
+    "uv_layers": 1,
+    "components": [
+      {
+        "vertices": 29996,
+        "min": [
+          -0.46356910467147827,
+          -0.1816825270652771,
+          -3.2639050914440304e-05
+        ],
+        "max": [
+          0.46342384815216064,
+          0.18180952966213226,
+          0.9802112579345703
+        ]
+      }
+    ],
+    "texture_sizes": [
+      [
+        4096,
+        4096
+      ],
+      [
+        4096,
+        4096
+      ],
+      [
+        4096,
+        4096
+      ]
+    ],
+    "rigged": false,
+    "method": "Blender collapse decimation; not deformation-ready retopology",
+    "weld_threshold": 5e-06,
+    "output_bytes": 9529040
+  }
+}

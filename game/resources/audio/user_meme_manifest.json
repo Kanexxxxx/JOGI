@@ -1,0 +1,233 @@
+{
+  "schema_version": 1,
+  "enabled": true,
+  "policy": "Only three short spoken excerpts selected from local transcript review. Archive memes, never impersonation of the runner. Other files remain excluded; platform decisions and music rights not certified.",
+  "clips": [
+    {
+      "id": "254d22681d247fcf5ce058a2b47a3eedfc1abd2d86699b299d6d876dff21e506",
+      "source_names": [
+        "lula-pergunta-simples.mp3"
+      ],
+      "bytes": 66817,
+      "clip_path": "res://assets/audio/user-memes/254d22681d247fcf5ce058a2b47a3eedfc1abd2d86699b299d6d876dff21e506.mp3",
+      "enabled": false,
+      "review_status": "excluded",
+      "review_notes": "Excluded from automatic rotation: long clip, music, suggestive/profane content, or insufficient confidence. Original retained.",
+      "kind": "unassigned",
+      "team": 0,
+      "duration_seconds": 8.52904796600342,
+      "cooldown_seconds": 60
+    },
+    {
+      "id": "1296f90d75d6b62bccabb9cbb15526eb3ed2e49bbf0e31a92f5ba3d3fc119c36",
+      "source_names": [
+        "chega-de-frescura-e-mimimi.mp3"
+      ],
+      "bytes": 138340,
+      "clip_path": "res://assets/audio/user-memes/1296f90d75d6b62bccabb9cbb15526eb3ed2e49bbf0e31a92f5ba3d3fc119c36.mp3",
+      "enabled": false,
+      "review_status": "excluded",
+      "review_notes": "Excluded from automatic rotation: long clip, music, suggestive/profane content, or insufficient confidence. Original retained.",
+      "kind": "unassigned",
+      "team": 0,
+      "duration_seconds": 6.57600021362305,
+      "cooldown_seconds": 60
+    },
+    {
+      "id": "f6a216503bcd130211976283c12977847b5dbcd5187f3b36706da8721cf5bf0e",
+      "source_names": [
+        "explica.mp3"
+      ],
+      "bytes": 168044,
+      "clip_path": "res://assets/audio/user-memes/f6a216503bcd130211976283c12977847b5dbcd5187f3b36706da8721cf5bf0e.mp3",
+      "enabled": true,
+      "review_status": "approved",
+      "review_notes": "Short spoken archive excerpt; Portuguese transcript reviewed locally; no profanity in transcript. Human listening/music-rights verification not certified.",
+      "kind": "impact",
+      "team": 0,
+      "duration_seconds": 4.14599990844727,
+      "cooldown_seconds": 90
+    },
+    {
+      "id": "39d217489d165610e221eb4491c9da15d2da38d1b1782018a8f691dce1de60b6",
+      "source_names": [
+        "bolsonaro-acabou-porra.mp3"
+      ],
+      "bytes": 52244,
+      "clip_path": "res://assets/audio/user-memes/39d217489d165610e221eb4491c9da15d2da38d1b1782018a8f691dce1de60b6.mp3",
+      "enabled": false,
+      "review_status": "excluded",
+      "review_notes": "Excluded from automatic rotation: long clip, music, suggestive/profane content, or insufficient confidence. Original retained.",
+      "kind": "unassigned",
+      "team": 0,
+      "duration_seconds": 1.24775505065918,
+      "cooldown_seconds": 60
+    },
+    {
+      "id": "59cdc61fd3d429e34a12e2247342a2fa5f766c60bd42dece0ff831f59842ba4a",
+      "source_names": [
+        "vai-novinha-lula-e-bolsonaro.mp3"
+      ],
+      "bytes": 303498,
+      "clip_path": "res://assets/audio/user-memes/59cdc61fd3d429e34a12e2247342a2fa5f766c60bd42dece0ff831f59842ba4a.mp3",
+      "enabled": false,
+      "review_status": "excluded",
+      "review_notes": "Excluded from automatic rotation: long clip, music, suggestive/profane content, or insufficient confidence. Original retained.",
+      "kind": "unassigned",
+      "team": 0,
+      "duration_seconds": 7.53697919845581,
+      "cooldown_seconds": 60
+    },
+    {
+      "id": "60954d5a24551b83f6c706917e4d7714eb167b491a908358d53507b4649cefa5",
+      "source_names": [
+        "bolsonaro-pegaram-meu-telefone.mp3"
+      ],
+      "bytes": 40604,
+      "clip_path": "res://assets/audio/user-memes/60954d5a24551b83f6c706917e4d7714eb167b491a908358d53507b4649cefa5.mp3",
+      "enabled": true,
+      "review_status": "approved",
+      "review_notes": "Short spoken archive excerpt; Portuguese transcript reviewed locally; no profanity in transcript. Human listening/music-rights verification not certified.",
+      "kind": "shield",
+      "team": 0,
+      "duration_seconds": 4.57433319091797,
+      "cooldown_seconds": 90
+    },
+    {
+      "id": "3cd57b5148c3818f3331eefcbd0d5f18747bcc4ea763367e2022893b8cb018d1",
+      "source_names": [
+        "bolsonaro-risada.mp3"
+      ],
+      "bytes": 145904,
+      "clip_path": "res://assets/audio/user-memes/3cd57b5148c3818f3331eefcbd0d5f18747bcc4ea763367e2022893b8cb018d1.mp3",
+      "enabled": false,
+      "review_status": "excluded",
+      "review_notes": "Excluded from automatic rotation: long clip, music, suggestive/profane content, or insufficient confidence. Original retained.",
+      "kind": "unassigned",
+      "team": 0,
+      "duration_seconds": 6.52480745315552,
+      "cooldown_seconds": 60
+    },
+    {
+      "id": "cd25d3ad9b29ef1920e3828e66c9e11cb7c818d2b6a28ce2549cfe61a1545cb3",
+      "source_names": [
+        "cade-o-ze-gotinha.mp3"
+      ],
+      "bytes": 97637,
+      "clip_path": "res://assets/audio/user-memes/cd25d3ad9b29ef1920e3828e66c9e11cb7c818d2b6a28ce2549cfe61a1545cb3.mp3",
+      "enabled": false,
+      "review_status": "excluded",
+      "review_notes": "Excluded from automatic rotation: long clip, music, suggestive/profane content, or insufficient confidence. Original retained.",
+      "kind": "unassigned",
+      "team": 0,
+      "duration_seconds": 6.06040811538696,
+      "cooldown_seconds": 60
+    },
+    {
+      "id": "af69dda1653d66fc1892c86229c39aaddb3415eb79e02cb3f6d9fcdb88f78472",
+      "source_names": [
+        "lula-e-pra-apanhar-e-ficar-calado.mp3"
+      ],
+      "bytes": 140972,
+      "clip_path": "res://assets/audio/user-memes/af69dda1653d66fc1892c86229c39aaddb3415eb79e02cb3f6d9fcdb88f78472.mp3",
+      "enabled": false,
+      "review_status": "excluded",
+      "review_notes": "Excluded from automatic rotation: long clip, music, suggestive/profane content, or insufficient confidence. Original retained.",
+      "kind": "unassigned",
+      "team": 0,
+      "duration_seconds": 8.76000022888184,
+      "cooldown_seconds": 60
+    },
+    {
+      "id": "e6dc2d56272a66d5c796c21167ace8581a02efc2957ffe05684c06e7aa96e738",
+      "source_names": [
+        "sem-h-calanguinho.mp3"
+      ],
+      "bytes": 216148,
+      "clip_path": "res://assets/audio/user-memes/e6dc2d56272a66d5c796c21167ace8581a02efc2957ffe05684c06e7aa96e738.mp3",
+      "enabled": false,
+      "review_status": "excluded",
+      "review_notes": "Excluded from automatic rotation: long clip, music, suggestive/profane content, or insufficient confidence. Original retained.",
+      "kind": "unassigned",
+      "team": 0,
+      "duration_seconds": 21.5044994354248,
+      "cooldown_seconds": 60
+    },
+    {
+      "id": "01365e0e108baa24d80e7d26eb7e9ccc73d89eb6abef1ac774cebe2a6b89a50b",
+      "source_names": [
+        "lula-bora-pra-rua-gente.mp3"
+      ],
+      "bytes": 70080,
+      "clip_path": "res://assets/audio/user-memes/01365e0e108baa24d80e7d26eb7e9ccc73d89eb6abef1ac774cebe2a6b89a50b.mp3",
+      "enabled": true,
+      "review_status": "approved",
+      "review_notes": "Short spoken archive excerpt; Portuguese transcript reviewed locally; no profanity in transcript. Human listening/music-rights verification not certified.",
+      "kind": "boost",
+      "team": 1,
+      "duration_seconds": 1.69506251811981,
+      "cooldown_seconds": 90
+    },
+    {
+      "id": "2cc23f4c3f48bf17d0377fb9f388cb02d4f3c3fa2369b5299accb27517f4c560",
+      "source_names": [
+        "faz-o-l-vinheta.mp3"
+      ],
+      "bytes": 163145,
+      "clip_path": "res://assets/audio/user-memes/2cc23f4c3f48bf17d0377fb9f388cb02d4f3c3fa2369b5299accb27517f4c560.mp3",
+      "enabled": false,
+      "review_status": "excluded",
+      "review_notes": "Excluded from automatic rotation: long clip, music, suggestive/profane content, or insufficient confidence. Original retained.",
+      "kind": "unassigned",
+      "team": 0,
+      "duration_seconds": 4.0170521736145,
+      "cooldown_seconds": 60
+    },
+    {
+      "id": "d9c724055264c7ee4e7476c761a3effad05fe6cfd62b31ecb41cff0204a20dde",
+      "source_names": [
+        "lula-bom-dia-motivacional-meme-kkkkkk.mp3"
+      ],
+      "bytes": 159755,
+      "clip_path": "res://assets/audio/user-memes/d9c724055264c7ee4e7476c761a3effad05fe6cfd62b31ecb41cff0204a20dde.mp3",
+      "enabled": false,
+      "review_status": "excluded",
+      "review_notes": "Excluded from automatic rotation: long clip, music, suggestive/profane content, or insufficient confidence. Original retained.",
+      "kind": "unassigned",
+      "team": 0,
+      "duration_seconds": 15.9085712432861,
+      "cooldown_seconds": 60
+    },
+    {
+      "id": "da603d41443ab9e62a1d52b60b8237f4228db7d8e14af21c04f2ffeb9f4aebf4",
+      "source_names": [
+        "setembro-vai-entrar-o-grosso-lula (1).mp3",
+        "setembro-vai-entrar-o-grosso-lula.mp3"
+      ],
+      "bytes": 130991,
+      "clip_path": "res://assets/audio/user-memes/da603d41443ab9e62a1d52b60b8237f4228db7d8e14af21c04f2ffeb9f4aebf4.mp3",
+      "enabled": false,
+      "review_status": "excluded",
+      "review_notes": "Excluded from automatic rotation: long clip, music, suggestive/profane content, or insufficient confidence. Original retained.",
+      "kind": "unassigned",
+      "team": 0,
+      "duration_seconds": 8.15999984741211,
+      "cooldown_seconds": 60
+    },
+    {
+      "id": "12d6ade6cdb5e20731f49095c95629cfc14be68d99aeaa8aa3caf7572768972b",
+      "source_names": [
+        "ah-lula-meu-presidente.mp3"
+      ],
+      "bytes": 207671,
+      "clip_path": "res://assets/audio/user-memes/12d6ade6cdb5e20731f49095c95629cfc14be68d99aeaa8aa3caf7572768972b.mp3",
+      "enabled": false,
+      "review_status": "excluded",
+      "review_notes": "Excluded from automatic rotation: long clip, music, suggestive/profane content, or insufficient confidence. Original retained.",
+      "kind": "unassigned",
+      "team": 0,
+      "duration_seconds": 33.8808174133301,
+      "cooldown_seconds": 60
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "lula": {
+    "path": "assets\\models\\lula\\rig-preview-v4\\lula_rig_preview_v4.glb",
+    "bones": 19,
+    "clips": [
+      "espera",
+      "corrida",
+      "turbo"
+    ],
+    "weight_regions": {
+      "head": 15704,
+      "cape": 7201,
+      "limbs_body": 15192
+    },
+    "textures": "2048x2048",
+    "bytes": 13303424,
+    "status": "experimental spatial weights; cape and joints require visual QA"
+  },
+  "flavio": {
+    "path": "assets\\models\\flavio\\rig-preview-v4\\flavio_rig_preview_v4.glb",
+    "bones": 19,
+    "clips": [
+      "espera",
+      "corrida",
+      "turbo"
+    ],
+    "weight_regions": {
+      "head": 10617,
+      "cape": 7907,
+      "limbs_body": 19495
+    },
+    "textures": "2048x2048",
+    "bytes": 13016544,
+    "status": "experimental spatial weights; cape and joints require visual QA"
+  }
+}

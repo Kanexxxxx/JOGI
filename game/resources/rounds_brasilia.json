@@ -1,0 +1,356 @@
+{
+  "schema_version": "1.0",
+  "rounds_per_cycle": 50,
+  "rounds": [
+    {
+      "id": 1,
+      "act_id": 1,
+      "preset_id": 1,
+      "duration_seconds": 600,
+      "name": "Primeiro Sol"
+    },
+    {
+      "id": 2,
+      "act_id": 1,
+      "preset_id": 2,
+      "duration_seconds": 600,
+      "name": "Céu de Brasília"
+    },
+    {
+      "id": 3,
+      "act_id": 1,
+      "preset_id": 3,
+      "duration_seconds": 600,
+      "name": "Brisa na Esplanada"
+    },
+    {
+      "id": 4,
+      "act_id": 1,
+      "preset_id": 4,
+      "duration_seconds": 600,
+      "name": "Nuvens Monumentais"
+    },
+    {
+      "id": 5,
+      "act_id": 1,
+      "preset_id": 5,
+      "duration_seconds": 600,
+      "name": "Reflexos do Meio-Dia"
+    },
+    {
+      "id": 6,
+      "act_id": 1,
+      "preset_id": 6,
+      "duration_seconds": 600,
+      "name": "Tarde Dourada"
+    },
+    {
+      "id": 7,
+      "act_id": 1,
+      "preset_id": 7,
+      "duration_seconds": 600,
+      "name": "Horizonte Coral"
+    },
+    {
+      "id": 8,
+      "act_id": 1,
+      "preset_id": 8,
+      "duration_seconds": 600,
+      "name": "Hora Azul"
+    },
+    {
+      "id": 9,
+      "act_id": 1,
+      "preset_id": 9,
+      "duration_seconds": 600,
+      "name": "Capital Iluminada"
+    },
+    {
+      "id": 10,
+      "act_id": 1,
+      "preset_id": 10,
+      "duration_seconds": 600,
+      "name": "Festa da Esplanada"
+    },
+    {
+      "id": 11,
+      "act_id": 2,
+      "preset_id": 1,
+      "duration_seconds": 600,
+      "name": "Largada das Águas"
+    },
+    {
+      "id": 12,
+      "act_id": 2,
+      "preset_id": 2,
+      "duration_seconds": 600,
+      "name": "Espelhos da Capital"
+    },
+    {
+      "id": 13,
+      "act_id": 2,
+      "preset_id": 3,
+      "duration_seconds": 600,
+      "name": "Brisa do Lago"
+    },
+    {
+      "id": 14,
+      "act_id": 2,
+      "preset_id": 4,
+      "duration_seconds": 600,
+      "name": "Pontes de Luz"
+    },
+    {
+      "id": 15,
+      "act_id": 2,
+      "preset_id": 5,
+      "duration_seconds": 600,
+      "name": "Água e Concreto"
+    },
+    {
+      "id": 16,
+      "act_id": 2,
+      "preset_id": 6,
+      "duration_seconds": 600,
+      "name": "Reflexos Dourados"
+    },
+    {
+      "id": 17,
+      "act_id": 2,
+      "preset_id": 7,
+      "duration_seconds": 600,
+      "name": "Pôr do Sol no Lago"
+    },
+    {
+      "id": 18,
+      "act_id": 2,
+      "preset_id": 8,
+      "duration_seconds": 600,
+      "name": "Águas da Hora Azul"
+    },
+    {
+      "id": 19,
+      "act_id": 2,
+      "preset_id": 9,
+      "duration_seconds": 600,
+      "name": "Reflexos Noturnos"
+    },
+    {
+      "id": 20,
+      "act_id": 2,
+      "preset_id": 10,
+      "duration_seconds": 600,
+      "name": "Festival das Águas"
+    },
+    {
+      "id": 21,
+      "act_id": 3,
+      "preset_id": 1,
+      "duration_seconds": 600,
+      "name": "Amanhecer do Cerrado"
+    },
+    {
+      "id": 22,
+      "act_id": 3,
+      "preset_id": 2,
+      "duration_seconds": 600,
+      "name": "Ipês da Capital"
+    },
+    {
+      "id": 23,
+      "act_id": 3,
+      "preset_id": 3,
+      "duration_seconds": 600,
+      "name": "Vento no Jardim"
+    },
+    {
+      "id": 24,
+      "act_id": 3,
+      "preset_id": 4,
+      "duration_seconds": 600,
+      "name": "Sombras do Cerrado"
+    },
+    {
+      "id": 25,
+      "act_id": 3,
+      "preset_id": 5,
+      "duration_seconds": 600,
+      "name": "Jardim Monumental"
+    },
+    {
+      "id": 26,
+      "act_id": 3,
+      "preset_id": 6,
+      "duration_seconds": 600,
+      "name": "Cerrado Dourado"
+    },
+    {
+      "id": 27,
+      "act_id": 3,
+      "preset_id": 7,
+      "duration_seconds": 600,
+      "name": "Flores do Entardecer"
+    },
+    {
+      "id": 28,
+      "act_id": 3,
+      "preset_id": 8,
+      "duration_seconds": 600,
+      "name": "Jardim da Hora Azul"
+    },
+    {
+      "id": 29,
+      "act_id": 3,
+      "preset_id": 9,
+      "duration_seconds": 600,
+      "name": "Jardim Iluminado"
+    },
+    {
+      "id": 30,
+      "act_id": 3,
+      "preset_id": 10,
+      "duration_seconds": 600,
+      "name": "Festa dos Ipês"
+    },
+    {
+      "id": 31,
+      "act_id": 4,
+      "preset_id": 1,
+      "duration_seconds": 600,
+      "name": "Sol na Praça"
+    },
+    {
+      "id": 32,
+      "act_id": 4,
+      "preset_id": 2,
+      "duration_seconds": 600,
+      "name": "Portais da Capital"
+    },
+    {
+      "id": 33,
+      "act_id": 4,
+      "preset_id": 3,
+      "duration_seconds": 600,
+      "name": "Bandeirolas ao Vento"
+    },
+    {
+      "id": 34,
+      "act_id": 4,
+      "preset_id": 4,
+      "duration_seconds": 600,
+      "name": "Concreto e Nuvens"
+    },
+    {
+      "id": 35,
+      "act_id": 4,
+      "preset_id": 5,
+      "duration_seconds": 600,
+      "name": "Praça em Movimento"
+    },
+    {
+      "id": 36,
+      "act_id": 4,
+      "preset_id": 6,
+      "duration_seconds": 600,
+      "name": "Monumentos Dourados"
+    },
+    {
+      "id": 37,
+      "act_id": 4,
+      "preset_id": 7,
+      "duration_seconds": 600,
+      "name": "Praça do Entardecer"
+    },
+    {
+      "id": 38,
+      "act_id": 4,
+      "preset_id": 8,
+      "duration_seconds": 600,
+      "name": "Portais da Hora Azul"
+    },
+    {
+      "id": 39,
+      "act_id": 4,
+      "preset_id": 9,
+      "duration_seconds": 600,
+      "name": "Praça das Luzes"
+    },
+    {
+      "id": 40,
+      "act_id": 4,
+      "preset_id": 10,
+      "duration_seconds": 600,
+      "name": "Festival Monumental"
+    },
+    {
+      "id": 41,
+      "act_id": 5,
+      "preset_id": 1,
+      "duration_seconds": 600,
+      "name": "Amanhecer da Arena"
+    },
+    {
+      "id": 42,
+      "act_id": 5,
+      "preset_id": 2,
+      "duration_seconds": 600,
+      "name": "Capital em Festa"
+    },
+    {
+      "id": 43,
+      "act_id": 5,
+      "preset_id": 3,
+      "duration_seconds": 600,
+      "name": "Vento nas Arquibancadas"
+    },
+    {
+      "id": 44,
+      "act_id": 5,
+      "preset_id": 4,
+      "duration_seconds": 600,
+      "name": "Céu da Grande Arena"
+    },
+    {
+      "id": 45,
+      "act_id": 5,
+      "preset_id": 5,
+      "duration_seconds": 600,
+      "name": "Arena Brasileira"
+    },
+    {
+      "id": 46,
+      "act_id": 5,
+      "preset_id": 6,
+      "duration_seconds": 600,
+      "name": "Capital Dourada"
+    },
+    {
+      "id": 47,
+      "act_id": 5,
+      "preset_id": 7,
+      "duration_seconds": 600,
+      "name": "Último Entardecer"
+    },
+    {
+      "id": 48,
+      "act_id": 5,
+      "preset_id": 8,
+      "duration_seconds": 600,
+      "name": "Arena da Hora Azul"
+    },
+    {
+      "id": 49,
+      "act_id": 5,
+      "preset_id": 9,
+      "duration_seconds": 600,
+      "name": "Noite dos Finalistas"
+    },
+    {
+      "id": 50,
+      "act_id": 5,
+      "preset_id": 10,
+      "duration_seconds": 600,
+      "name": "Grande Final da Capital"
+    }
+  ]
+}

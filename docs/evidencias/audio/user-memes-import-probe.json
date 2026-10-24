@@ -1,0 +1,114 @@
+{
+  "source_files": 16,
+  "unique_files": 15,
+  "enabled_clips": 0,
+  "network_requests": 0,
+  "clips": [
+    {
+      "id": "254d22681d247fcf5ce058a2b47a3eedfc1abd2d86699b299d6d876dff21e506",
+      "seconds": 8.52904796600342,
+      "source_names": [
+        "lula-pergunta-simples.mp3"
+      ]
+    },
+    {
+      "id": "1296f90d75d6b62bccabb9cbb15526eb3ed2e49bbf0e31a92f5ba3d3fc119c36",
+      "seconds": 6.57600021362305,
+      "source_names": [
+        "chega-de-frescura-e-mimimi.mp3"
+      ]
+    },
+    {
+      "id": "f6a216503bcd130211976283c12977847b5dbcd5187f3b36706da8721cf5bf0e",
+      "seconds": 4.14599990844727,
+      "source_names": [
+        "explica.mp3"
+      ]
+    },
+    {
+      "id": "39d217489d165610e221eb4491c9da15d2da38d1b1782018a8f691dce1de60b6",
+      "seconds": 1.24775505065918,
+      "source_names": [
+        "bolsonaro-acabou-porra.mp3"
+      ]
+    },
+    {
+      "id": "59cdc61fd3d429e34a12e2247342a2fa5f766c60bd42dece0ff831f59842ba4a",
+      "seconds": 7.53697919845581,
+      "source_names": [
+        "vai-novinha-lula-e-bolsonaro.mp3"
+      ]
+    },
+    {
+      "id": "60954d5a24551b83f6c706917e4d7714eb167b491a908358d53507b4649cefa5",
+      "seconds": 4.57433319091797,
+      "source_names": [
+        "bolsonaro-pegaram-meu-telefone.mp3"
+      ]
+    },
+    {
+      "id": "3cd57b5148c3818f3331eefcbd0d5f18747bcc4ea763367e2022893b8cb018d1",
+      "seconds": 6.52480745315552,
+      "source_names": [
+        "bolsonaro-risada.mp3"
+      ]
+    },
+    {
+      "id": "cd25d3ad9b29ef1920e3828e66c9e11cb7c818d2b6a28ce2549cfe61a1545cb3",
+      "seconds": 6.06040811538696,
+      "source_names": [
+        "cade-o-ze-gotinha.mp3"
+      ]
+    },
+    {
+      "id": "af69dda1653d66fc1892c86229c39aaddb3415eb79e02cb3f6d9fcdb88f78472",
+      "seconds": 8.76000022888184,
+      "source_names": [
+        "lula-e-pra-apanhar-e-ficar-calado.mp3"
+      ]
+    },
+    {
+      "id": "e6dc2d56272a66d5c796c21167ace8581a02efc2957ffe05684c06e7aa96e738",
+      "seconds": 21.5044994354248,
+      "source_names": [
+        "sem-h-calanguinho.mp3"
+      ]
+    },
+    {
+      "id": "01365e0e108baa24d80e7d26eb7e9ccc73d89eb6abef1ac774cebe2a6b89a50b",
+      "seconds": 1.69506251811981,
+      "source_names": [
+        "lula-bora-pra-rua-gente.mp3"
+      ]
+    },
+    {
+      "id": "2cc23f4c3f48bf17d0377fb9f388cb02d4f3c3fa2369b5299accb27517f4c560",
+      "seconds": 4.0170521736145,
+      "source_names": [
+        "faz-o-l-vinheta.mp3"
+      ]
+    },
+    {
+      "id": "d9c724055264c7ee4e7476c761a3effad05fe6cfd62b31ecb41cff0204a20dde",
+      "seconds": 15.9085712432861,
+      "source_names": [
+        "lula-bom-dia-motivacional-meme-kkkkkk.mp3"
+      ]
+    },
+    {
+      "id": "da603d41443ab9e62a1d52b60b8237f4228db7d8e14af21c04f2ffeb9f4aebf4",
+      "seconds": 8.15999984741211,
+      "source_names": [
+        "setembro-vai-entrar-o-grosso-lula (1).mp3",
+        "setembro-vai-entrar-o-grosso-lula.mp3"
+      ]
+    },
+    {
+      "id": "12d6ade6cdb5e20731f49095c95629cfc14be68d99aeaa8aa3caf7572768972b",
+      "seconds": 33.8808174133301,
+      "source_names": [
+        "ah-lula-meu-presidente.mp3"
+      ]
+    }
+  ]
+}

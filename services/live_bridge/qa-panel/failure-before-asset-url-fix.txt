@@ -1,0 +1,5 @@
+locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('#text-backend-status').filter({ hasText: 'TIKTOK' }) to be visible[22m
+
+    at C:\Users\Kanex\OneDrive\Desktop\JOGI\tools\qa_admin_panel.cjs:36:73

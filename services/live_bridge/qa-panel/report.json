@@ -1,0 +1,53 @@
+{
+  "result": "FUNCTIONAL_PASS",
+  "verdict": "INCONCLUSIVE",
+  "verdict_reason": "Functional checks passed; no approved visual baseline and no full WCAG audit.",
+  "scope": "ephemeral loopback; test consumer/seeded telemetry; no actual platform live",
+  "interactions": [
+    "Start without Godot queues request; no invented race state",
+    "pause_race",
+    "resume_race",
+    "skip_lobby",
+    "restart modal",
+    "invalid goal blocked by form validation",
+    "goal via WS",
+    "vote",
+    "likes, share, follow",
+    "real-value gift 42x3=126 once",
+    "catalog ID/action override applied to next gift, value unchanged",
+    "candidate controls",
+    "gift count/coin count mapped separately from telemetry",
+    "HTTP fallback sets actual goal",
+    "HTTP follow receipt"
+  ],
+  "console_errors": [],
+  "network_errors": [],
+  "visuals": [
+    {
+      "width": 375,
+      "overflow": false,
+      "screenshot": "admin-375.png"
+    },
+    {
+      "width": 768,
+      "overflow": false,
+      "screenshot": "admin-768.png"
+    },
+    {
+      "width": 1440,
+      "overflow": false,
+      "screenshot": "admin-1440.png"
+    }
+  ],
+  "visual_regression": "INCONCLUSIVE: no approved screenshot baseline",
+  "accessibility": {
+    "audit": "DOM label/name checks only, not full WCAG/axe",
+    "missing_labels": []
+  },
+  "web_vitals": {
+    "cls": 0,
+    "lcp": null,
+    "inp": "not measured"
+  },
+  "packets_received": 18
+}

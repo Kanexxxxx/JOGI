@@ -1,0 +1,51 @@
+{
+  "method": "cape-only primitive; COLOR_0 red free-cloth mask, green rest-width phase; originals never overwritten",
+  "characters": [
+    {
+      "character": "lula",
+      "source": "game\\assets\\characters\\api-cape-v13\\lula_run.glb",
+      "output": "game\\assets\\characters\\cape-motion-v1\\lula_run.glb",
+      "source_sha256": "ade9662e93870a06e35c83bfc7bfc7237b74780ca6a780679163d758a04989a9",
+      "output_sha256": "337525a7384a0d0b21538acf250e0d0182df5d22fe7748b02e58fa07369980ca",
+      "original_binary_prefix_unchanged": true,
+      "cape_surface": 1,
+      "cape_vertices": 261917,
+      "free_vertices": 227335,
+      "shoulder_vertices_pinned": 34582,
+      "cape_bounds_min": [
+        -0.30493560433387756,
+        0.23443840444087982,
+        -0.19019146263599396
+      ],
+      "cape_bounds_max": [
+        0.2958119809627533,
+        0.7177331447601318,
+        0.07691887021064758
+      ],
+      "total_triangles": 1960784
+    },
+    {
+      "character": "flavio",
+      "source": "game\\assets\\characters\\api-cape-v13\\flavio_run.glb",
+      "output": "game\\assets\\characters\\cape-motion-v1\\flavio_run.glb",
+      "source_sha256": "ea660de72471855e164a262c433c014f8c0598617a55a113e275945e2049e332",
+      "output_sha256": "951403a0f7a9c2ddfc722e83e5a286e92ff0b55209a72564cd8b0d730f06014c",
+      "original_binary_prefix_unchanged": true,
+      "cape_surface": 1,
+      "cape_vertices": 302383,
+      "free_vertices": 270338,
+      "shoulder_vertices_pinned": 32045,
+      "cape_bounds_min": [
+        -0.26545587182044983,
+        0.21074582636356354,
+        -0.18534426391124725
+      ],
+      "cape_bounds_max": [
+        0.26788386702537537,
+        0.717936635017395,
+        0.07653158903121948
+      ],
+      "total_triangles": 1978479
+    }
+  ]
+}

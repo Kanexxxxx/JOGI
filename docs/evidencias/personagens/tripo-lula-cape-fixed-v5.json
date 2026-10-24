@@ -1,0 +1,43 @@
+{
+  "source": "assets\\models\\lula\\tripo-original-run\\tripo-out\\9b4cb475-retarget-750b86a1\\model.glb",
+  "output": "assets\\models\\lula\\tripo-cape-fixed-v5\\model.glb",
+  "cape_vertices": 257547,
+  "all_vertices": 1020380,
+  "chest_bone": "mixamorig:Spine2",
+  "modified_bytes": 4567068,
+  "only_selected_skin_and_hips_xz_bytes_changed": true,
+  "geometry_normals_uv_images_bytes_untouched": true,
+  "animation_unchanged_except_horizontal_hips_origin": [
+    {
+      "bone": "mixamorig:Hips",
+      "subtracted_gltf_xz": [
+        -0.02347654663026333,
+        -2.266669273376465
+      ],
+      "vertical_track_unchanged": true
+    }
+  ],
+  "selected_rest_bounds": {
+    "min": [
+      -0.30493563413619995,
+      -0.07498056441545486,
+      0.23443832993507385
+    ],
+    "max": [
+      0.2958119809627533,
+      0.19019147753715515,
+      0.7149930596351624
+    ]
+  },
+  "source_sha256": "6fa058f017f6dd402c379688b94486aaec8b8ada528864da49756f5619097b02",
+  "output_sha256": "89ec15ebd87233e108922453d530f9a3a4f972e13a93356a86579102a24ea8cd",
+  "method": "rigid chest pin below z .65; collar blend .65-.715; approximate semantic mask; no cloth simulation",
+  "renders": [
+    "docs\\evidencias\\personagens\\tripo-lula-cape-fixed-v5-frente-pose1.png",
+    "docs\\evidencias\\personagens\\tripo-lula-cape-fixed-v5-perfil-pose1.png",
+    "docs\\evidencias\\personagens\\tripo-lula-cape-fixed-v5-verso-pose1.png",
+    "docs\\evidencias\\personagens\\tripo-lula-cape-fixed-v5-frente-pose2.png",
+    "docs\\evidencias\\personagens\\tripo-lula-cape-fixed-v5-perfil-pose2.png",
+    "docs\\evidencias\\personagens\\tripo-lula-cape-fixed-v5-verso-pose2.png"
+  ]
+}

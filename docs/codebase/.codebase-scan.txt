@@ -1,0 +1,286 @@
+
+=== DIRECTORY TREE (max depth 3, source files only) ===
+.agents
+.agents\agents
+.agents\agents\3d-art-director.md
+.agents\agents\a11y-architect.md
+.agents\agents\agent-evaluator.md
+.agents\agents\architect.md
+.agents\agents\build-error-resolver.md
+.agents\agents\chief-of-staff.md
+.agents\agents\code-architect.md
+.agents\agents\code-explorer.md
+.agents\agents\code-reviewer.md
+.agents\agents\code-simplifier.md
+.agents\agents\comment-analyzer.md
+.agents\agents\conversation-analyzer.md
+.agents\agents\database-reviewer.md
+.agents\agents\doc-updater.md
+.agents\agents\docs-lookup.md
+.agents\agents\e2e-runner.md
+.agents\agents\fastapi-reviewer.md
+.agents\agents\game-designer.md
+.agents\agents\gan-evaluator.md
+.agents\agents\gan-generator.md
+.agents\agents\gan-planner.md
+.agents\agents\godot-engineer.md
+.agents\agents\harness-optimizer.md
+.agents\agents\independent-reviewer.md
+.agents\agents\live-integration-engineer.md
+.agents\agents\loop-operator.md
+.agents\agents\marketing-agent.md
+.agents\agents\network-architect.md
+.agents\agents\network-config-reviewer.md
+.agents\agents\network-troubleshooter.md
+.agents\agents\opensource-forker.md
+.agents\agents\opensource-packager.md
+.agents\agents\opensource-sanitizer.md
+.agents\agents\performance-optimizer.md
+.agents\agents\planner.md
+.agents\agents\pr-test-analyzer.md
+.agents\agents\python-reviewer.md
+.agents\agents\qa-engineer.md
+.agents\agents\react-build-resolver.md
+.agents\agents\react-reviewer.md
+.agents\agents\refactor-cleaner.md
+.agents\agents\security-reviewer.md
+.agents\agents\seo-specialist.md
+.agents\agents\silent-failure-hunter.md
+.agents\agents\spec-miner.md
+.agents\agents\tdd-guide.md
+.agents\agents\tech-lead.md
+.agents\agents\type-design-analyzer.md
+.agents\agents\typescript-reviewer.md
+.agents\ecc-install-state.json
+.agents\mcp_config.json
+.agents\mcp_config.json.backup-20261018-125404
+.agents\plugins
+.agents\plugins\corrida-gamedev
+.agents\plugins\corrida-gamedev\mcp_config.json
+.agents\plugins\corrida-gamedev\plugin.json
+.agents\reports
+.agents\reports\live-integration-plan.md
+.agents\rules
+.agents\rules\common-agents.md
+.agents\rules\common-code-review.md
+.agents\rules\common-coding-style.md
+.agents\rules\common-development-workflow.md
+.agents\rules\common-git-workflow.md
+.agents\rules\common-hooks.md
+.agents\rules\common-patterns.md
+.agents\rules\common-performance.md
+.agents\rules\common-security.md
+.agents\rules\common-testing.md
+.agents\rules\corrida-live-safety.md
+.agents\rules\godot-4-architecture.md
+.agents\rules\python-coding-style.md
+.agents\rules\python-fastapi.md
+.agents\rules\python-hooks.md
+.agents\rules\python-patterns.md
+.agents\rules\python-security.md
+.agents\rules\python-testing.md
+.agents\rules\react-coding-style.md
+.agents\rules\react-hooks.md
+.agents\rules\react-patterns.md
+.agents\rules\react-security.md
+.agents\rules\react-testing.md
+.agents\rules\README.md
+.agents\rules\tripo-3d-pipeline.md
+.agents\rules\typescript-coding-style.md
+.agents\rules\typescript-hooks.md
+.agents\rules\typescript-patterns.md
+.agents\rules\typescript-security.md
+.agents\rules\typescript-testing.md
+.agents\rules\web-coding-style.md
+.agents\rules\web-design-quality.md
+.agents\rules\web-hooks.md
+.agents\rules\web-patterns.md
+.agents\rules\web-performance.md
+.agents\rules\web-security.md
+.agents\rules\web-testing.md
+.agents\skills
+.agents\skills\agent-introspection-debugging
+.agents\skills\agent-introspection-debugging\SKILL.md
+.agents\skills\agent-self-evaluation
+.agents\skills\agent-self-evaluation\examples
+.agents\skills\agent-self-evaluation\references
+.agents\skills\agent-self-evaluation\scripts
+.agents\skills\agent-self-evaluation\SKILL.md
+.agents\skills\agent-self-evaluation\templates
+.agents\skills\agent-sort
+.agents\skills\agent-sort\SKILL.md
+.agents\skills\ai-regression-testing
+.agents\skills\ai-regression-testing\SKILL.md
+.agents\skills\architecture-decision-records
+.agents\skills\architecture-decision-records\SKILL.md
+.agents\skills\browser-qa
+.agents\skills\browser-qa\SKILL.md
+.agents\skills\ck
+.agents\skills\ck\commands
+.agents\skills\ck\hooks
+.agents\skills\ck\SKILL.md
+.agents\skills\click-path-audit
+.agents\skills\click-path-audit\SKILL.md
+.agents\skills\code-tour
+.agents\skills\code-tour\SKILL.md
+.agents\skills\codebase-onboarding
+.agents\skills\codebase-onboarding\SKILL.md
+.agents\skills\codehealth-mcp
+.agents\skills\codehealth-mcp\SKILL.md
+.agents\skills\config-gc
+.agents\skills\config-gc\SKILL.md
+.agents\skills\configure-ecc
+.agents\skills\configure-ecc\SKILL.md
+.agents\skills\context-budget
+.agents\skills\context-budget\SKILL.md
+.agents\skills\continuous-learning
+.agents\skills\continuous-learning\config.json
+.agents\skills\continuous-learning\evaluate-session.sh
+.agents\skills\continuous-learning\SKILL.md
+.agents\skills\continuous-learning-v2
+.agents\skills\continuous-learning-v2\agents
+.agents\skills\continuous-learning-v2\config.json
+.agents\skills\continuous-learning-v2\hooks
+.agents\skills\continuous-learning-v2\scripts
+.agents\skills\continuous-learning-v2\SKILL.md
+.agents\skills\council
+.agents\skills\council\SKILL.md
+.agents\skills\council-multi-model
+.agents\skills\council-multi-model\scripts
+.agents\skills\council-multi-model\SKILL.md
+.agents\skills\delivery-gate
+.agents\skills\delivery-gate\hooks
+.agents\skills\delivery-gate\SKILL.md
+.agents\skills\design-taste-frontend
+.agents\skills\design-taste-frontend\SKILL.md
+.agents\skills\dev-team
+.agents\skills\dev-team\SKILL.md
+.agents\skills\e2e-testing
+.agents\skills\e2e-testing\SKILL.md
+.agents\skills\ecc-guide
+.agents\skills\ecc-guide\SKILL.md
+.agents\skills\ecc-recipes
+.agents\skills\ecc-recipes\SKILL.md
+.agents\skills\error-handling
+.agents\skills\error-handling\SKILL.md
+.agents\skills\eval-harness
+.agents\skills\eval-harness\SKILL.md
+.agents\skills\gda
+.agents\skills\gda\SKILL.md
+.agents\skills\git-workflow
+.agents\skills\git-workflow\SKILL.md
+.agents\skills\godot-3d-essentials
+.agents\skills\godot-3d-essentials\SKILL.md
+.agents\skills\godot-animation
+.agents\skills\godot-animation\SKILL.md
+.agents\skills\godot-audio
+.agents\skills\godot-audio\SKILL.md
+.agents\skills\godot-autoload-architecture
+.agents\skills\godot-autoload-architecture\SKILL.md
+.agents\skills\godot-debugging-profiling
+.agents\skills\godot-debugging-profiling\SKILL.md
+.agents\skills\godot-gdscript
+.agents\skills\godot-gdscript\SKILL.md
+.agents\skills\godot-nodes-scenes
+.agents\skills\godot-nodes-scenes\SKILL.md
+.agents\skills\godot-performance-optimization
+.agents\skills\godot-performance-optimization\SKILL.md
+.agents\skills\godot-physics-3d
+.agents\skills\godot-physics-3d\SKILL.md
+.agents\skills\godot-resources
+.agents\skills\godot-resources\SKILL.md
+.agents\skills\godot-shaders
+.agents\skills\godot-shaders\SKILL.md
+.agents\skills\godot-signals-groups
+.agents\skills\godot-signals-groups\SKILL.md
+.agents\skills\godot-state-machine-advanced
+.agents\skills\godot-state-machine-advanced\SKILL.md
+.agents\skills\godot-testing-patterns
+.agents\skills\godot-testing-patterns\SKILL.md
+.agents\skills\godot-ui-control
+.agents\skills\godot-ui-control\SKILL.md
+.agents\skills\growth-log
+
+=== STACK DETECTION (manifest files) ===
+No recognized manifest files found in project root.
+
+=== ENTRY POINTS ===
+No common entry points found. Check 'main' or 'scripts.start' in manifest files above.
+
+=== LINTING AND FORMATTING CONFIG ===
+No linting or formatting config files found in project root.
+
+=== ENVIRONMENT VARIABLE TEMPLATES ===
+--- .env.example ---
+# Configuração de Ambiente — Corrida dos Candidatos
+# Copie este arquivo para .env e preencha localmente (NUNCA envie .env para o Git ou chat)
+
+# Caminho para o executável console do Godot 4.6+ usado pelo Godot Agent (gda)
+GDA_GODOT=C:\\Godot\\Godot_v4.6-stable_win64_console.exe
+GDA_PROJECT=C:\\Users\\Kanex\\OneDrive\\Desktop\\JOGI
+
+# Conector Local LiveBridge (Bind exclusivo em 127.0.0.1)
+LIVE_BRIDGE_HOST=127.0.0.1
+LIVE_BRIDGE_PORT=8765
+LIVE_BRIDGE_LOCAL_TOKEN=change_me_local_random_token
+
+# Identificadores públicos das lives (opcional; use simulator para testes offline)
+LIVE_MODE=simulator
+TIKTOK_LIVE_UNIQUE_ID=
+KWAI_LIVE_STREAM_ID=
+
+# Tripo 3D CLI (Recomendado autenticar via `tripo.cmd login --region ov` em vez de variável)
+# TRIPO_API_KEY=
+# TRIPO_REGION=ov
+
+
+=== TODO / FIXME / HACK (production code only, test dirs excluded) ===
+.agents\skills\agent-self-evaluation\scripts\evaluate.py:70: (r"(?i)(TODO|FIXME|HACK|WORKAROUND)", "Unresolved TODO/FIXME"),
+.agents\skills\agent-self-evaluation\scripts\evaluate.py:70: (r"(?i)(TODO|FIXME|HACK|WORKAROUND)", "Unresolved TODO/FIXME"),
+.agents\skills\agent-self-evaluation\scripts\evaluate.py:70: (r"(?i)(TODO|FIXME|HACK|WORKAROUND)", "Unresolved TODO/FIXME"),
+services\live_bridge\simulator.py:49: "[color=red][wave]HACKER_BBCODE[/wave][/color]",
+services\live_bridge\adapters\simulator_adapter.py:59: "[color=red][wave]HACKER_BBCODE[/wave][/color]",
+
+=== GIT RECENT COMMITS (last 20) ===
+No commits found.
+
+=== HIGH-CHURN FILES (last 90 days, top 20) ===
+None found.
+
+=== MONOREPO SIGNALS ===
+Sub-package directory found: services/
+
+=== CODE METRICS ===
+Total files scanned: 345
+Total lines of code: 17635
+
+Files by language:
+  Other: 315
+  Python: 28
+  JavaScript: 2
+
+Top 10 largest files:
+.agents\ecc-install-state.json: 226.5KB
+.agents\skills\continuous-learning-v2\scripts\instinct-cli.py: 89.0KB
+services\live_bridge\uv.lock: 53.8KB
+.agents\skills\continuous-learning-v2\scripts\test_parse_instinct.py: 50.1KB
+services\live_bridge\server.py: 45.1KB
+game\scripts\race_main.gd: 39.3KB
+services\live_bridge\admin\app.js: 34.2KB
+services\live_bridge\protocol.py: 29.9KB
+.agents\skills\windows-desktop-e2e\SKILL.md: 29.9KB
+.agents\skills\continuous-learning-v2\hooks\observe.sh: 27.5KB
+
+=== CI/CD PIPELINES ===
+No CI/CD pipelines detected.
+
+=== CONTAINERS & ORCHESTRATION ===
+No containerization configs detected.
+
+=== SECURITY & COMPLIANCE ===
+Security: SECURITY.md
+
+=== PERFORMANCE & TESTING ===
+No performance testing configs detected.
+
+=== SCAN COMPLETE ===

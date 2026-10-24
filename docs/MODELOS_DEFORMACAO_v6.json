@@ -1,0 +1,210 @@
+{
+  "lula": {
+    "version": "v6",
+    "criterion": "posed edge > .05 Blender units and > 6x rest length",
+    "samples": [
+      {
+        "clip": "corrida",
+        "frame": 1,
+        "severe_stretched_edges": 0,
+        "worst": []
+      },
+      {
+        "clip": "corrida",
+        "frame": 4,
+        "severe_stretched_edges": 0,
+        "worst": []
+      },
+      {
+        "clip": "corrida",
+        "frame": 7,
+        "severe_stretched_edges": 0,
+        "worst": []
+      },
+      {
+        "clip": "corrida",
+        "frame": 10,
+        "severe_stretched_edges": 0,
+        "worst": []
+      },
+      {
+        "clip": "corrida",
+        "frame": 13,
+        "severe_stretched_edges": 0,
+        "worst": []
+      },
+      {
+        "clip": "corrida",
+        "frame": 16,
+        "severe_stretched_edges": 0,
+        "worst": []
+      },
+      {
+        "clip": "corrida",
+        "frame": 19,
+        "severe_stretched_edges": 0,
+        "worst": []
+      },
+      {
+        "clip": "corrida",
+        "frame": 22,
+        "severe_stretched_edges": 0,
+        "worst": []
+      },
+      {
+        "clip": "corrida",
+        "frame": 25,
+        "severe_stretched_edges": 0,
+        "worst": []
+      },
+      {
+        "clip": "turbo",
+        "frame": 1,
+        "severe_stretched_edges": 0,
+        "worst": []
+      },
+      {
+        "clip": "turbo",
+        "frame": 4,
+        "severe_stretched_edges": 0,
+        "worst": []
+      },
+      {
+        "clip": "turbo",
+        "frame": 7,
+        "severe_stretched_edges": 0,
+        "worst": []
+      },
+      {
+        "clip": "turbo",
+        "frame": 10,
+        "severe_stretched_edges": 0,
+        "worst": []
+      },
+      {
+        "clip": "turbo",
+        "frame": 13,
+        "severe_stretched_edges": 0,
+        "worst": []
+      },
+      {
+        "clip": "turbo",
+        "frame": 16,
+        "severe_stretched_edges": 0,
+        "worst": []
+      },
+      {
+        "clip": "turbo",
+        "frame": 19,
+        "severe_stretched_edges": 0,
+        "worst": []
+      }
+    ],
+    "max_severe_edges": 0,
+    "note": "diagnostic only; does not certify joint, cloth, collision or aesthetic quality"
+  },
+  "flavio": {
+    "version": "v6",
+    "criterion": "posed edge > .05 Blender units and > 6x rest length",
+    "samples": [
+      {
+        "clip": "corrida",
+        "frame": 1,
+        "severe_stretched_edges": 0,
+        "worst": []
+      },
+      {
+        "clip": "corrida",
+        "frame": 4,
+        "severe_stretched_edges": 0,
+        "worst": []
+      },
+      {
+        "clip": "corrida",
+        "frame": 7,
+        "severe_stretched_edges": 0,
+        "worst": []
+      },
+      {
+        "clip": "corrida",
+        "frame": 10,
+        "severe_stretched_edges": 0,
+        "worst": []
+      },
+      {
+        "clip": "corrida",
+        "frame": 13,
+        "severe_stretched_edges": 0,
+        "worst": []
+      },
+      {
+        "clip": "corrida",
+        "frame": 16,
+        "severe_stretched_edges": 0,
+        "worst": []
+      },
+      {
+        "clip": "corrida",
+        "frame": 19,
+        "severe_stretched_edges": 0,
+        "worst": []
+      },
+      {
+        "clip": "corrida",
+        "frame": 22,
+        "severe_stretched_edges": 0,
+        "worst": []
+      },
+      {
+        "clip": "corrida",
+        "frame": 25,
+        "severe_stretched_edges": 0,
+        "worst": []
+      },
+      {
+        "clip": "turbo",
+        "frame": 1,
+        "severe_stretched_edges": 0,
+        "worst": []
+      },
+      {
+        "clip": "turbo",
+        "frame": 4,
+        "severe_stretched_edges": 0,
+        "worst": []
+      },
+      {
+        "clip": "turbo",
+        "frame": 7,
+        "severe_stretched_edges": 0,
+        "worst": []
+      },
+      {
+        "clip": "turbo",
+        "frame": 10,
+        "severe_stretched_edges": 0,
+        "worst": []
+      },
+      {
+        "clip": "turbo",
+        "frame": 13,
+        "severe_stretched_edges": 0,
+        "worst": []
+      },
+      {
+        "clip": "turbo",
+        "frame": 16,
+        "severe_stretched_edges": 0,
+        "worst": []
+      },
+      {
+        "clip": "turbo",
+        "frame": 19,
+        "severe_stretched_edges": 0,
+        "worst": []
+      }
+    ],
+    "max_severe_edges": 0,
+    "note": "diagnostic only; does not certify joint, cloth, collision or aesthetic quality"
+  }
+}

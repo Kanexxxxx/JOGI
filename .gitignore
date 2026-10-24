@@ -1,0 +1,54 @@
+# Environment & Secrets (NEVER COMMIT)
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# Godot 4+ Ignore
+.godot/
+game/.godot/
+/android/
+export.cfg
+export_presets.cfg
+
+# Python / uv
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Node / Playwright / Taste Skill
+node_modules/
+playwright-report/
+test-results/
+.taste-skill/
+
+# OS & Temp files
+.DS_Store
+Thumbs.db
+*.tmp
+*.log
+
+# Backups & Local Agent/MCP Machine State (Do not track local absolute paths)
+*.backup*
+*.bak
+.agents/ecc-install-state.json
+.agents/mcp_config.json
+.agents/plugins/*/mcp_config.json
+
+# Tripo: runtime local e relatórios de upload com tokens temporários
+.tripo/
+docs/*UPLOAD*.json
+.tools/
+
+# Iterações brutas intermediárias de modelagem (>2.9 GB locais preservados em disco, fora do limite LFS do GitHub)
+/assets/
+game/assets/characters/preview-v1/
+game/assets/characters/preview-v2/
+game/assets/characters/preview-v3/
+game/assets/characters/preview-v4/
+game/assets/characters/preview-v5/
+game/assets/characters/preview-v6/
+game/assets/characters/api-original-v1/

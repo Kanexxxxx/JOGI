@@ -1,0 +1,54 @@
+{
+  "lula": {
+    "source": "C:\\Users\\Kanex\\Downloads\\lula_base_v1.glb.glb",
+    "project_copy": "assets\\models\\lula\\lula_base_v1.glb",
+    "sha256": "ed74d61c0dfdf6e2157c4d8bd0767edd3992ba6164676302435dfac5e893f9c2",
+    "bytes": 64693188,
+    "gltf_version": "2.0",
+    "generator": "Tripo",
+    "mesh_count": 1,
+    "primitive_count": 1,
+    "triangle_count": 1960784,
+    "material_count": 1,
+    "image_count": 3,
+    "texture_count": 3,
+    "skins": 0,
+    "joint_count": 0,
+    "animations": [],
+    "external_dependencies": [],
+    "extensions_required": [],
+    "nodes": [
+      {
+        "name": "tripo_node_912ded9e-0ad6-4b5d-a81c-10d39c68fa06",
+        "mesh": 0,
+        "skin": null
+      }
+    ]
+  },
+  "flavio": {
+    "source": "C:\\Users\\Kanex\\Downloads\\flavio_base_v1.glb.glb",
+    "project_copy": "assets\\models\\flavio\\flavio_base_v1.glb",
+    "sha256": "9be65cbb6dd4c579109e5c2015b1f12c677d10f1184f1b65313cb9ddd8b666c7",
+    "bytes": 64572428,
+    "gltf_version": "2.0",
+    "generator": "Tripo",
+    "mesh_count": 1,
+    "primitive_count": 1,
+    "triangle_count": 1978479,
+    "material_count": 1,
+    "image_count": 3,
+    "texture_count": 3,
+    "skins": 0,
+    "joint_count": 0,
+    "animations": [],
+    "external_dependencies": [],
+    "extensions_required": [],
+    "nodes": [
+      {
+        "name": "tripo_node_5b7aa59a-3195-4ebf-8045-06b519808237",
+        "mesh": 0,
+        "skin": null
+      }
+    ]
+  }
+}

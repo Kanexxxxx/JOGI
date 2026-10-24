@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "entries": {
+    "1acf2d55de2f8720c227b315e273c93f0151cef93cc674e33e9e132b1d9bc553": {
+      "state": "complete",
+      "kind": "boost",
+      "duration_seconds": 1.0,
+      "created_unix": 1792834791,
+      "audio_sha256": "6eaf8218a09d92ec5cdd7f7d673e69a8ad3184ac0e118ed8218b1c34b4a8f69e",
+      "reported_credit_cost": 10
+    },
+    "c8566c9db2d88631de372388703ab36668f40003442e18066f90faaf99a68a4c": {
+      "state": "complete",
+      "kind": "shield",
+      "duration_seconds": 1.2,
+      "created_unix": 1792834793,
+      "audio_sha256": "eddff0bb8dde1a32da03a4ef8ae5b1eacf30b327e3a1b08f8eea94b6d66c7900",
+      "reported_credit_cost": 12
+    },
+    "d03ddd51bc95aa032b9adac1e730c1eab7e972a8b87de84fa1229b4b221566f6": {
+      "state": "complete",
+      "kind": "impact",
+      "duration_seconds": 0.8,
+      "created_unix": 1792834794,
+      "audio_sha256": "211ab7098e2053e486429511f8c9a49ff16e7b9337d3de196334672cedb67433",
+      "reported_credit_cost": 8
+    },
+    "272c4e68d028e85f7697c181d68a453c0eead329f476821c08db9834da9ff3a7": {
+      "state": "complete",
+      "kind": "victory",
+      "duration_seconds": 3.0,
+      "created_unix": 1792834796,
+      "audio_sha256": "49eea5465386ac6cc3a6389a6b74e8fb5603da4c42a9e66a74d347c275535044",
+      "reported_credit_cost": 30
+    },
+    "37a811b3d4798e01acb28722e3190f30fee82af62b13bae6d8541a5080d545c3": {
+      "state": "complete",
+      "kind": "crowd",
+      "duration_seconds": 10.0,
+      "created_unix": 1792855898,
+      "audio_sha256": "f7d9959ea45f221dbaf6f0b892fbc26d0c06567088a1c0e4fc4b56b076461c5a",
+      "reported_credit_cost": 100
+    }
+  }
+}
