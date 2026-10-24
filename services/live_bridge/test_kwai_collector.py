@@ -160,7 +160,7 @@ class KwaiCollectorTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_bridge_kwai_listener_honest_status_and_ttl(self) -> None:
         with tempfile.TemporaryDirectory() as folder:
-            server = LiveBridgeServer(
+            server = LiveBridgeServer(runtime_mode="development",
                 port=0,
                 platform="kwai",
                 account="mentalista..",
@@ -257,7 +257,7 @@ class KwaiCollectorTests(unittest.IsolatedAsyncioTestCase):
         try:
             with tempfile.TemporaryDirectory() as folder:
                 tmp_path = Path(folder)
-                server = LiveBridgeServer(
+                server = LiveBridgeServer(runtime_mode="development",
                     port=0,
                     platform="kwai",
                     account="mentalista..",

@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import argparse
+from contextlib import closing
 import json
 import os
 from pathlib import Path
 import secrets
 import shutil
+import sqlite3
 import subprocess
 import sys
 import time
@@ -18,6 +20,9 @@ from live_supervisor import LiveSupervisor, ManagedChild, stay_awake
 
 ROOT = Path(__file__).resolve().parents[1]
 BRIDGE_DIR = ROOT / "services" / "live_bridge"
+if str(BRIDGE_DIR) not in sys.path:
+    sys.path.insert(0, str(BRIDGE_DIR))
+from operational_shutdown import normalize_end_at
 PUBLIC_ACCOUNTS = {"tiktok": "nostalgiia.br", "kwai": "mentalista.."}
 PORTS = {"tiktok": 8765, "kwai": 8766}
 KWAI_WEBHOOK_PORT = 8786
@@ -38,22 +43,33 @@ def build_plan(
     godot: Path = DEFAULT_GODOT,
     scene: str = "res://scenes/main/stadium_race.tscn",
     offline: bool = False,
+    runtime_mode: str | None = None,
 ) -> dict:
     port = PORTS[platform]
-    state_dir = Path(os.environ.get("LOCALAPPDATA", str(Path.home() / ".local"))) / "JOGI" / "live_bridge" / platform
+    mode = runtime_mode or ("development" if offline else os.environ.get("JOGI_MODE", "production"))
+    if mode not in ("production", "development"):
+        raise ValueError("JOGI_MODE deve ser production ou development.")
+    end_at = os.environ.get("JOGI_END_AT", "2026-10-26T07:00:00-03:00")
+    end_at, _ = normalize_end_at(end_at)
+    state_dir = Path(os.environ.get("LOCALAPPDATA", str(Path.home() / ".local"))) / "JOGI" / "live_bridge" / platform / mode
     return {
         "platform": platform,
         "account": PUBLIC_ACCOUNTS[platform],
         "port": port,
+        "runtime_mode": mode,
+        "end_at": end_at,
         "python": str(BRIDGE_DIR / ".venv" / "Scripts" / "python.exe"),
         "bridge_script": str(BRIDGE_DIR / "server.py"),
         "state_dir": str(state_dir),
+        "legacy_state_dir": str(state_dir.parent),
         "godot": str(godot),
         "project": str(ROOT / "game"),
         "scene": scene,
         "godot_environment": {
             "LIVE_PLATFORM": platform,
             "LIVE_BRIDGE_WS_URL": f"ws://127.0.0.1:{port}/ws/godot",
+            "JOGI_MODE": mode,
+            "JOGI_END_AT": end_at,
         },
         "panel": f"http://127.0.0.1:{port}/admin",
         "starts_platform_live": False,
@@ -65,6 +81,20 @@ def build_plan(
     }
 
 
+def legacy_pending_gifts(plan: dict) -> int:
+    """Never silently strand previously accepted gifts when introducing mode isolation."""
+    if plan.get("runtime_mode") != "production":
+        return 0
+    path = Path(plan["legacy_state_dir"]) / "gifts.sqlite3"
+    if not path.exists():
+        return 0
+    try:
+        with closing(sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True, timeout=1)) as db:
+            return int(db.execute("SELECT COUNT(*) FROM gifts WHERE completed_ms IS NULL").fetchone()[0])
+    except sqlite3.Error as error:
+        raise RuntimeError("Outbox anterior requer verificação antes de abrir produção; nenhum dado foi alterado.") from error
+
+
 def launch(plans: list[dict], *, bridge_only: bool = False) -> int:
     children: list[ManagedChild] = []
     handles = []
@@ -73,6 +103,8 @@ def launch(plans: list[dict], *, bridge_only: bool = False) -> int:
     try:
         for plan in plans:
             existing = health(plan["port"])
+            if existing is None and legacy_pending_gifts(plan):
+                raise RuntimeError(f"{plan['platform']}: há presentes pendentes na sessão anterior. Recupere-os antes de abrir produção.")
             state_dir = Path(plan["state_dir"])
             # A rejected second launcher must not overwrite the owner's status.
             if existing is None:
@@ -86,6 +118,8 @@ def launch(plans: list[dict], *, bridge_only: bool = False) -> int:
             instance_producer_token = secrets.token_urlsafe(32)
             shared_env = os.environ.copy()
             shared_env["LIVE_BRIDGE_PRODUCER_TOKEN"] = instance_producer_token
+            shared_env["JOGI_MODE"] = plan["runtime_mode"]
+            shared_env["JOGI_END_AT"] = plan["end_at"]
 
             server_args = [
                 plan["python"],
@@ -129,6 +163,7 @@ def launch(plans: list[dict], *, bridge_only: bool = False) -> int:
                     ),
                     ready=lambda dependency=bridge, port=plan["port"], platform=plan["platform"]: (
                         dependency.process is not None and (health(port) or {}).get("platform") == platform
+                        and not (health(port) or {}).get("operational_shutdown", {}).get("ended", False)
                     ),
                 )
                 if existing is not None:
@@ -195,12 +230,15 @@ def main() -> int:
     parser.add_argument("--both", action="store_true", help="Abrir as duas sessões independentes no mesmo PC.")
     parser.add_argument("--bridge-only", action="store_true", help="Subir pontes locais, sem renderizar jogos.")
     parser.add_argument("--offline", action="store_true", help="Desativar escuta pública TikTok e operar apenas simulador local.")
+    parser.add_argument("--mode", choices=("production", "development"), default=None,
+                        help="Padrão produção; --offline seleciona desenvolvimento salvo modo explícito.")
     parser.add_argument("--check", action="store_true", help="Validar plano/caminhos sem iniciar processos.")
     parser.add_argument("--godot", type=Path, default=DEFAULT_GODOT)
     parser.add_argument("--scene", default="res://scenes/main/stadium_race.tscn")
     args = parser.parse_args()
     platforms = ("tiktok", "kwai") if args.both else (args.platform,)
-    plans = [build_plan(platform, godot=args.godot, scene=args.scene, offline=args.offline) for platform in platforms]
+    plans = [build_plan(platform, godot=args.godot, scene=args.scene, offline=args.offline,
+                        runtime_mode=args.mode) for platform in platforms]
     for plan in plans:
         for field in ("python", "bridge_script") + (() if args.bridge_only else ("godot",)):
             if not Path(plan[field]).is_file():

@@ -142,3 +142,12 @@ Quando o agente principal assumir a execução do projeto:
 - Contratos de produção, confirmação de comandos e encerramento absoluto acordados entre os agentes em `CONTRATO_ESTABILIZACAO_2026-10-24.md`. Implementação backend/admin/Godot ainda em andamento neste checkpoint.
 - Corrigido coletor Kwai para priorizar preço unitário explícito sobre valor total de combo, preservar zero e persistir o campo na fila. Três regressões reproduziram falha antes da correção; oito testes Node passaram depois. Isso não homologa a semântica de uma sala Kwai real.
 - Verificação eleitoral oficial encontrou restrição temporal relevante; estreia pública bloqueada até avaliação específica, conforme `CONFORMIDADE_ELEITORAL_2026-10-24.md`. Sem live pública ou uso de APIs pagas.
+
+## 2026-10-24 — Produção, recibos reais e encerramento implementados
+
+- Produção é o padrão; bloqueia simuladores no backend e Godot, oculta controles de desenvolvimento e remove legendas técnicas públicas. Prévia continua explícita em desenvolvimento. Dados são separados por modo/plataforma; outbox antiga com pendências bloqueia nova produção até recuperação.
+- Comandos retornam fila e só recebem confirmação aplicada/rejeitada após execução no Godot. Corrigidos ataque administrativo duplicado, campo do cronômetro e corrida de feedback no fallback HTTP. Metas offline preservam a correlação original na reconexão; comandos substituídos não recebem sucesso falso.
+- Encerramento absoluto e persistente em 26/10/2026 às 7h de Brasília, manual ou automático, sem reinício de rodadas após terminal. Presentes pós-fim permanecem na outbox como pendências, inclusive quando o jogo está desconectado. Não há controle de transmissão externa.
+- Histórico limitado a 50 resultados no checkpoint e 10 na telemetria/painel, sem inventar rodadas anteriores. Repetição de finalização não duplica; reinício administrativo desfaz o resultado da tentativa cancelada.
+- Validação atual: 124 testes Python +48 subtestes, 2 avisos de SDK; 31 scripts Godot strict aprovados, scan sem erros. Painel real ponta a ponta aprovado nas duas instâncias efêmeras, com autenticação, comandos, metas, áudio, HTTP fallback e encerramento. Capturas e benchmark sob carga ainda em consolidação.
+- Subagentes atingiram limite de uso após os testes focais. O agente principal assumiu a conclusão; não apresentar autorrevisão como revisão independente.

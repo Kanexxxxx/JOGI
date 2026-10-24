@@ -46,7 +46,14 @@ var race_elapsed_time: float = 0.0
 var current_round: int = 1
 var cycle_number: int = 1
 var cycle_wins: Array[int] = [0, 0]
+var round_history: Array[Dictionary] = []
 var race_paused: bool = false
+var runtime_mode: String = "production"
+var experience_ended: bool = false
+var experience_end_reason: String = ""
+var experience_ended_at: float = 0.0
+var experience_end_at: float = 0.0
+var experience_config_valid: bool = true
 var round_metadata: Dictionary = {}
 var live_goal: Dictionary = {"goal_kind": "likes", "goal_target": 1000, "goal_label": "Meta de curtidas"}
 var live_goals: Dictionary = default_live_goals()
@@ -114,6 +121,7 @@ var _shared_geometries_built: bool = false
 
 
 func _ready() -> void:
+	_configure_runtime()
 	_load_round_catalog()
 	_select_round_metadata()
 	match_time_remaining = match_duration
@@ -125,9 +133,71 @@ func _ready() -> void:
 	_setup_hud()
 	_connect_live_event_bus()
 	restart_race(false)
+	if not experience_config_valid:
+		set_race_paused(true)
+	check_experience_deadline()
+
+
+func _configure_runtime() -> void:
+	runtime_mode = "development" if OS.get_environment("JOGI_MODE").strip_edges().to_lower() == "development" else "production"
+	var configured_end: String = OS.get_environment("JOGI_END_AT").strip_edges()
+	if configured_end.is_empty():
+		configured_end = "2026-10-26T07:00:00-03:00"
+	experience_end_at = parse_end_datetime(configured_end)
+	experience_config_valid = experience_end_at > 0.0
+
+
+static func parse_end_datetime(value: String) -> float:
+	var pattern: RegEx = RegEx.new()
+	pattern.compile("^(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2})(Z|([+-])(\\d{2}):(\\d{2}))$")
+	var found: RegExMatch = pattern.search(value)
+	if found == null:
+		return -1.0
+	var base: String = found.get_string(1)
+	var unix_time: int = Time.get_unix_time_from_datetime_string(base)
+	if Time.get_datetime_string_from_unix_time(unix_time) != base:
+		return -1.0
+	if found.get_string(2) != "Z":
+		var hours: int = int(found.get_string(4))
+		var minutes: int = int(found.get_string(5))
+		if hours > 14 or minutes > 59 or (hours == 14 and minutes != 0):
+			return -1.0
+		var offset: int = (hours * 60 + minutes) * 60
+		unix_time -= offset if found.get_string(3) == "+" else -offset
+	return float(unix_time)
+
+
+func is_production_mode() -> bool:
+	return runtime_mode != "development"
+
+
+func check_experience_deadline(now_unix: float = -1.0) -> bool:
+	if experience_ended or not experience_config_valid:
+		return experience_ended
+	var now: float = now_unix if now_unix >= 0.0 else Time.get_unix_time_from_system()
+	if now >= experience_end_at:
+		return end_experience("scheduled", now)
+	return false
+
+
+func end_experience(reason: String = "manual", at_unix: float = -1.0) -> bool:
+	if experience_ended:
+		return true
+	experience_ended = true
+	experience_end_reason = reason if reason in ["manual", "scheduled", "recovered"] else "manual"
+	experience_ended_at = at_unix if at_unix >= 0.0 else Time.get_unix_time_from_system()
+	auto_loop_after_podium = false
+	set_race_paused(true)
+	if event_bus != null:
+		event_bus.effects_suspended = true
+	_update_hud()
+	send_telemetry_now()
+	return true
 
 
 func _exit_tree() -> void:
+	if is_instance_valid(event_bus) and event_bus.admin_command_executor == Callable(self, "_execute_admin_command"):
+		event_bus.admin_command_executor = Callable()
 	runners.clear()
 	rankings.clear()
 	_track_chunks.clear()
@@ -136,6 +206,8 @@ func _exit_tree() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if is_production_mode() or experience_ended:
+		return
 	if event is InputEventKey:
 		var key_event: InputEventKey = event as InputEventKey
 		if not key_event.pressed or key_event.echo:
@@ -156,6 +228,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	check_experience_deadline()
 	if race_paused:
 		return
 	if _toast_timer > 0.0:
@@ -234,6 +307,12 @@ func _finish_match_by_timer() -> void:
 			_recorded_winner_slot = winner.candidate_id
 			cycle_wins[_recorded_winner_slot - 1] += 1
 	_round_result_recorded = true
+	round_history.append({"cycle": cycle_number, "round": current_round,
+		"winner_slot": _recorded_winner_slot,
+		"lula_m": runners[0].progress_m if runners.size() > 0 else 0.0,
+		"flavio_m": runners[1].progress_m if runners.size() > 1 else 0.0})
+	while round_history.size() > 50:
+		round_history.pop_front()
 	_transition_to_state(RaceState.PHOTO_FINISH)
 	race_finished.emit(winner)
 
@@ -246,12 +325,16 @@ func _update_rankings() -> void:
 
 
 func start_race_immediately() -> void:
+	if experience_ended or not experience_config_valid:
+		return
 	if current_state == RaceState.RACING:
 		return
 	start_racing()
 
 
 func start_countdown() -> void:
+	if experience_ended or not experience_config_valid:
+		return
 	if current_state != RaceState.LOBBY_VOTACAO and current_state != RaceState.COUNTDOWN:
 		return
 	state_timer = countdown_duration
@@ -260,6 +343,8 @@ func start_countdown() -> void:
 
 
 func start_racing() -> void:
+	if experience_ended or not experience_config_valid:
+		return
 	if current_state == RaceState.RACING or _round_result_recorded:
 		return
 	_transition_to_state(RaceState.RACING)
@@ -269,9 +354,16 @@ func start_racing() -> void:
 
 
 func restart_race(p_skip_lobby: bool = false) -> void:
+	if experience_ended or not experience_config_valid:
+		return
 	# Reinício administrativo repete a rodada; não conta uma tentativa cancelada.
 	if _round_result_recorded and _recorded_winner_slot in [1, 2]:
 		cycle_wins[_recorded_winner_slot - 1] = maxi(0, cycle_wins[_recorded_winner_slot - 1] - 1)
+	if _round_result_recorded:
+		for index: int in range(round_history.size() - 1, -1, -1):
+			if int(round_history[index]["cycle"]) == cycle_number and int(round_history[index]["round"]) == current_round:
+				round_history.remove_at(index)
+				break
 	_round_result_recorded = false
 	_recorded_winner_slot = 0
 	set_race_paused(false)
@@ -337,6 +429,8 @@ func _select_round_metadata() -> void:
 
 
 func _advance_round() -> void:
+	if experience_ended or not experience_config_valid:
+		return
 	if current_state != RaceState.PODIO or not _round_result_recorded:
 		return
 	# Preserva o resultado encerrado; restart só desfaz tentativas manuais.
@@ -353,9 +447,9 @@ func _advance_round() -> void:
 
 
 func set_race_paused(paused: bool) -> void:
-	race_paused = paused
+	race_paused = paused or experience_ended or not experience_config_valid
 	for runner: CandidateRunner in runners:
-		runner.set_physics_process(not paused)
+		runner.set_physics_process(not race_paused)
 	send_telemetry_now()
 
 
@@ -385,6 +479,8 @@ func trigger_candidate_boost(
 	voter_name: String = "Local",
 	source_label: String = "TURBO"
 ) -> void:
+	if experience_ended:
+		return
 	match_events_count += 1
 	var runner: CandidateRunner = get_runner_by_id(candidate_id)
 	if runner == null:
@@ -411,6 +507,8 @@ func trigger_candidate_boost(
 
 
 func trigger_candidate_shield(candidate_id: int, duration: float = 5.0, voter_name: String = "Local") -> void:
+	if experience_ended:
+		return
 	if should_reserve_paid_effect():
 		_reserve_round_effect(candidate_id, "shield", duration)
 		return
@@ -432,6 +530,8 @@ func spawn_political_obstacle(
 	_obstacle_type: String = "pilha_documentos",
 	voter_name: String = "Oponente"
 ) -> Area3D:
+	if experience_ended:
+		return null
 	if should_reserve_paid_effect():
 		_reserve_round_effect(target_slot, "attack", 1.0)
 		return null
@@ -1116,6 +1216,7 @@ func bind_event_bus(p_bus: LiveEventBusInstance) -> void:
 	event_bus = p_bus
 	if event_bus == null:
 		return
+	event_bus.effects_suspended = experience_ended
 
 	if not event_bus.candidate_vote_registered.is_connected(_on_bus_vote_registered):
 		event_bus.candidate_vote_registered.connect(_on_bus_vote_registered)
@@ -1125,8 +1226,7 @@ func bind_event_bus(p_bus: LiveEventBusInstance) -> void:
 		event_bus.candidate_shield_requested.connect(_on_bus_shield_requested)
 	if not event_bus.candidate_attack_requested.is_connected(_on_bus_attack_requested):
 		event_bus.candidate_attack_requested.connect(_on_bus_attack_requested)
-	if not event_bus.admin_command_requested.is_connected(_on_bus_admin_command):
-		event_bus.admin_command_requested.connect(_on_bus_admin_command)
+	event_bus.admin_command_executor = _execute_admin_command
 	if not event_bus.connection_state_changed.is_connected(_on_bus_connection_changed):
 		event_bus.connection_state_changed.connect(_on_bus_connection_changed)
 
@@ -1167,30 +1267,42 @@ func _on_bus_attack_requested(target_slot: int, obstacle_type: String, voter_nam
 	spawn_political_obstacle(target_slot, obstacle_type, voter_name)
 
 
-func _on_bus_admin_command(command: String, payload: Dictionary = {}) -> void:
+func _execute_admin_command(command: String, payload: Dictionary = {}) -> Dictionary:
+	if experience_ended and not command in ["end_experience", "set_live_goal", "set_live_goals", "set_audio_settings"]:
+		return {"applied": false, "message": "experience_ended"}
+	if not experience_config_valid and command != "end_experience":
+		return {"applied": false, "message": "invalid_end_configuration"}
+	var applied: bool = _on_bus_admin_command(command, payload)
+	send_telemetry_now()
+	return {"applied": applied, "message": "executed" if applied else "command_not_applicable"}
+
+
+func _on_bus_admin_command(command: String, payload: Dictionary = {}) -> bool:
 	match_events_count += 1
 	var clean_cmd: String = command.strip_edges().to_lower()
 
 	match clean_cmd:
+		"end_experience":
+			return end_experience("scheduled" if payload.get("reason") == "scheduled" else "manual")
 		"start_race":
 			start_race_immediately()
-			return
+			return current_state == RaceState.RACING
 		"restart_race", "restart", "reset", "admin_restart":
 			restart_race(false)
-			return
+			return current_state == RaceState.LOBBY_VOTACAO
 		"skip_lobby":
 			start_countdown()
-			return
+			return current_state == RaceState.COUNTDOWN
 		"reset_dedup":
 			if event_bus != null:
 				event_bus.reset_deduplication()
-			return
+			return event_bus != null
 		"pause", "pause_race":
 			set_race_paused(true)
-			return
+			return race_paused
 		"resume", "resume_race":
 			set_race_paused(false)
-			return
+			return not race_paused
 
 	var candidate_slot: int = int(payload.get("candidate_slot", payload.get("slot", payload.get("candidate_id", 0))))
 	if candidate_slot == 0:
@@ -1200,19 +1312,21 @@ func _on_bus_admin_command(command: String, payload: Dictionary = {}) -> void:
 				break
 
 	if candidate_slot in [1, 2]:
+		if current_state != RaceState.RACING or race_paused:
+			return false
 		if clean_cmd in ["boost", "turbo", "admin_boost", "candidate_boost"] or clean_cmd.begins_with("boost") or clean_cmd.begins_with("turbo"):
 			var boost_amount: float = clampf(float(payload.get("boost_amount", payload.get("amount", 5.0))), 1.0, 20.0)
 			var boost_duration: float = clampf(float(payload.get("boost_duration", payload.get("duration", 3.5))), 0.5, 10.0)
 			trigger_candidate_boost(candidate_slot, boost_amount, boost_duration, "Admin", "ADMIN TURBO")
-			return
+			return true
 		elif clean_cmd in ["shield", "admin_shield", "candidate_shield"] or clean_cmd.begins_with("shield"):
 			var shield_dur: float = clampf(float(payload.get("shield_duration", payload.get("duration", 5.0))), 1.0, 15.0)
 			trigger_candidate_shield(candidate_slot, shield_dur, "Admin")
-			return
+			return true
 		elif clean_cmd in ["attack", "spawn_obstacle", "candidate_attack"] or clean_cmd.begins_with("attack"):
 			var target_slot: int = clampi(int(payload.get("target_slot", 2 if candidate_slot == 1 else 1)), 1, 2)
-			spawn_political_obstacle(target_slot, "pilha_documentos", "Admin")
-			return
+			return spawn_political_obstacle(target_slot, "pilha_documentos", "Admin") != null
+	return false
 
 
 func _on_bus_connection_changed(is_connected: bool, status_text: String) -> void:
@@ -1256,8 +1370,14 @@ func get_telemetry_snapshot() -> Dictionary:
 
 	return {
 		"type": "telemetry",
+		"runtime_mode": runtime_mode,
+		"experience_ended": experience_ended,
+		"experience_end_reason": experience_end_reason,
+		"experience_ended_at": experience_ended_at,
+		"experience_end_at": experience_end_at,
+		"experience_config_valid": experience_config_valid,
 		"current_state": int(current_state),
-		"state_name": _get_state_name(current_state),
+		"state_name": "ENDED" if experience_ended else _get_state_name(current_state),
 		"race_elapsed_time": race_elapsed_time,
 		"match_time_remaining": match_time_remaining,
 		"match_duration": match_duration,
@@ -1268,6 +1388,7 @@ func get_telemetry_snapshot() -> Dictionary:
 		"round_name": String(round_metadata.get("name", "")),
 		"round_metadata": round_metadata.duplicate(true),
 		"cycle_wins": cycle_wins.duplicate(),
+		"round_history": round_history.slice(maxi(0, round_history.size() - 10)),
 		"race_paused": race_paused,
 		"winner_id": winner.candidate_id if winner != null else 0,
 		"advantage_leader": advantage_leader,

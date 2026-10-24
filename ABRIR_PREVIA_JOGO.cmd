@@ -1,5 +1,6 @@
 @echo off
 setlocal
+set "JOGI_MODE=development"
 cd /d "%~dp0"
 set "LIVE_PLATFORM="
 set "LIVE_BRIDGE_WS_URL="

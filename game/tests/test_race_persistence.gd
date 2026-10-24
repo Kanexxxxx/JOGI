@@ -86,6 +86,7 @@ func _test_restore_and_replay() -> bool:
 	race.current_round = 7
 	race.cycle_number = 2
 	race.cycle_wins.assign([3, 2])
+	race.round_history.assign([{"cycle": 1, "round": 50, "winner_slot": 2, "lula_m": 800.0, "flavio_m": 900.0}])
 	race.live_goal = {"goal_kind": "follows", "goal_target": 1234, "goal_label": "Novos seguidores"}
 	race.start_race_immediately()
 	race.match_time_remaining = 345.0
@@ -113,11 +114,16 @@ func _test_restore_and_replay() -> bool:
 	var audience: AudienceDirector = context["audience"] as AudienceDirector
 	var bootstrap_ok: bool = bool(context["initialized"]) and persistence.is_ready and persistence.recovered
 	var timers_ok: bool = race.current_round == 7 and race.cycle_number == 2 and race.cycle_wins == [3, 2] and race.match_time_remaining == 345.0 and race.race_elapsed_time == 255.0 and race.race_paused
+	if not _check(race.round_history.size() == 1 and race.round_history[0]["winner_slot"] == 2 and race.round_history[0]["flavio_m"] == 900.0, "Histórico deve restaurar com os resultados originais"):
+		_destroy(context)
+		return false
 	var goal_ok: bool = race.live_goal == {"goal_kind": "follows", "goal_target": 1234, "goal_label": "Novos seguidores"}
 	var runner_state_ok: bool = race.runners[0].progress_m == 168.0 and race.runners[1].progress_m == 171.0 and race.runners[0].boost_count == 1 and race.runners[0].lobby_votes == 3 and race.runners[1].boost_count == 1 and race.runners[1].shield_timer == 8.0
 	var money_ok: bool = audience.get_top_supporters().size() == 1 and int(audience.get_top_supporters()[0]["coins"]) == 35
 	var count_before_retry: int = race.runners[1].boost_count
-	var retry_rejected: bool = not bus.ingest_envelope(second) and race.runners[1].boost_count == count_before_retry and int(audience.get_top_supporters()[0]["coins"]) == 35
+	var retry_rejected: bool = not bus.ingest_envelope(second) and race.runners[1].boost_count == count_before_retry and audience.get_top_supporters().size() == 1 and int(audience.get_top_supporters()[0]["coins"]) == 35
+	if not money_ok:
+		printerr("RESTORE_FIXTURE_DIAGNOSTIC mode=", bus.runtime_mode, " first=", first_accepted, " second=", second_accepted, " initialized=", context["initialized"], " error=", persistence.last_error)
 	var pending: Array[Node] = race._obstacles_root.get_children()
 	var obstacle_ok: bool = pending.size() == 1 and int(pending[0].get_meta("target_slot", 0)) == 2 and is_equal_approx((pending[0] as Area3D).global_position.z - race.runners[1].global_position.z, -9.0)
 	var next_store: RaceSessionStore = RaceSessionStore.new("local", base)

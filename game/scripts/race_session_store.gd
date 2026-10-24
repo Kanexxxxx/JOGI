@@ -37,7 +37,8 @@ func configure(channel: String, base_directory: String = DEFAULT_DIRECTORY) -> b
 		last_error = "invalid_storage_location"
 		return false
 	_channel = channel
-	_directory = base_directory.path_join(channel)
+	var mode: String = "development" if OS.get_environment("JOGI_MODE").strip_edges().to_lower() == "development" else "production"
+	_directory = base_directory.path_join(mode).path_join(channel) if base_directory == DEFAULT_DIRECTORY else base_directory.path_join(channel)
 	_configured = true
 	return true
 

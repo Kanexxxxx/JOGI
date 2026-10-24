@@ -2,6 +2,7 @@
 import importlib.util
 from pathlib import Path
 import sys
+import sqlite3
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -26,6 +27,23 @@ class FakeProcess:
 
 
 class SupervisorTests(unittest.TestCase):
+    def test_mode_storage_is_separate_and_legacy_paid_pending_is_detected_read_only(self):
+        production = run_live_instances.build_plan('tiktok', runtime_mode='production')
+        development = run_live_instances.build_plan('tiktok', offline=True)
+        self.assertNotEqual(production['state_dir'], development['state_dir'])
+        self.assertEqual(production['godot_environment']['JOGI_MODE'], 'production')
+        self.assertEqual(development['godot_environment']['JOGI_MODE'], 'development')
+        with tempfile.TemporaryDirectory() as folder:
+            production['legacy_state_dir'] = folder
+            path = Path(folder) / 'gifts.sqlite3'
+            with sqlite3.connect(path) as db:
+                db.execute('CREATE TABLE gifts (completed_ms INTEGER)')
+                db.executemany('INSERT INTO gifts VALUES (?)', [(None,), (100,)])
+            db.close()
+            before = path.read_bytes()
+            self.assertEqual(run_live_instances.legacy_pending_gifts(production), 1)
+            self.assertEqual(path.read_bytes(), before)
+
     def test_rejected_second_launcher_preserves_owner_status(self):
         with tempfile.TemporaryDirectory() as folder:
             plans = [run_live_instances.build_plan(platform, offline=True) for platform in ('tiktok', 'kwai')]

@@ -107,7 +107,7 @@ class OutboxTests(unittest.TestCase):
 
 class ReliableServerTests(unittest.IsolatedAsyncioTestCase):
     async def test_offline_retention_reconnect_and_ack(self) -> None:
-        server = LiveBridgeServer(port=0, platform="tiktok", ack_retry_seconds=0.2)
+        server = LiveBridgeServer(runtime_mode="development", port=0, platform="tiktok", ack_retry_seconds=0.2)
         await server.start()
         url = f"ws://127.0.0.1:{server.bound_port}/ws/godot"
         try:
@@ -137,11 +137,11 @@ class ReliableServerTests(unittest.IsolatedAsyncioTestCase):
     async def test_unacknowledged_gift_survives_server_restart(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "gifts.sqlite3"
-            first = LiveBridgeServer(port=0, platform="kwai", outbox_path=path)
+            first = LiveBridgeServer(runtime_mode="development", port=0, platform="kwai", outbox_path=path)
             await first.start()
             first.enqueue_envelope(gift("evt_restart_gift", "kwai"))
             await first.stop()
-            second = LiveBridgeServer(port=0, platform="kwai", outbox_path=path)
+            second = LiveBridgeServer(runtime_mode="development", port=0, platform="kwai", outbox_path=path)
             await second.start()
             try:
                 async with websockets.connect(f"ws://127.0.0.1:{second.bound_port}/ws/godot") as ws:
@@ -154,7 +154,7 @@ class ReliableServerTests(unittest.IsolatedAsyncioTestCase):
                 await second.stop()
 
     async def test_busy_is_explicit_and_retry_after_ack_is_accepted(self) -> None:
-        server = LiveBridgeServer(port=0, platform="tiktok", gift_capacity=1)
+        server = LiveBridgeServer(runtime_mode="development", port=0, platform="tiktok", gift_capacity=1)
         await server.start()
         try:
             self.assertEqual(server.ingest_raw_json(json.dumps(gift("evt_capacity_one")))["status"], "accepted")
@@ -170,7 +170,7 @@ class ReliableServerTests(unittest.IsolatedAsyncioTestCase):
             await server.stop()
 
     async def test_two_platforms_have_independent_delivery_and_reject_cross_source(self) -> None:
-        tt, kw = LiveBridgeServer(port=0, platform="tiktok"), LiveBridgeServer(port=0, platform="kwai")
+        tt, kw = LiveBridgeServer(runtime_mode="development", port=0, platform="tiktok"), LiveBridgeServer(runtime_mode="development", port=0, platform="kwai")
         await tt.start()
         await kw.start()
         try:
@@ -193,7 +193,7 @@ class ReliableServerTests(unittest.IsolatedAsyncioTestCase):
             await kw.stop()
 
     async def test_only_one_game_consumer_and_stale_telemetry_not_current(self) -> None:
-        server = LiveBridgeServer(port=0)
+        server = LiveBridgeServer(runtime_mode="development", port=0)
         await server.start()
         url = f"ws://127.0.0.1:{server.bound_port}/ws/godot"
         try:
@@ -216,7 +216,7 @@ class ReliableServerTests(unittest.IsolatedAsyncioTestCase):
             await server.stop()
 
     async def test_ws_origin_policy_before_upgrade_and_originless_collector(self) -> None:
-        server = LiveBridgeServer(port=0)
+        server = LiveBridgeServer(runtime_mode="development", port=0)
         await server.start()
         try:
             for route in ("ingest", "admin", "godot"):

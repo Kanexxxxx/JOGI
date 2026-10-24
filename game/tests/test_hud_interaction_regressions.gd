@@ -57,6 +57,14 @@ func _run() -> void:
 			var region: Vector4 = material.get_shader_parameter("circle_uv_region")
 			_check(region.z > .0 and region.z < 1.0 and region.w > .0 and region.w < 1.0, "máscara circular usa UV local do rosto recortado no atlas")
 	_check(atlas_portraits == 2, "os dois retratos aprovados usam a máscara corrigida")
+	hud.show_event("ULTRAPASSAGEM · 22 FLÁVIO ASSUME A PONTA", 2)
+	for entry: Dictionary in hud._interaction_slots:
+		var panel: Control = entry["panel"] as Control
+		if panel.visible:
+			_check(not panel.get_rect().intersects(hud._event_root.get_rect()), "aviso mecânico não cobre cards de espectadores")
+	_check(hud._event_root.position.y > 1320.0, "aviso preserva a faixa dos pés dos corredores")
+	hud._finish_event_notice()
+	_check(is_equal_approx((hud._interaction_slots[0]["panel"] as Control).position.y, 1352.0), "cards retornam à posição regular ao terminar aviso")
 	root.remove_child(hud)
 	hud.free()
 	await process_frame

@@ -75,7 +75,7 @@ class TikTokListenerTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_bridge_instantiates_configured_listener_and_receives_fake_event(self):
         with patch.object(module, 'TikTokLiveClient', FakeClient), patch.object(module, 'TIKTOK_AVAILABLE', True):
-            server = LiveBridgeServer(port=0, platform='tiktok', account='nostalgiia.br')
+            server = LiveBridgeServer(runtime_mode="development", port=0, platform='tiktok', account='nostalgiia.br')
             await server.start()
             try:
                 await server.start_live_listener()

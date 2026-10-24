@@ -50,6 +50,7 @@ func _ready() -> void:
 	var window_platform: String = OS.get_environment("LIVE_PLATFORM").to_lower()
 	DisplayServer.window_set_title("Corrida Presidencial - " + (window_platform.capitalize() if window_platform in ["tiktok", "kwai"] else "Previa local"))
 	super._ready()
+	var asset_preview: bool = not is_production_mode() and "--asset-preview" in OS.get_cmdline_user_args()
 	audience = AudienceDirector.new()
 	add_child(audience)
 	audience.setup(event_bus)
@@ -88,6 +89,8 @@ func _ready() -> void:
 	world_visual.set_round_metadata(round_metadata)
 	round_changed.connect(_on_visual_round_changed)
 	for argument: String in OS.get_cmdline_user_args():
+		if is_production_mode():
+			continue
 		if argument.begins_with("--capture="):
 			_capture_path = argument.trim_prefix("--capture=")
 		elif argument.begins_with("--measure-seconds="):
@@ -100,31 +103,36 @@ func _ready() -> void:
 		push_error("Captura exige PNG novo em docs/evidencias/estadio")
 		get_tree().quit(1)
 		return
-	if "--idle-preview" in OS.get_cmdline_user_args():
+	if not is_production_mode() and "--idle-preview" in OS.get_cmdline_user_args():
 		state_timer = 300.0
-	elif "--asset-preview" in OS.get_cmdline_user_args():
+	elif asset_preview:
 		start_race_immediately()
 	if not _capture_path.is_empty() and _test_duration <= 0.0:
 		_test_duration = 5.0
-	if "--asset-preview" in OS.get_cmdline_user_args() and "--showcase-events" in OS.get_cmdline_user_args():
+	if asset_preview and "--showcase-events" in OS.get_cmdline_user_args():
 		get_tree().create_timer(.8).timeout.connect(_run_interaction_showcase)
 	_update_stage(0.0, true)
-	if not "--asset-preview" in OS.get_cmdline_user_args() and DisplayServer.get_name() != "headless":
+	if not asset_preview and (is_production_mode() or DisplayServer.get_name() != "headless"):
 		var channel: String = OS.get_environment("LIVE_PLATFORM").strip_edges().to_lower()
 		if not channel in ["tiktok", "kwai"]:
 			channel = "local"
 		persistence = RacePersistence.new()
 		add_child(persistence)
 		if not persistence.setup(self, audience, event_bus, channel):
-			stadium_hud.show_event("RECUPERAÇÃO LOCAL PRECISA DE ATENÇÃO", 0)
+			set_race_paused(true)
+			if not is_production_mode():
+				stadium_hud.show_event("RECUPERAÇÃO LOCAL PRECISA DE ATENÇÃO", 0)
 		else:
 			stadium_hud.update_leaderboard(audience.get_top_supporters())
 			_update_stage(0.0, true)
+	check_experience_deadline()
+	if experience_ended:
+		set_race_paused(true)
 
 
 func _run_interaction_showcase() -> void:
 	# Somente bancada explícita: nunca simular público em uma transmissão.
-	if not "--asset-preview" in OS.get_cmdline_user_args():
+	if is_production_mode() or not "--asset-preview" in OS.get_cmdline_user_args():
 		return
 	var names: Array[String] = ["Ana · teste", "Bia · teste", "Caio · teste", "Davi · teste"]
 	for index: int in range(4):
@@ -135,6 +143,8 @@ func _run_interaction_showcase() -> void:
 
 
 func _showcase_turbo() -> void:
+	if is_production_mode() or experience_ended:
+		return
 	trigger_candidate_boost(1, 9.0, 8.0, "Ana · teste")
 	trigger_candidate_boost(2, 9.0, 8.0, "Bia · teste")
 	if "--showcase-cutscene" in OS.get_cmdline_user_args():
@@ -280,13 +290,15 @@ func _on_visual_round_changed(_round_id: int, _cycle_id: int, metadata: Dictiona
 
 
 func _on_audience_moment(kind: String, team: int, _display_name: String) -> void:
-	if bool(get_meta("restoring_session", false)):
+	if experience_ended or bool(get_meta("restoring_session", false)):
 		return
 	if audio != null and kind == "join" and team > 0:
 		audio.play_event("vote", team)
 
 
 func _on_show_event(envelope: Dictionary) -> void:
+	if experience_ended:
+		return
 	if avatar_visuals != null:
 		avatar_visuals.register_event(envelope)
 	if str(envelope.get("event_type", "")) != "gift":
@@ -482,19 +494,25 @@ func restart_race(p_skip_lobby: bool = false) -> void:
 func set_race_paused(paused: bool) -> void:
 	super.set_race_paused(paused)
 	if effects != null:
-		effects.set_paused(paused)
+		effects.set_paused(race_paused)
 	if sound_effects != null:
-		sound_effects.set_paused(paused)
+		sound_effects.set_paused(race_paused)
 	if audio != null:
-		audio.set_paused(paused)
+		audio.set_paused(race_paused)
 	if ambience != null:
-		ambience.set_paused(paused)
+		ambience.set_paused(race_paused)
 	if memes != null:
-		memes.set_paused(paused)
+		memes.set_paused(race_paused)
+	for runner: CandidateRunner in runners:
+		if runner.presentation != null and runner.presentation.animation_player != null:
+			runner.presentation.set_process(not race_paused)
+			runner.presentation.animation_player.speed_scale = 0.0 if race_paused else 1.0
 	_update_hud()
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if is_production_mode() or experience_ended:
+		return
 	if event is InputEventKey:
 		var key: InputEventKey = event as InputEventKey
 		if key.pressed and not key.echo:
@@ -565,6 +583,8 @@ func _update_hud() -> void:
 			phase = "EMPATE NA RODADA" if winner == null else ("13 VENCEU · LULA" if winner.candidate_id == 1 else "22 VENCEU · FLÁVIO")
 	if race_paused:
 		phase = "CORRIDA PAUSADA"
+	if experience_ended:
+		phase = "EXPERIÊNCIA ENCERRADA · OBRIGADO!"
 	var lula: StadiumRunner = runners[0] as StadiumRunner
 	var flavio: StadiumRunner = runners[1] as StadiumRunner
 	var live: Dictionary = _get_live_summary()
@@ -582,17 +602,16 @@ func _update_hud() -> void:
 		"lula_stumble": lula.stumble_timer > 0.0, "flavio_stumble": flavio.stumble_timer > 0.0,
 		"lula_screen": race_camera.unproject_position(lula.stage_position + Vector3(0.0, 2.05, 0.0)) if _cinematic_team == 0 and _finish_elapsed < .85 else Vector2(-1000, -1000),
 		"flavio_screen": race_camera.unproject_position(flavio.stage_position + Vector3(0.0, 2.05, 0.0)) if _cinematic_team == 0 and _finish_elapsed < .85 else Vector2(-1000, -1000),
-		"phase": phase, "mode": _session_caption()})
+		"phase": phase, "mode": _session_caption(), "experience_ended": experience_ended})
 
 
 func _session_caption() -> String:
+	if is_production_mode():
+		return "JOGO FICTÍCIO · IA"
 	var platform: String = OS.get_environment("LIVE_PLATFORM").strip_edges().to_lower()
 	if "--asset-preview" in OS.get_cmdline_user_args() or not platform in ["tiktok", "kwai"]:
 		return "TESTE LOCAL"
-	var ws_live: bool = event_bus != null and event_bus.is_ws_connected
-	if platform == "tiktok":
-		return "TIKTOK · BRIDGE" if ws_live else "TIKTOK · LOCAL"
-	return "KWAI · BRIDGE" if ws_live else "KWAI · LOCAL"
+	return "TESTE · " + platform.to_upper()
 
 
 func _sum_session_metric(counts: Dictionary, key: String) -> int:
@@ -667,18 +686,19 @@ func get_telemetry_snapshot() -> Dictionary:
 	}
 	snapshot["gift_visuals"] = gift_visuals.get_cache_stats() if gift_visuals != null else {}
 	snapshot["avatar_visuals"] = avatar_visuals.get_cache_stats() if avatar_visuals != null else {}
+	snapshot["persistence"] = {"ready": persistence.is_ready, "error": persistence.last_error} if persistence != null else {"ready": false, "error": "not_enabled"}
 	var platform: String = OS.get_environment("LIVE_PLATFORM").to_lower()
 	snapshot["platform"] = platform if platform in ["tiktok", "kwai"] else "local"
 	return snapshot
 
 
-func _on_bus_admin_command(command: String, payload: Dictionary = {}) -> void:
+func _on_bus_admin_command(command: String, payload: Dictionary = {}) -> bool:
 	if command == "set_audio_settings":
 		for key: String in ["voices_enabled", "sfx_enabled", "crowd_enabled", "memes_enabled"]:
 			audio_settings[key] = bool(payload[key])
 		_apply_audio_settings()
 		send_telemetry_now()
-		return
+		return true
 	if command == "set_live_goal":
 		live_goal = {"goal_kind": String(payload["goal_kind"]), "goal_target": int(payload["goal_target"]), "goal_label": String(payload["goal_label"]).strip_edges()}
 		if live_goal["goal_kind"] == "gift_specific":
@@ -699,7 +719,7 @@ func _on_bus_admin_command(command: String, payload: Dictionary = {}) -> void:
 		live_goals[mapped_slot] = updated_slot
 		_update_hud()
 		send_telemetry_now()
-		return
+		return true
 	if command == "set_live_goals":
 		var incoming: Dictionary = payload["live_goals"] as Dictionary
 		for slot: String in ["likes", "gifts", "follows"]:
@@ -721,11 +741,22 @@ func _on_bus_admin_command(command: String, payload: Dictionary = {}) -> void:
 		live_goal = (live_goals["likes"] as Dictionary).duplicate(true)
 		_update_hud()
 		send_telemetry_now()
-		return
-	super._on_bus_admin_command(command, payload)
+		return true
+	return super._on_bus_admin_command(command, payload)
+
+
+func end_experience(reason: String = "manual", at_unix: float = -1.0) -> bool:
+	var changed: bool = super.end_experience(reason, at_unix)
+	if not changed:
+		return false
+	if persistence != null and persistence.is_ready:
+		return persistence.flush_snapshot()
+	return not is_production_mode()
 
 
 func trigger_candidate_boost(candidate_id: int, amount: float = 5.0, duration: float = 3.5, voter_name: String = "Local", label: String = "TURBO") -> void:
+	if experience_ended:
+		return
 	super.trigger_candidate_boost(candidate_id, amount, duration, voter_name, label)
 	if bool(get_meta("restoring_session", false)):
 		return
@@ -738,6 +769,8 @@ func trigger_candidate_boost(candidate_id: int, amount: float = 5.0, duration: f
 
 
 func _on_bus_boost_requested(candidate_slot: int, amount: float, duration: float, voter_name: String, label: String) -> void:
+	if experience_ended:
+		return
 	var reserved: bool = should_reserve_paid_effect()
 	super._on_bus_boost_requested(candidate_slot, amount, duration, voter_name, label)
 	if reserved:
@@ -755,6 +788,8 @@ func _on_bus_boost_requested(candidate_slot: int, amount: float, duration: float
 
 
 func trigger_candidate_shield(candidate_id: int, duration: float = 5.0, voter_name: String = "Local") -> void:
+	if experience_ended:
+		return
 	var reserved: bool = should_reserve_paid_effect()
 	super.trigger_candidate_shield(candidate_id, duration, voter_name)
 	if reserved:
@@ -808,6 +843,8 @@ func _process(delta: float) -> void:
 
 
 func get_next_round_in() -> float:
+	if experience_ended:
+		return 0.0
 	match current_state:
 		RaceState.PHOTO_FINISH:
 			return state_timer + podium_duration + countdown_duration

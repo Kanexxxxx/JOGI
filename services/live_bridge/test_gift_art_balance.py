@@ -91,7 +91,7 @@ class GiftCacheAndAPItests(unittest.IsolatedAsyncioTestCase):
     async def test_cache_optional_nonblocking_hashed_local_route_and_disk_restart(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory)/'gifts.sqlite3'
-            server = LiveBridgeServer(port=0,platform='tiktok',outbox_path=path)
+            server = LiveBridgeServer(runtime_mode="development", port=0,platform='tiktok',outbox_path=path)
             await server.start()
             data=png(); metadata={'source_url':CDN_URL,'sha256':hashlib.sha256(data).hexdigest(),'bytes':len(data),'content_type':'image/png','width':2,'height':2}
             gate=asyncio.Event()
@@ -134,13 +134,13 @@ class GiftCacheAndAPItests(unittest.IsolatedAsyncioTestCase):
     async def test_specific_goal_http_ws_persist_and_platform_isolation(self):
         with tempfile.TemporaryDirectory() as directory:
             path=Path(directory)/'tiktok.sqlite3'
-            server=LiveBridgeServer(port=0,platform='tiktok',outbox_path=path)
-            other=LiveBridgeServer(port=0,platform='kwai')
+            server=LiveBridgeServer(runtime_mode="development", port=0,platform='tiktok',outbox_path=path)
+            other=LiveBridgeServer(runtime_mode="development", port=0,platform='kwai')
             await server.start()
             base=f'http://127.0.0.1:{server.bound_port}'
             query=urlencode({'command':'set_live_goal','goal_kind':'gift_specific','goal_gift_id':'5655','goal_target':100,'goal_label':'Rosas'})
             response=await asyncio.to_thread(urlopen,base+'/api/admin/command?'+query)
-            self.assertEqual(json.loads(response.read())['status'],'ok')
+            self.assertEqual(json.loads(response.read())['status'],'queued')
             self.assertEqual(server.live_goal.value['goal_gift_id'],'5655')
             self.assertEqual(other.live_goal.value['goal_kind'],'likes')
             async with websockets.connect(f'ws://127.0.0.1:{server.bound_port}/ws/admin') as ws:
@@ -149,10 +149,10 @@ class GiftCacheAndAPItests(unittest.IsolatedAsyncioTestCase):
                 for _ in range(6):
                     message=json.loads(await ws.recv())
                     if message.get('type')=='command_ack':
-                        self.assertEqual(message['status'],'ok'); break
+                        self.assertEqual(message['status'],'queued'); break
                 self.assertEqual(server.live_goal.value['goal_gift_id'],'9999')
             await server.stop(); await other.stop()
-            restored=LiveBridgeServer(port=0,platform='tiktok',outbox_path=path)
+            restored=LiveBridgeServer(runtime_mode="development", port=0,platform='tiktok',outbox_path=path)
             self.assertEqual(restored.live_goal.value['goal_gift_id'],'9999')
             await restored.stop()
 

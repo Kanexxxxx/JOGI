@@ -19,7 +19,9 @@ func _process(_delta: float) -> bool:
 
 func _run_suite() -> void:
 	var passed: bool = true
-	passed = _check(_hud.timer_label.text == "10:00" and _hud.mode_label.text == "TESTE LOCAL", "Padrão deve identificar teste local") and passed
+	passed = _check(_hud.timer_label.text == "10:00" and _hud.mode_label.text == "JOGO FICTÍCIO · IA", "Padrão público preserva transparência sem marcador de desenvolvimento") and passed
+	_hud.apply_state({"mode": "TESTE LOCAL"})
+	passed = _check(_hud.mode_label.text == "TESTE LOCAL", "Bancada explicitamente identificada continua disponível") and passed
 	_hud.apply_state({"remaining": 121.2, "round": 8, "wins": [2, 1], "lula_m": 100.0, "flavio_m": 73.0, "lula_speed": 5.0, "flavio_speed": 4.0, "lula_boost": true})
 	passed = _check(_hud.timer_label.text == "02:02", "Cronômetro deve arredondar o restante para cima") and passed
 	passed = _check(_hud.advantage_label.text == "LULA NA FRENTE  +27 m", "Vantagem deve vir dos metros reais") and passed

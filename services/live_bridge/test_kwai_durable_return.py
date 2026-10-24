@@ -10,8 +10,8 @@ from server import LiveBridgeServer
 
 @pytest.mark.asyncio
 async def test_operator_cookies_coexist_for_two_platforms() -> None:
-    first = LiveBridgeServer(port=0, platform='tiktok', local_token='operator-fixture-token')
-    second = LiveBridgeServer(port=0, platform='kwai', local_token='operator-fixture-token')
+    first = LiveBridgeServer(runtime_mode="development", port=0, platform='tiktok', local_token='operator-fixture-token')
+    second = LiveBridgeServer(runtime_mode="development", port=0, platform='kwai', local_token='operator-fixture-token')
     await first.start()
     await second.start()
     jar = CookieJar()
@@ -51,7 +51,7 @@ async def post(adapter, body: dict, token: str = 'producer-fixture-token') -> tu
 
 @pytest.mark.asyncio
 async def test_kwai_retries_same_id_after_failure_and_only_acks_durable_storage(tmp_path) -> None:
-    bridge = LiveBridgeServer(port=0, platform='kwai', kwai_webhook_port=0,
+    bridge = LiveBridgeServer(runtime_mode="development", port=0, platform='kwai', kwai_webhook_port=0,
                               producer_token='producer-fixture-token', outbox_path=tmp_path / 'gifts.sqlite3')
     await bridge.start()
     await bridge.start_live_listener()

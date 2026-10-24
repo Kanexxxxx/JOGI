@@ -82,13 +82,13 @@ class FollowAndGoalTests(unittest.IsolatedAsyncioTestCase):
     async def test_goal_persist_restart_and_send_only_latest_after_welcome(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / 'gifts.sqlite3'
-            first = LiveBridgeServer(port=0, platform='tiktok', outbox_path=path)
+            first = LiveBridgeServer(runtime_mode="development", port=0, platform='tiktok', outbox_path=path)
             for target in (25, 50):
                 envelope = build_admin_command_envelope(command='set_live_goal', goal_kind='follows',
                     goal_target=target, goal_label='Seguidores', event_id=f'evt_goal_{target}')
                 self.assertEqual(first.enqueue_envelope(envelope), 'accepted')
             await first.stop()
-            second = LiveBridgeServer(port=0, platform='tiktok', outbox_path=path)
+            second = LiveBridgeServer(runtime_mode="development", port=0, platform='tiktok', outbox_path=path)
             await second.start()
             try:
                 self.assertEqual(second.live_goal.value['goal_target'], 50)
@@ -101,7 +101,7 @@ class FollowAndGoalTests(unittest.IsolatedAsyncioTestCase):
                 await second.stop()
 
     async def test_http_fallback_goal_follow_and_price_gift(self) -> None:
-        server = LiveBridgeServer(port=0, platform='kwai')
+        server = LiveBridgeServer(runtime_mode="development", port=0, platform='kwai')
         await server.start()
         base = f'http://127.0.0.1:{server.bound_port}'
         async def request(path):
@@ -110,7 +110,7 @@ class FollowAndGoalTests(unittest.IsolatedAsyncioTestCase):
         try:
             ack = await request('/api/admin/command?' + urlencode({'command': 'set_live_goal',
                 'goal_kind': 'coins', 'goal_target': 1234, 'goal_label': 'Meta Brasil'}))
-            self.assertEqual(ack['status'], 'ok')
+            self.assertEqual(ack['status'], 'queued')
             self.assertEqual(server.live_goal.value['goal_target'], 1234)
             with self.assertRaises(HTTPError):
                 await request('/api/admin/command?command=set_live_goal&goal_kind=coins&goal_target=0')

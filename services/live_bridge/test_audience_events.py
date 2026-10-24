@@ -134,7 +134,7 @@ class ConnectorAudienceTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(await adapter.ingest_raw_event(raw))
 
     async def test_real_loopback_adapter_gifts_keep_delta_and_sanitized_names(self) -> None:
-        server = LiveBridgeServer(port=0, rate_limit_per_sec=200)
+        server = LiveBridgeServer(runtime_mode="development", port=0, rate_limit_per_sec=200)
         adapter = TikTokLiveAdapter()
         adapter.on_event(lambda env: server.enqueue_envelope(env))
         await server.start()
@@ -157,7 +157,7 @@ class ConnectorAudienceTests(unittest.IsolatedAsyncioTestCase):
             await server.stop()
 
     async def test_ingest_shorthands_remember_choice_and_real_coin_price(self) -> None:
-        server = LiveBridgeServer(port=0)
+        server = LiveBridgeServer(runtime_mode="development", port=0)
         neutral = server.normalize_incoming_payload({"type": "gift", "source": "tiktok", "user_id": "a"})
         self.assertNotIn("candidate_slot", neutral["payload"])
         self.assertEqual(neutral["payload"]["coin_value"], 0)

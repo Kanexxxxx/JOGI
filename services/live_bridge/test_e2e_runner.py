@@ -23,11 +23,11 @@ GODOT_EXE = Path(r"C:\Users\Kanex\Downloads\Godot_v4.7.2-stable_win64.exe\Godot_
 
 async def run_e2e_test() -> int:
     logger.info("Iniciando LiveBridgeServer em porta local efêmera isolada...")
-    srv = LiveBridgeServer(host="127.0.0.1", port=0, platform="tiktok", rate_limit_per_sec=100.0)
+    srv = LiveBridgeServer(runtime_mode="development", host="127.0.0.1", port=0, platform="tiktok", rate_limit_per_sec=100.0)
     await srv.start()
     godot_url = f"ws://127.0.0.1:{srv.bound_port}/ws/godot"
     child_env = os.environ.copy()
-    child_env.update({"LIVE_BRIDGE_WS_URL": godot_url, "LIVE_PLATFORM": "tiktok"})
+    child_env.update({"LIVE_BRIDGE_WS_URL": godot_url, "LIVE_PLATFORM": "tiktok", "JOGI_MODE": "development"})
     proc = None
 
     try:

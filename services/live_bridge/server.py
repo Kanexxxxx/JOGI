@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+from collections import OrderedDict
 import hashlib
 import hmac
 from http.cookies import SimpleCookie
@@ -35,6 +36,7 @@ from gift_images import GiftImageCache
 from avatar_images import AvatarImageCache
 from audio_settings import AudioSettings, AUDIO_KEYS
 from kwai_collector_settings import KwaiCollectorSettings
+from operational_shutdown import OperationalShutdown
 
 from protocol import (
     CANDIDATES,
@@ -146,12 +148,27 @@ class LiveBridgeServer:
         kwai_webhook_port: int = 8786,
         local_token: str | None = None,
         producer_token: str | None = None,
+        runtime_mode: str | None = None,
+        end_at: str | None = None,
+        wall_clock: Any = time.time,
     ) -> None:
         if platform not in ("local", "tiktok", "kwai"):
             raise ValueError("platform deve ser local, tiktok ou kwai.")
         self.host: str = validate_bind_host(host)
         self.port: int = int(port)
         self.platform = platform
+        self.runtime_mode = runtime_mode or os.environ.get("JOGI_MODE", "production")
+        if self.runtime_mode not in ("production", "development"):
+            raise ValueError("JOGI_MODE deve ser production ou development.")
+        self.simulation_allowed = self.runtime_mode == "development"
+        self.operational_shutdown = OperationalShutdown(
+            outbox_path.parent / "operational_shutdown.json" if outbox_path else None,
+            end_at=end_at, now=wall_clock,
+        )
+        self.recent_commands: OrderedDict[str, dict[str, Any]] = OrderedDict()
+        self.recent_events: OrderedDict[str, dict[str, Any]] = OrderedDict()
+        self._operational_task: asyncio.Task[None] | None = None
+        self._end_command_id: str | None = None
         self.account = account.strip().lstrip("@")[:64]
         self.kwai_webhook_port = int(kwai_webhook_port)
         self.ack_retry_seconds = max(0.05, ack_retry_seconds)
@@ -441,6 +458,7 @@ class LiveBridgeServer:
             self.outbox.close()
             raise
         self._dispatch_task = asyncio.create_task(self._dispatch_loop())
+        self._operational_task = asyncio.create_task(self._operational_loop())
         logger.info(
             "LiveBridgeServer unificado escutando em ws://%s:%d e http://%s:%d/admin (auth=%s)",
             self.host,
@@ -453,6 +471,13 @@ class LiveBridgeServer:
     async def stop(self) -> None:
         """Encerra graciosamente as tasks e conexões abertas."""
         self._running = False
+        if self._operational_task is not None:
+            self._operational_task.cancel()
+            try:
+                await self._operational_task
+            except asyncio.CancelledError:
+                pass
+            self._operational_task = None
         if self._live_adapter is not None:
             await self._live_adapter.stop()
         self._queue_notify.set()
@@ -472,6 +497,75 @@ class LiveBridgeServer:
         await self.avatar_images.stop()
         self.outbox.close()
 
+    def _command_receipt(self, envelope: dict[str, Any], outcome: str) -> dict[str, Any]:
+        return {"type": "command_ack", "command": envelope["payload"]["command"],
+                "event_id": envelope["event_id"],
+                "status": "queued" if outcome in ("accepted", "duplicate") else outcome,
+                "message": "Aguardando execução no jogo." if outcome == "accepted" else "Comando não confirmado."}
+
+    def _record_command(self, envelope: dict[str, Any]) -> None:
+        event_id = envelope["event_id"]
+        self.recent_commands[event_id] = {"event_id": event_id,
+            "command": envelope["payload"]["command"], "status": "queued",
+            "queued_monotonic": time.monotonic(), "updated_at": int(time.time() * 1000)}
+        while len(self.recent_commands) > 100:
+            self.recent_commands.popitem(last=False)
+
+    def _command_snapshot(self) -> list[dict[str, Any]]:
+        now = time.monotonic()
+        for value in self.recent_commands.values():
+            if value["status"] == "queued" and now - value["queued_monotonic"] >= 15.0:
+                value.update(status="timeout", message="Jogo não confirmou execução no prazo.")
+        return [{k: v for k, v in item.items() if k != "queued_monotonic"}
+                for item in self.recent_commands.values()]
+
+    def _record_event(self, envelope: dict[str, Any], status: str) -> None:
+        if envelope["event_type"] not in ("gift", "vote", "like_batch", "share", "follow"):
+            return
+        event_id = envelope["event_id"]
+        safe_payload = {key: value for key, value in envelope["payload"].items()
+                        if key not in ("avatar_url", "gift_image_url")}
+        self.recent_events[event_id] = {**envelope, "payload": safe_payload, "processing_status": status}
+        self.recent_events.move_to_end(event_id)
+        while len(self.recent_events) > 100:
+            self.recent_events.popitem(last=False)
+
+    def _queue_operational_end(self) -> None:
+        if not self.operational_shutdown.ended or self._end_command_id is not None:
+            return
+        envelope = build_admin_command_envelope(command="end_experience")
+        if self.enqueue_envelope(envelope) == "accepted":
+            self._end_command_id = envelope["event_id"]
+
+    async def _operational_loop(self) -> None:
+        while self._running:
+            try:
+                self.operational_shutdown.check_deadline()
+                self._queue_operational_end()
+                self._command_snapshot()
+            except OSError:
+                self.metrics["storage_errors"] += 1
+                logger.error("Não foi possível persistir o encerramento; requer atenção do operador.")
+            await asyncio.sleep(0.5)
+
+    async def _send_saved_setting(self, ws: Any, command: str, fallback: dict[str, Any]) -> None:
+        retained = []
+        latest: dict[str, Any] | None = None
+        while not self.p0_queue.empty():
+            pending = self.p0_queue.get_nowait()
+            if pending["payload"].get("command") == command:
+                if latest is not None and latest["event_id"] in self.recent_commands:
+                    self.recent_commands[latest["event_id"]].update(
+                        status="rejected", message="Substituído por configuração mais recente.")
+                latest = pending
+            else:
+                retained.append(pending)
+        for pending in retained:
+            self.p0_queue.put_nowait(pending)
+        replay = latest if latest is not None else fallback
+        self._record_command(replay)
+        await ws.send(json.dumps(replay, ensure_ascii=False))
+
     def _get_fallback_candidates(self) -> list[dict[str, Any]]:
         colors = {
             1: "#FF3B5C",
@@ -487,10 +581,10 @@ class LiveBridgeServer:
                     "id": "lula" if slot == 1 else "bolsonaro",
                     "name": name,
                     "color": colors.get(slot, "#FFFFFF"),
-                    "position": slot,
+                    "position": None,
                     "distance_meters": 0.0,
                     "progress_pct": 0.0,
-                    "speed_mps": 12.0,
+                    "speed_mps": 0.0,
                     "votes": 0,
                     "status": {"turbo": False, "shield": False, "stumble": False},
                 }
@@ -556,10 +650,11 @@ class LiveBridgeServer:
                 advantage_leader = "Flávio Bolsonaro"
                 advantage_meters = abs(diff)
 
-        state_name = str(raw.get("state_name", "LOBBY_VOTACAO"))
+        state_name = str(raw.get("state_name", "AGUARDANDO_JOGO"))
         elapsed = round(float(raw.get("race_elapsed_time", 0.0)), 1)
         phase_timer = round(
-            float(raw.get("match_timer_remaining", raw.get("state_timer", raw.get("phase_timer_seconds", 300.0)))),
+            float(raw.get("match_time_remaining", raw.get("match_timer_remaining",
+                      raw.get("state_timer", raw.get("phase_timer_seconds", 0.0))))),
             1,
         )
         goal = dict(self.live_goal.value)
@@ -601,6 +696,14 @@ class LiveBridgeServer:
         return {
             "status": "ok",
             "platform": self.platform,
+            "runtime_mode": self.runtime_mode,
+            "simulation_allowed": self.simulation_allowed,
+            "operational_shutdown": {**self.operational_shutdown.snapshot(),
+                "pending_gifts": self.outbox.pending_count(),
+                "applied": bool(raw.get("experience_ended", False)),
+                "paid_event_policy": "after_close_pending"},
+            "recent_commands": self._command_snapshot(),
+            "recent_events": list(self.recent_events.values()),
             "account": self.account,
             "auth_mode": self.auth_mode,
             "uptime_seconds": round(max(0.0, time.monotonic() - self._started_monotonic), 1),
@@ -880,6 +983,10 @@ class LiveBridgeServer:
                 "ingest_clients": len(self.ingest_clients),
                 "platform": self.platform,
                 "account": self.account,
+                "runtime_mode": self.runtime_mode,
+                "simulation_allowed": self.simulation_allowed,
+                "operational_shutdown": {**self.operational_shutdown.snapshot(),
+                    "pending_gifts": self.outbox.pending_count()},
                 "pending_gifts": self.outbox.pending_count(),
                 "gift_delivery": "at_least_once_ack",
                 "dispatch_online": bool(self._dispatch_task and not self._dispatch_task.done()),
@@ -1000,7 +1107,7 @@ class LiveBridgeServer:
 
             if not cmd or cmd not in VALID_ADMIN_COMMANDS:
                 err_body = json.dumps(
-                    {"status": "error", "message": f"Comando administrativo invalido: {cmd!r}"}
+                    {"status": "error", "message": "Comando administrativo inválido."}
                 ).encode("utf-8")
                 return Response(
                     400,
@@ -1050,15 +1157,14 @@ class LiveBridgeServer:
                         b'{"status":"error","message":"Audio switches require true/false."}',
                     )
             else:
-                env = build_admin_command_envelope(command=cmd, candidate_slot=slot)
+                try:
+                    env = build_admin_command_envelope(command=cmd, candidate_slot=slot)
+                except (ProtocolValidationError, ValueError, TypeError):
+                    return Response(400, "Bad Request", Headers(cors_headers + [("Content-Type", "application/json")]),
+                                    b'{"status":"rejected","message":"Candidato invalido."}')
             outcome = self.enqueue_envelope(env)
             ok_body = json.dumps(
-                {
-                    "status": "ok" if outcome in ("accepted", "duplicate") else outcome,
-                    "command": cmd,
-                    "event_id": env["event_id"],
-                    "message": "Comando enfileirado." if outcome == "accepted" else f"Resultado do envio: {outcome}.",
-                }
+                self._command_receipt(env, outcome)
             ).encode("utf-8")
             return Response(
                 200,
@@ -1074,6 +1180,9 @@ class LiveBridgeServer:
             )
 
         if path_only == "/api/admin/simulate":
+            if not self.simulation_allowed:
+                return Response(403, "Forbidden", Headers(cors_headers + [("Content-Type", "application/json")]),
+                                b'{"status":"rejected","message":"Simulacao indisponivel em producao."}')
             evt_type = (
                 query_params.get("event_type", [query_params.get("type", [None])[0]])[0]
                 or "vote"
@@ -1358,9 +1467,31 @@ class LiveBridgeServer:
         Retorna 'accepted', 'duplicate' ou 'shed'.
         """
         event_id: str = envelope["event_id"]
+        if not self.simulation_allowed and envelope["source"] == "simulator":
+            self.metrics["invalid_rejected"] += 1
+            return "rejected_production"
         if self.platform != "local" and envelope["source"] not in (self.platform, "admin", "simulator"):
             self.metrics["platform_rejected"] += 1
             return "rejected_platform"
+        try:
+            self.operational_shutdown.check_deadline()
+        except OSError:
+            self.metrics["storage_errors"] += 1
+            return "busy"
+        command = envelope["payload"].get("command") if envelope["event_type"] == "admin_command" else None
+        if command == "end_experience":
+            try:
+                self.operational_shutdown.end("manual")
+            except OSError:
+                self.metrics["storage_errors"] += 1
+                return "busy"
+        if self.operational_shutdown.ended and envelope["event_type"] != "gift" and command not in (
+                "end_experience", "set_live_goal", "set_live_goals", "set_audio_settings"):
+            self._record_event(envelope, "rejected")
+            return "closed"
+        if (not self.simulation_allowed and command is not None and not self.godot_clients
+                and command not in ("end_experience", "set_live_goal", "set_live_goals", "set_audio_settings")):
+            return "godot_unavailable"
         if envelope["event_type"] in ("gift", "vote", "like_batch", "share", "follow"):
             envelope = self._prepare_viewer_avatar(envelope)
         if envelope["event_type"] == "gift":
@@ -1387,6 +1518,8 @@ class LiveBridgeServer:
                     logger.error("Presente durável aceito; metadados do catálogo não puderam ser atualizados.")
                 self.metrics["accepted_total"] += 1
                 self._queue_notify.set()
+            self._record_event(envelope, "after_close_pending" if self.operational_shutdown.ended and outcome == "accepted" else
+                               "queued" if outcome == "accepted" else outcome)
             return outcome
         if envelope["priority"] == "P0" and self.p0_queue.full():
             return "busy"
@@ -1439,6 +1572,11 @@ class LiveBridgeServer:
             self.p2_queue.put_nowait(envelope)
 
         self.metrics["accepted_total"] += 1
+        if envelope["event_type"] == "admin_command":
+            self._record_command(envelope)
+            if command == "end_experience":
+                self._end_command_id = event_id
+        self._record_event(envelope, "queued")
         self._queue_notify.set()
         return "accepted"
 
@@ -1594,12 +1732,10 @@ class LiveBridgeServer:
                             )
                             continue
                         outcome = self.enqueue_envelope(env)
-                        ack = {
-                            "type": "command_ack",
-                            "command": cmd,
-                            "status": "ok" if outcome in ("accepted", "duplicate") else outcome,
-                            "message": f"Comando '{cmd}': {outcome}.",
-                        }
+                        ack = self._command_receipt(env, outcome)
+                        request_id = data.get("request_id")
+                        if isinstance(request_id, str) and len(request_id) <= 128:
+                            ack["request_id"] = request_id
                         await ws.send(json.dumps(ack, ensure_ascii=False))
                         await self.broadcast_to_admin(
                             {
@@ -1616,13 +1752,18 @@ class LiveBridgeServer:
                             "type": "command_ack",
                             "command": cmd,
                             "status": "error",
-                            "message": f"Comando desconhecido: '{cmd}'",
+                            "message": "Comando desconhecido.",
                         }
                         await ws.send(json.dumps(ack, ensure_ascii=False))
 
                 elif msg_type == "candidate_action":
                     action = str(data.get("action", "")).strip().lower()
-                    slot = int(data.get("candidate_slot", 1))
+                    slot = data.get("candidate_slot")
+                    if type(slot) is not int or slot not in (1, 2) or action not in (
+                            "turbo", "boost", "shield", "attack", "obstacle", "papelada"):
+                        await ws.send(json.dumps({"type": "command_ack", "status": "rejected",
+                            "message": "Ação ou candidato inválido."}))
+                        continue
                     if action in ("turbo", "boost"):
                         cmd = "boost"
                     elif action == "shield":
@@ -1633,15 +1774,14 @@ class LiveBridgeServer:
                         cmd = "boost"
                     env = build_admin_command_envelope(command=cmd, candidate_slot=slot)
                     outcome = self.enqueue_envelope(env)
-                    ack = {
-                        "type": "command_ack",
-                        "command": cmd,
-                        "status": "ok" if outcome in ("accepted", "duplicate") else outcome,
-                        "message": f"Ação '{action}' para {'Lula' if slot == 1 else 'Flávio'}: {outcome}.",
-                    }
+                    ack = self._command_receipt(env, outcome)
                     await ws.send(json.dumps(ack, ensure_ascii=False))
 
                 elif msg_type == "simulate_event":
+                    if not self.simulation_allowed:
+                        await ws.send(json.dumps({"type": "command_ack", "status": "rejected",
+                            "message": "Simulação indisponível em produção."}))
+                        continue
                     outcome = "accepted"
                     evt_type = str(data.get("event_type", "vote")).strip().lower()
                     evt_data = data.get("data", {}) if isinstance(data.get("data"), dict) else {}
@@ -1759,35 +1899,19 @@ class LiveBridgeServer:
                 },
             }
             await ws.send(json.dumps(welcome_envelope, ensure_ascii=False))
+            if self.operational_shutdown.ended:
+                terminal = build_admin_command_envelope(command="end_experience")
+                self._record_command(terminal)
+                self._end_command_id = terminal["event_id"]
+                await ws.send(json.dumps(terminal, ensure_ascii=False))
             if self.live_goal.configured:
                 # Send only the latest saved setting. Old offline settings must not
                 # overwrite it after reconnect; unrelated commands retain their order.
-                retained = []
-                while not self.p0_queue.empty():
-                    pending = self.p0_queue.get_nowait()
-                    if pending["payload"].get("command") != "set_live_goal":
-                        retained.append(pending)
-                for pending in retained:
-                    self.p0_queue.put_nowait(pending)
-                await ws.send(json.dumps(self.live_goal.envelope(), ensure_ascii=False))
+                await self._send_saved_setting(ws, "set_live_goal", self.live_goal.envelope())
             if self.live_goal.multi_configured:
-                retained = []
-                while not self.p0_queue.empty():
-                    pending = self.p0_queue.get_nowait()
-                    if pending["payload"].get("command") != "set_live_goals":
-                        retained.append(pending)
-                for pending in retained:
-                    self.p0_queue.put_nowait(pending)
-                await ws.send(json.dumps(self.live_goal.multi_envelope(), ensure_ascii=False))
+                await self._send_saved_setting(ws, "set_live_goals", self.live_goal.multi_envelope())
             if self.audio_settings.configured:
-                retained = []
-                while not self.p0_queue.empty():
-                    pending = self.p0_queue.get_nowait()
-                    if pending["payload"].get("command") != "set_audio_settings":
-                        retained.append(pending)
-                for pending in retained:
-                    self.p0_queue.put_nowait(pending)
-                await ws.send(json.dumps(self.audio_settings.envelope(), ensure_ascii=False))
+                await self._send_saved_setting(ws, "set_audio_settings", self.audio_settings.envelope())
             self.outbox.make_due()
             self._godot_available.set()
             self._queue_notify.set()
@@ -1803,11 +1927,25 @@ class LiveBridgeServer:
                 # Verifica se é um frame de telemetria emitido pelo Godot
                 try:
                     parsed = json.loads(raw_message)
+                    if isinstance(parsed, dict) and parsed.get("type") == "command_result":
+                        event_id = parsed.get("event_id")
+                        pending = self.recent_commands.get(event_id) if isinstance(event_id, str) else None
+                        if (pending is not None and parsed.get("command") == pending["command"]
+                                and parsed.get("status") in ("applied", "rejected")
+                                and pending["status"] in ("queued", "timeout", "disconnected")):
+                            pending.update(status=parsed["status"], updated_at=int(time.time() * 1000))
+                            result = {"type": "command_result", "event_id": event_id,
+                                "command": pending["command"], "status": pending["status"]}
+                            await self.broadcast_to_admin(result)
+                            await self.broadcast_to_admin({"type": "state_update", **self._build_admin_state_payload()})
+                        continue
                     if isinstance(parsed, dict) and parsed.get("type") == "event_ack":
                         event_id = parsed.get("event_id")
                         if isinstance(event_id, str) and len(event_id) <= 128:
                             if self.outbox.acknowledge(event_id):
                                 self.metrics["gift_acks_total"] += 1
+                                if event_id in self.recent_events:
+                                    self.recent_events[event_id]["processing_status"] = "confirmed"
                             self._queue_notify.set()
                         continue
                     if isinstance(parsed, dict) and parsed.get("type") == "telemetry":
@@ -1826,6 +1964,9 @@ class LiveBridgeServer:
             pass
         finally:
             self.godot_clients.discard(ws)
+            for command in self.recent_commands.values():
+                if command["status"] == "queued":
+                    command.update(status="disconnected", message="Jogo desconectou antes da confirmação.")
             if not self.godot_clients:
                 self._godot_available.clear()
                 self.latest_telemetry = {}
@@ -1877,7 +2018,16 @@ class LiveBridgeServer:
 
     def _pop_next_priority_envelope(self) -> dict[str, Any] | None:
         if not self.p0_queue.empty():
-            return self.p0_queue.get_nowait()
+            while not self.p0_queue.empty():
+                pending = self.p0_queue.get_nowait()
+                if not self.operational_shutdown.ended or pending["payload"].get("command") in (
+                        "end_experience", "set_live_goal", "set_live_goals", "set_audio_settings"):
+                    return pending
+                if pending["event_id"] in self.recent_commands:
+                    self.recent_commands[pending["event_id"]].update(status="rejected", message="Experiência encerrada.")
+        if self.operational_shutdown.ended:
+            # Paid events remain in the durable outbox, visible as after_close_pending.
+            return None
         gift = self.outbox.next_due()
         if gift is not None:
             return gift
@@ -1925,6 +2075,8 @@ class LiveBridgeServer:
                     await asyncio.sleep(1.0)
                     continue
             sent = await self._broadcast_to_godot(envelope)
+            if sent and envelope["event_id"] in self.recent_events:
+                self.recent_events[envelope["event_id"]]["processing_status"] = "dispatched"
             if not sent:
                 if is_gift:
                     self.outbox.make_due(envelope["event_id"])
@@ -1962,13 +2114,16 @@ async def run_server_forever(
     state_dir: pathlib.Path | None = None,
     listen_live: bool = False,
     kwai_webhook_port: int = 8786,
+    runtime_mode: str | None = None,
 ) -> None:
+    mode = runtime_mode or os.environ.get("JOGI_MODE", "production")
     if state_dir is None:
         state_dir = (
             pathlib.Path(os.environ.get("LOCALAPPDATA", str(pathlib.Path.home() / ".local")))
             / "JOGI"
             / "live_bridge"
             / platform
+            / mode
         )
     server = LiveBridgeServer(
         host=host,
@@ -1977,6 +2132,7 @@ async def run_server_forever(
         account=account,
         outbox_path=state_dir / "gifts.sqlite3",
         kwai_webhook_port=kwai_webhook_port,
+        runtime_mode=mode,
     )
     await server.start()
     stop_event = asyncio.Event()
@@ -2004,6 +2160,7 @@ def main() -> None:
     )
     parser.add_argument("--platform", choices=("local", "tiktok", "kwai"), default="local")
     parser.add_argument("--account", default="", help="Identificador público da conta; não autentica nem abre live.")
+    parser.add_argument("--mode", choices=("production", "development"), default=None)
     parser.add_argument(
         "--state-dir",
         type=pathlib.Path,
@@ -2038,6 +2195,7 @@ def main() -> None:
                 state_dir=args.state_dir,
                 listen_live=args.listen_live,
                 kwai_webhook_port=args.kwai_webhook_port,
+                runtime_mode=args.mode,
             )
         )
     except KeyboardInterrupt:

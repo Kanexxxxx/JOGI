@@ -27,18 +27,18 @@ class AudioSettingsTests(unittest.IsolatedAsyncioTestCase):
     async def test_http_settings_restart_latest_only_and_confirmed_telemetry(self):
         with tempfile.TemporaryDirectory() as directory:
             path=Path(directory)/'tiktok.sqlite3'
-            first=LiveBridgeServer(port=0,platform='tiktok',outbox_path=path)
+            first=LiveBridgeServer(runtime_mode="development", port=0,platform='tiktok',outbox_path=path)
             await first.start()
             base=f'http://127.0.0.1:{first.bound_port}'
             query=urlencode({'command':'set_audio_settings',**{key:str(value).lower() for key,value in FLAGS.items()}})
             response=await asyncio.to_thread(urlopen,base+'/api/admin/command?'+query)
-            self.assertEqual(json.loads(response.read())['status'],'ok')
+            self.assertEqual(json.loads(response.read())['status'],'queued')
             self.assertEqual(first.audio_settings.value,FLAGS)
             self.assertFalse(first._build_admin_state_payload()['audio_settings_applied'])
             with self.assertRaises(HTTPError):
                 await asyncio.to_thread(urlopen,base+'/api/admin/command?command=set_audio_settings&voices_enabled=true')
             await first.stop()
-            second=LiveBridgeServer(port=0,platform='tiktok',outbox_path=path)
+            second=LiveBridgeServer(runtime_mode="development", port=0,platform='tiktok',outbox_path=path)
             await second.start()
             try:
                 # Stale offline settings are discarded; only the newest configuration wins on reconnect.
@@ -58,9 +58,9 @@ class AudioSettingsTests(unittest.IsolatedAsyncioTestCase):
                 await second.stop()
 
     async def test_ws_bad_params_does_not_close_admin_and_settings_are_isolated(self):
-        server=LiveBridgeServer(port=0,platform='kwai')
+        server=LiveBridgeServer(runtime_mode="development", port=0,platform='kwai')
         await server.start()
-        other=LiveBridgeServer(port=0,platform='tiktok')
+        other=LiveBridgeServer(runtime_mode="development", port=0,platform='tiktok')
         try:
             async with websockets.connect(f'ws://127.0.0.1:{server.bound_port}/ws/admin') as ws:
                 await ws.recv()
@@ -70,7 +70,7 @@ class AudioSettingsTests(unittest.IsolatedAsyncioTestCase):
                 while True:
                     message=json.loads(await ws.recv())
                     if message.get('type')=='command_ack':
-                        self.assertEqual(message['status'],'ok');break
+                        self.assertEqual(message['status'],'queued');break
                 self.assertEqual(server.audio_settings.value,FLAGS)
                 self.assertFalse(other.audio_settings.configured)
         finally:

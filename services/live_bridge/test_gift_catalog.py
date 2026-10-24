@@ -33,7 +33,7 @@ class GiftCatalogTests(unittest.IsolatedAsyncioTestCase):
     async def test_mapping_persists_and_keeps_old_pending_events_and_real_values(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory)/'gifts.sqlite3'
-            first=LiveBridgeServer(port=0,platform='tiktok',outbox_path=path)
+            first=LiveBridgeServer(runtime_mode="development", port=0,platform='tiktok',outbox_path=path)
             first.enqueue_envelope(gift('evt_catalog_first'))
             first.gift_catalog.set_action('tiktok','rose-99','attack')
             first.enqueue_envelope(gift('evt_catalog_second',50))
@@ -45,7 +45,7 @@ class GiftCatalogTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(new['payload']['coin_value'],50)
             self.assertEqual(new['payload']['unit_coin_value'],50)
             await first.stop()
-            second=LiveBridgeServer(port=0,platform='tiktok',outbox_path=path)
+            second=LiveBridgeServer(runtime_mode="development", port=0,platform='tiktok',outbox_path=path)
             row=second.gift_catalog.listing()['entries'][0]
             self.assertEqual(row['action'],'attack')
             self.assertTrue(row['override'])
@@ -53,7 +53,7 @@ class GiftCatalogTests(unittest.IsolatedAsyncioTestCase):
             await second.stop()
 
     async def test_source_isolation_and_duplicate_does_not_overwrite_metadata(self):
-        bridge=LiveBridgeServer(port=0)
+        bridge=LiveBridgeServer(runtime_mode="development", port=0)
         bridge.enqueue_envelope(gift('evt_catalog_source'))
         bridge.gift_catalog.set_action('tiktok','rose-99','super_turbo')
         self.assertEqual(bridge.enqueue_envelope(gift('evt_catalog_source',99)),'duplicate')
@@ -66,7 +66,7 @@ class GiftCatalogTests(unittest.IsolatedAsyncioTestCase):
         await bridge.stop()
 
     async def test_catalog_http_read_edit_restore_and_validation(self):
-        bridge=LiveBridgeServer(port=0,platform='tiktok')
+        bridge=LiveBridgeServer(runtime_mode="development", port=0,platform='tiktok')
         await bridge.start()
         base=f'http://127.0.0.1:{bridge.bound_port}'
         async def request(route):

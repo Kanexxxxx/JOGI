@@ -318,7 +318,7 @@ void fragment() {
 	timer_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 	round_label = _label("RODADA 01 / 50", Rect2(60.0, 303.0, 290.0, 34.0), 23, WHITE)
-	mode_label = _label("TESTE LOCAL", Rect2(358.0, 303.0, 320.0, 34.0), 21, Color("7ce7ff"))
+	mode_label = _label("JOGO FICTÍCIO · IA", Rect2(358.0, 303.0, 320.0, 34.0), 21, Color("7ce7ff"))
 	mode_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cycle_label = _label("C01 · VITÓRIAS 0×0", Rect2(686.0, 303.0, 336.0, 34.0), 22, GOLD)
 	cycle_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -896,6 +896,7 @@ func _refresh_interaction_cards() -> void:
 		_audience_pill.visible = _interaction_entries.is_empty()
 	for idx: int in range(_interaction_slots.size()):
 		var slot: Dictionary = _interaction_slots[idx]
+		(slot["panel"] as Control).position.y = (1430.0 if _event_root != null and _event_root.visible else 1352.0) + float(idx) * 70.0
 		var panel: Panel = slot["panel"] as Panel
 		var name_lbl: Label = slot["name_label"] as Label
 		var action_lbl: Label = slot["action_label"] as Label
@@ -975,6 +976,8 @@ func _refresh_interaction_cards() -> void:
 			mono_panel.visible = true
 
 		panel.visible = true
+	if _chat_panel != null:
+		_refresh_chat()
 
 
 func _restore_audience_prompt() -> void:
@@ -1029,7 +1032,7 @@ func _expire_chat() -> void:
 
 
 func _refresh_chat() -> void:
-	_chat_panel.visible = not _chat_entries.is_empty()
+	_chat_panel.visible = not _chat_entries.is_empty() and _interaction_entries.is_empty() and (_event_root == null or not _event_root.visible)
 	for index: int in range(_chat_lines.size()):
 		var line: Label = _chat_lines[index]
 		line.text = ""
@@ -1109,8 +1112,8 @@ func _make_runner_badge(text: String, color: Color, text_color: Color) -> Contro
 
 func _build_event_ribbon() -> void:
 	var panel: Panel = Panel.new()
-	panel.position = Vector2(140.0, 1288.0)
-	panel.size = Vector2(800.0, 56.0)
+	panel.position = Vector2(42.0, 1344.0)
+	panel.size = Vector2(484.0, 72.0)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_event_style = StyleBoxFlat.new()
 	_event_style.bg_color = Color("071f5e", 0.94)
@@ -1122,7 +1125,7 @@ func _build_event_ribbon() -> void:
 	panel.add_theme_stylebox_override("panel", _event_style)
 	frame.add_child(panel)
 	_event_root = panel
-	_event_text = _label("", Rect2(20.0, 2.0, 760.0, 52.0), 24, WHITE, false, _event_root)
+	_event_text = _label("", Rect2(14.0, 4.0, 456.0, 64.0), 21, WHITE, false, _event_root)
 	_event_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_event_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_event_text.max_lines_visible = 2
@@ -1165,7 +1168,7 @@ func apply_state(state: Dictionary) -> void:
 	cycle_label.text = "C%02d · VITÓRIAS %d×%d" % [maxi(1, int(state.get("cycle", 1))), left_wins, right_wins]
 	cycle_label.tooltip_text = "Ciclo %d" % maxi(1, int(state.get("cycle", 1)))
 	_fit_line(cycle_label, 14)
-	mode_label.text = _plain(str(state.get("mode", "TESTE LOCAL")), 22).to_upper()
+	mode_label.text = _plain(str(state.get("mode", "JOGO FICTÍCIO · IA")), 22).to_upper()
 	_fit_line(mode_label, 14)
 
 	var left_m: float = _number(state.get("lula_m", 0.0))
@@ -1206,6 +1209,10 @@ func apply_state(state: Dictionary) -> void:
 			advantage_label.text = "EMPATE NA RODADA"
 		if state.has("next_round_in"):
 			phase_label.text = "NOVA RODADA EM %02d s" % ceili(_number(state["next_round_in"], 0.0, 3600.0))
+	if bool(state.get("experience_ended", false)):
+		advantage_label.text = "EXPERIÊNCIA ENCERRADA"
+		phase_label.text = "OBRIGADO PELA PARTICIPAÇÃO · RESULTADOS FICTÍCIOS"
+		timer_label.text = "--:--"
 	_fit_line(advantage_label, 15)
 	_fit_line(phase_label, 14)
 
@@ -1236,16 +1243,24 @@ func show_event(text: String, team: int = 0, kind: String = "boost") -> void:
 	_event_style.border_color = RED if team == 1 else (GREEN if team == 2 else GOLD)
 	_event_style.bg_color = Color("650d37", 0.94) if kind == "attack" else Color("071f5e", 0.94)
 	_event_root.visible = true
-	_event_root.position.y = 1278.0
+	_refresh_interaction_cards()
+	_refresh_chat()
+	_event_root.position.y = 1334.0
 	_event_root.modulate.a = 0.0
 	_event_tween = create_tween()
 	_event_tween.set_parallel(true)
 	_event_tween.tween_property(_event_root, "modulate:a", 1.0, 0.16)
-	_event_tween.tween_property(_event_root, "position:y", 1288.0, 0.22).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_event_tween.tween_property(_event_root, "position:y", 1344.0, 0.22).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	_event_tween.set_parallel(false)
 	_event_tween.tween_interval(2.2)
 	_event_tween.tween_property(_event_root, "modulate:a", 0.0, 0.30)
-	_event_tween.tween_callback(_event_root.hide)
+	_event_tween.tween_callback(_finish_event_notice)
+
+
+func _finish_event_notice() -> void:
+	_event_root.hide()
+	_refresh_interaction_cards()
+	_refresh_chat()
 
 
 func _number(value: Variant, fallback: float = 0.0, maximum: float = 10000000.0) -> float:

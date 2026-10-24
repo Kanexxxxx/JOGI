@@ -47,7 +47,8 @@ const VALID_ADMIN_COMMANDS: Array[String] = [
 	"candidate_attack",
 	"set_live_goal",
 	"set_live_goals",
-	"set_audio_settings"
+	"set_audio_settings",
+	"end_experience"
 ]
 
 @export var ws_url: String = "ws://127.0.0.1:8765/ws/godot"
@@ -66,6 +67,12 @@ var gift_commit_hook: Callable = Callable()
 ## Synchronous dispatch context; never retained after event delivery.
 var current_event_type: String = ""
 var current_event_payload: Dictionary = {}
+var runtime_mode: String = "production"
+var session_platform: String = ""
+var effects_suspended: bool = false
+var admin_command_executor: Callable = Callable()
+var last_command_result: Dictionary = {}
+var _command_results: Dictionary = {}
 
 var _ws_peer: WebSocketPeer = null
 var _connect_in_progress: bool = false
@@ -75,11 +82,15 @@ var _bbcode_regex: RegEx = null
 
 
 func _ready() -> void:
+	runtime_mode = "development" if OS.get_environment("JOGI_MODE").strip_edges().to_lower() == "development" else "production"
+	session_platform = OS.get_environment("LIVE_PLATFORM").strip_edges().to_lower()
+	if runtime_mode == "production" and not session_platform in ["tiktok", "kwai"]:
+		auto_connect = false
 	var configured_url: String = OS.get_environment("LIVE_BRIDGE_WS_URL").strip_edges()
 	if not configured_url.is_empty():
 		ws_url = configured_url
 	# A bancada pode ser aberta pelo launcher, CLI ou F6, antes de existir current_scene.
-	if OS.get_cmdline_user_args().has("--asset-preview") or OS.get_cmdline_args().has("res://scenes/characters/character_preview.tscn"):
+	if runtime_mode == "development" and (OS.get_cmdline_user_args().has("--asset-preview") or OS.get_cmdline_args().has("res://scenes/characters/character_preview.tscn")):
 		auto_connect = false
 	_ws_peer = WebSocketPeer.new()
 	_bbcode_regex = RegEx.new()
@@ -344,6 +355,9 @@ func ingest_envelope(envelope: Dictionary) -> bool:
 	if not VALID_SOURCES.has(source):
 		_reject("invalid_source")
 		return false
+	if source in ["tiktok", "kwai"] and session_platform in ["tiktok", "kwai"] and source != session_platform:
+		_reject("platform_mismatch")
+		return false
 
 	# 4. Validate event_type
 	var event_type_var: Variant = envelope.get("event_type", null)
@@ -452,6 +466,9 @@ func ingest_envelope(envelope: Dictionary) -> bool:
 			if not _valid_live_goals_payload(payload.get("live_goals")):
 				_reject("invalid_live_goals")
 				return false
+	if source == "simulator" and runtime_mode != "development":
+		_reject("simulator_forbidden_in_production")
+		return false
 
 	# 7. Idempotent Deduplication (FIFO/LRU up to 2000 IDs)
 	var sanitized_user: Dictionary = user_dict.duplicate()
@@ -465,6 +482,8 @@ func ingest_envelope(envelope: Dictionary) -> bool:
 		duplicate_ignored.emit(event_id)
 		if event_type == "gift":
 			send_packet({"type": "event_ack", "event_id": event_id})
+		elif event_type == "admin_command" and _command_results.has(event_id):
+			send_packet(_command_results[event_id] as Dictionary)
 		return false
 	if event_type == "gift" and gift_commit_hook.is_valid() and not bool(gift_commit_hook.call(clean_envelope)):
 		_reject("gift_journal_unavailable")
@@ -478,12 +497,34 @@ func ingest_envelope(envelope: Dictionary) -> bool:
 	current_event_type = event_type
 	current_event_payload = payload
 	live_event_accepted.emit(clean_envelope)
-	_dispatch_typed_signals(event_type, candidate_slot, safe_display_name, payload)
+	if event_type == "admin_command":
+		_execute_admin_command(event_id, payload)
+	elif not effects_suspended:
+		_dispatch_typed_signals(event_type, candidate_slot, safe_display_name, payload)
 	current_event_type = previous_type
 	current_event_payload = previous_payload
 	if event_type == "gift":
 		send_packet({"type": "event_ack", "event_id": event_id})
 	return true
+
+
+func _execute_admin_command(event_id: String, payload: Dictionary) -> void:
+	var command: String = String(payload.get("command", payload.get("action_id", ""))).strip_edges().to_lower()
+	if command == "admin_restart":
+		command = "restart_race"
+	var result: Dictionary = {"applied": false, "message": "engine_not_ready"}
+	if admin_command_executor.is_valid():
+		var outcome: Variant = admin_command_executor.call(command, payload)
+		if outcome is Dictionary:
+			result = outcome as Dictionary
+	last_command_result = {"type": "command_result", "event_id": event_id, "command": command,
+		"status": "applied" if bool(result.get("applied", false)) else "rejected",
+		"message": String(result.get("message", "")).substr(0, 96)}
+	_command_results[event_id] = last_command_result.duplicate()
+	while _command_results.size() > MAX_DEDUP_CACHE_SIZE:
+		_command_results.erase(_command_results.keys()[0])
+	admin_command_requested.emit(command, payload)
+	send_packet(last_command_result)
 
 
 func _resolve_gift_tier_number(payload: Dictionary) -> int:

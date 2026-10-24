@@ -241,7 +241,7 @@ async def test_avatar_url_stripped_before_godot_and_outbox(tmp_path: Path, monke
         ),
     )
 
-    server = LiveBridgeServer(
+    server = LiveBridgeServer(runtime_mode="development",
         host="127.0.0.1",
         port=0,
         platform="tiktok",
@@ -290,7 +290,7 @@ async def test_avatar_url_stripped_before_godot_and_outbox(tmp_path: Path, monke
 
 @pytest.mark.asyncio
 async def test_local_token_protects_admin_cookie_ws_and_producers(tmp_path: Path) -> None:
-    server = LiveBridgeServer(
+    server = LiveBridgeServer(runtime_mode="development",
         host="127.0.0.1",
         port=0,
         platform="tiktok",
@@ -363,7 +363,7 @@ async def test_local_token_protects_admin_cookie_ws_and_producers(tmp_path: Path
         )
         goals_status, _, goals_raw = await _http_get_or_post(goals_req)
         assert goals_status == 200
-        assert json.loads(goals_raw.decode("utf-8"))["status"] == "ok"
+        assert json.loads(goals_raw.decode("utf-8"))["status"] == "queued"
 
         # Producer channel /ws/godot connects with X-JOGI-Token and receives synced set_live_goals
         async with websockets.connect(
@@ -385,7 +385,7 @@ async def test_local_token_protects_admin_cookie_ws_and_producers(tmp_path: Path
 
 @pytest.mark.asyncio
 async def test_producer_token_protects_godot_ingest_and_kwai_webhook_while_admin_stays_loopback(tmp_path: Path) -> None:
-    server = LiveBridgeServer(
+    server = LiveBridgeServer(runtime_mode="development",
         host="127.0.0.1",
         port=0,
         platform="kwai",

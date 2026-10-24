@@ -226,7 +226,14 @@ class KwaiLiveAdapter(BaseLiveAdapter):
 
         elif event_type in ("gift", "present"):
             # Kwai webhook contract: coin_value/coins/price is UNIT price; count is delta.
-            coin_val = bounded_int(raw_data.get("coin_value") or raw_data.get("coins") or raw_data.get("price"), 0)
+            raw_unit = raw_data.get("unit_coin_value")
+            if raw_unit is None:
+                raw_unit = raw_data.get("coin_value")
+            if raw_unit is None:
+                raw_unit = raw_data.get("coins")
+            if raw_unit is None:
+                raw_unit = raw_data.get("price")
+            coin_val = bounded_int(raw_unit, 0)
             repeat = max(1, bounded_int(raw_data.get("repeat_count") or raw_data.get("count"), 1, 1000))
             tier_req = raw_data.get("gift_tier")
 

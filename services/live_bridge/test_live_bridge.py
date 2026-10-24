@@ -125,7 +125,7 @@ class TestLiveBridgeWebSocketEndToEnd(unittest.IsolatedAsyncioTestCase):
     """Valida a comunicação WebSocket real entre Simulador -> LiveBridgeServer -> Cliente Godot."""
 
     async def test_websocket_end_to_end_broadcast_and_deduplication(self) -> None:
-        server = LiveBridgeServer(host="127.0.0.1", port=0, rate_limit_per_sec=200.0)
+        server = LiveBridgeServer(runtime_mode="development", host="127.0.0.1", port=0, rate_limit_per_sec=200.0)
         await server.start()
         port = server.bound_port
         godot_url = f"ws://127.0.0.1:{port}/ws/godot"
@@ -185,7 +185,7 @@ class TestLiveBridgeAdminAndHttp(unittest.IsolatedAsyncioTestCase):
 
     async def test_admin_static_http_and_api_state_serving(self) -> None:
         import urllib.request
-        server = LiveBridgeServer(host="127.0.0.1", port=0)
+        server = LiveBridgeServer(runtime_mode="development", host="127.0.0.1", port=0)
         await server.start()
         port = server.bound_port
 
@@ -226,7 +226,7 @@ class TestLiveBridgeAdminAndHttp(unittest.IsolatedAsyncioTestCase):
             res_cmd = await asyncio.to_thread(urllib.request.urlopen, f"http://127.0.0.1:{port}/api/admin/command?command=start_race")
             self.assertEqual(res_cmd.status, 200)
             cmd_json = json.loads(res_cmd.read().decode("utf-8"))
-            self.assertEqual(cmd_json["status"], "ok")
+            self.assertEqual(cmd_json["status"], "queued")
             self.assertEqual(cmd_json["command"], "start_race")
 
             # 7. GET /api/admin/simulate?event_type=vote&slot=2&count=3
@@ -241,7 +241,7 @@ class TestLiveBridgeAdminAndHttp(unittest.IsolatedAsyncioTestCase):
     async def test_security_rejections_host_and_origin(self) -> None:
         import urllib.request
         from urllib.error import HTTPError
-        server = LiveBridgeServer(host="127.0.0.1", port=0)
+        server = LiveBridgeServer(runtime_mode="development", host="127.0.0.1", port=0)
         await server.start()
         port = server.bound_port
 
@@ -263,7 +263,7 @@ class TestLiveBridgeAdminAndHttp(unittest.IsolatedAsyncioTestCase):
 
     async def test_security_unauthorized_source_admin_rejected_on_ingest(self) -> None:
         """Verifica que clientes em /ws/ingest NÃO podem forjar source='admin'."""
-        server = LiveBridgeServer(host="127.0.0.1", port=0)
+        server = LiveBridgeServer(runtime_mode="development", host="127.0.0.1", port=0)
         await server.start()
         port = server.bound_port
         ingest_url = f"ws://127.0.0.1:{port}/ws/ingest"
@@ -286,7 +286,7 @@ class TestLiveBridgeAdminAndHttp(unittest.IsolatedAsyncioTestCase):
 
     async def test_admin_websocket_command_and_telemetry_flow(self) -> None:
         """Verifica fluxo completo de comando Admin -> Godot e telemetria Godot -> Admin."""
-        server = LiveBridgeServer(host="127.0.0.1", port=0)
+        server = LiveBridgeServer(runtime_mode="development", host="127.0.0.1", port=0)
         await server.start()
         port = server.bound_port
         godot_url = f"ws://127.0.0.1:{port}/ws/godot"
@@ -311,7 +311,7 @@ class TestLiveBridgeAdminAndHttp(unittest.IsolatedAsyncioTestCase):
                     # Admin recebe ack
                     ack_raw = await asyncio.wait_for(admin_ws.recv(), timeout=3.0)
                     ack = json.loads(ack_raw)
-                    self.assertEqual(ack["status"], "ok")
+                    self.assertEqual(ack["status"], "queued")
                     self.assertEqual(ack["command"], "restart_race")
 
                     # Godot recebe o comando despachado

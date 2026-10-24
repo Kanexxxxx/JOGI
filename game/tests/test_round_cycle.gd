@@ -75,6 +75,8 @@ func _execute_test_suite() -> bool:
 		if not _check(_race.state_timer == _race.photo_finish_duration, "Foto deve durar o tempo configurado"):
 			return false
 		_race._finish_match_by_timer()
+		if not _check(_race.round_history.size() == round_id and int(_race.round_history.back()["winner_slot"]) == slot, "Histórico deve registrar cada resultado uma vez"):
+			return false
 		if not _check(_race.cycle_wins == expected_wins and _finish_signals == round_id, "Repetir finalização não pode duplicar resultado nem sinal"):
 			return false
 		_race._physics_process(_race.photo_finish_duration)
@@ -132,6 +134,8 @@ func _execute_test_suite() -> bool:
 	if not _check(_race.current_state == RaceMain.RaceState.PODIO and _race.current_round == 1, "Operador pode desativar avanço automático"):
 		return false
 	var snapshot: Dictionary = _race.get_telemetry_snapshot()
+	if not _check(_race.round_history.size() <= 50 and (snapshot.get("round_history", []) as Array).size() <= 10, "Histórico deve ser limitado e a telemetria compacta"):
+		return false
 	if not _check(snapshot.get("round_id") == 1 and snapshot.get("cycle_number") == 2 and snapshot.get("winner_id") == 0 and snapshot.get("cycle_wins") == [0, 0], "Telemetria deve incluir rodada, ciclo, placar e empate"):
 		return false
 	# O centímetro exato não pode mudar o resultado por arredondamento binário.

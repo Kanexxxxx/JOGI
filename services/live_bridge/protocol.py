@@ -45,6 +45,7 @@ VALID_ADMIN_COMMANDS: frozenset[str] = frozenset(
         "set_live_goal",
         "set_live_goals",
         "set_audio_settings",
+        "end_experience",
     }
 )
 VALID_ACTION_IDS: frozenset[str] = frozenset(
@@ -813,7 +814,7 @@ def build_gift_envelope(
         raise ProtocolValidationError(f"gift_tier inválido: {gift_tier!r}")
     spec = GIFT_TIER_CATALOG[gift_tier]
     count = max(1, min(int(repeat_count), 1000))
-    unit_value = spec["coin_value"] if unit_coin_value is None else unit_coin_value
+    unit_value = (spec["coin_value"] if source == "simulator" else 0) if unit_coin_value is None else unit_coin_value
     if not _is_strict_int(unit_value) or not (0 <= unit_value <= 100_000):
         raise ProtocolValidationError("unit_coin_value deve ser inteiro em 0..100000.")
     gift_tier = gift_tier_for_unit_coins(unit_value)
@@ -825,7 +826,7 @@ def build_gift_envelope(
     payload: dict[str, Any] = {
         "candidate_slot": candidate_slot,
         "gift_tier": gift_tier,
-        "gift_name": gift_name if gift_name is not None else spec["gift_name"],
+        "gift_name": gift_name if gift_name is not None else spec["gift_name"] if source == "simulator" else "Presente",
         "gift_id": gift_id,
         "gift_image_url": gift_image_url,
         "unit_coin_value": unit_value,

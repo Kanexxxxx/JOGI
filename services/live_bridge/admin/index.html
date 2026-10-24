@@ -38,6 +38,10 @@
       </div>
     </header>
 
+    <nav class="section-nav" aria-label="Áreas do painel">
+      <a href="#section-match-title">Visão geral</a><a href="#section-goal-title">Metas</a><a href="#section-gifts-title">Presentes</a><a href="#section-audio-title">Áudio</a><a href="#section-telemetry-title">Diagnóstico</a><a href="#section-shutdown-title">Encerramento</a>
+    </nav>
+    <div class="operator-notice" role="status" aria-live="polite"><strong id="runtime-mode">Verificando modo de operação</strong><span id="command-feedback">Aguardando conexão autenticada e telemetria do jogo.</span></div>
     <!-- Main Grid Content -->
     <main class="control-room-layout" style="padding: 0; min-height: auto;">
 
@@ -60,7 +64,7 @@
       <section class="panel-section" aria-labelledby="section-match-title">
         <div class="section-header">
           <h2 class="section-title" id="section-match-title">
-            <span class="section-title-icon" aria-hidden="true">⏱️</span> Controle da Partida &amp; Vantagem
+            <span class="section-title-icon" aria-hidden="true">⏱️</span> Controle da corrida
           </h2>
           <span class="sub-label">50 rodadas de 10 minutos</span>
         </div>
@@ -69,28 +73,28 @@
           <!-- State and Timers Display -->
           <div class="match-state-box">
             <div class="state-label-row">
-              <span class="sub-label">Fase Atual da Corrida</span>
+              <span class="sub-label">Estado confirmado pelo jogo</span>
               <span class="sub-label" id="phase-label-info">Sincronizado</span>
             </div>
             <div class="race-state-badge state-lobby" id="race-state-badge">
-              LOBBY_VOTACAO
+              Aguardando jogo
             </div>
             <div class="timers-row">
               <div class="timer-item">
                 <span class="sub-label">Cronômetro da Partida</span>
-                <span class="timer-display active tabular-nums" id="timer-phase">10:00</span>
+                <span class="timer-display active tabular-nums" id="timer-phase">—</span>
               </div>
               <div class="timer-item">
                 <span class="sub-label">Tempo Decorrido</span>
-                <span class="timer-display tabular-nums" id="timer-total">00:00</span>
+                <span class="timer-display tabular-nums" id="timer-total">—</span>
               </div>
             </div>
 
             <!-- Tug of War Bar -->
             <div style="margin-top: 14px;">
               <div class="state-label-row">
-                <span class="sub-label">Disputa Relativa (Tug-of-War)</span>
-                <strong class="tabular-nums" id="advantage-display" style="color: #FBBF24;">⚔️ EMPATADOS</strong>
+                <span class="sub-label">Vantagem na corrida</span>
+                <strong class="tabular-nums" id="advantage-display" style="color: #FBBF24;">Aguardando telemetria</strong>
               </div>
               <div class="progress-bar-bg" style="height: 14px; margin-top: 6px;">
                 <div class="progress-bar-fill" id="tug-of-war-fill" style="width: 50%; background: linear-gradient(90deg, #FF3B5C, #FACC15);"></div>
@@ -116,6 +120,8 @@
             </button>
           </div>
         </div>
+        <p id="round-result" class="round-result">Resultado e placar do ciclo aguardando telemetria.</p>
+        <details><summary>Histórico · últimas 10 rodadas concluídas</summary><ol id="round-history"><li>Aguardando resultados confirmados.</li></ol></details>
       </section>
 
       <!-- Seção exclusiva da instância Kwai: Coletor Local & Webhook Loopback -->
@@ -206,7 +212,7 @@
           </div>
         </form>
 
-        <details class="legacy-goal-details" open>
+        <details class="legacy-goal-details">
           <summary class="sub-label" style="cursor: pointer;">Ajuste individual rápido (compatível com meta primária)</summary>
           <form id="goal-form" class="goal-controls">
             <label>Interação <select id="goal-kind" class="form-select"><option value="likes">Curtidas</option><option value="follows">Novos seguidores</option><option value="gifts">Quantidade de presentes</option><option value="coins">Moedas</option><option value="gift_specific">Presente específico (ex.: rosas)</option></select></label>
@@ -222,6 +228,9 @@
         <p id="audience-totals" class="sub-label">Interações aguardando telemetria.</p>
         <p id="outbox-status" class="sub-label">Fila de presentes: aguardando bridge.</p>
         <p id="cache-diagnostics" class="sub-label">Caches locais e filas: aguardando bridge.</p>
+      </section>
+      <section class="panel-section" aria-labelledby="section-audio-title">
+        <div class="section-header"><h2 class="section-title" id="section-audio-title">Áudio e apresentação</h2><span class="sub-label">Estado confirmado pelo jogo</span></div>
         <p id="audio-status" class="sub-label">Voz: aguardando telemetria.</p>
         <form id="audio-form" class="goal-controls">
           <label><input id="audio-voices" type="checkbox" disabled> Narração</label>
@@ -231,15 +240,23 @@
           <button id="audio-apply" type="submit" class="btn btn-secondary" disabled>Aplicar áudio</button>
         </form>
         <p id="audio-confirmation" class="sub-label">Controles disponíveis quando o jogo confirmar o estado do áudio.</p>
-        <h3>Top 5 de moedas nesta sessão</h3>
-        <ol id="top-supporters"><li>Aguardando presentes contabilizados pelo jogo.</li></ol>
+
       </section>
 
+      <section class="panel-section shutdown-panel" aria-labelledby="section-shutdown-title">
+        <div class="section-header"><h2 class="section-title" id="section-shutdown-title">Encerramento operacional</h2><span id="shutdown-state" class="status-badge">Aguardando configuração</span></div>
+        <p id="shutdown-deadline">Horário de encerramento ainda não informado pelo servidor.</p>
+        <p id="shutdown-detail" class="sub-label">O encerramento se aplica ao jogo; OBS, plataformas e computador não são desligados.</p>
+        <button id="btn-end-experience" class="btn btn-danger" type="button" disabled>Encerrar experiência com segurança</button>
+        <details class="legacy-goal-details"><summary>Últimos comandos e confirmações</summary><ol id="command-receipts" class="command-receipts"><li>Aguardando comandos desta sessão.</li></ol></details>
+      </section>
       <!-- Catálogo dinâmico de presentes observados -->
       <section class="panel-section" aria-labelledby="section-gifts-title">
         <div class="section-header"><h2 class="section-title" id="section-gifts-title">🎁 Presentes observados e ações</h2><button type="button" id="btn-refresh-gifts" class="btn btn-secondary">Atualizar catálogo</button></div>
         <p class="sub-label">O catálogo aprende os IDs, nomes e valores recebidos. Offline ele pode estar vazio; não é uma tabela oficial pré-carregada. Alterações valem para novos presentes, preservando os totais já registrados.</p>
         <div id="gift-catalog-list" class="gift-catalog-list">Aguardando presentes identificados.</div>
+        <h3>Top 5 de moedas nesta sessão</h3>
+        <ol id="top-supporters"><li>Aguardando presentes contabilizados pelo jogo.</li></ol>
       </section>
 
       <!-- 2. Seção dos Competidores: Lula vs Bolsonaro -->
@@ -264,7 +281,7 @@
             <div class="progress-track-container">
               <div class="progress-meta">
                 <span>Distância Percorrida</span>
-                <span class="tabular-nums" id="c1-meters">0.0m</span>
+                <span class="tabular-nums" id="c1-meters">—</span>
               </div>
               <div class="progress-bar-bg" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="c1-prog-bar">
                 <div class="progress-bar-fill" style="width: 0%; background-color: #FF3B5C;" id="c1-fill"></div>
@@ -273,7 +290,7 @@
             <div class="candidate-stats-grid">
               <div class="stat-item">
                 <span class="stat-label">Velocidade</span>
-                <span class="stat-val tabular-nums" id="c1-speed">12.0 m/s</span>
+                <span class="stat-val tabular-nums" id="c1-speed">—</span>
               </div>
               <div class="stat-item">
                 <span class="stat-label">Votos</span>
@@ -306,7 +323,7 @@
             <div class="progress-track-container">
               <div class="progress-meta">
                 <span>Distância Percorrida</span>
-                <span class="tabular-nums" id="c2-meters">0.0m</span>
+                <span class="tabular-nums" id="c2-meters">—</span>
               </div>
               <div class="progress-bar-bg" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="c2-prog-bar">
                 <div class="progress-bar-fill" style="width: 0%; background-color: #FACC15;" id="c2-fill"></div>
@@ -315,7 +332,7 @@
             <div class="candidate-stats-grid">
               <div class="stat-item">
                 <span class="stat-label">Velocidade</span>
-                <span class="stat-val tabular-nums" id="c2-speed">12.0 m/s</span>
+                <span class="stat-val tabular-nums" id="c2-speed">—</span>
               </div>
               <div class="stat-item">
                 <span class="stat-label">Votos</span>
@@ -339,7 +356,7 @@
       </section>
 
       <!-- 3. Seção Simulador de Eventos da Live (TESTE LOCAL) -->
-      <section class="panel-section" aria-labelledby="section-simulator-title">
+      <section class="panel-section development-panel" id="simulator-section" aria-labelledby="section-simulator-title" hidden>
         <div class="section-header">
           <h2 class="section-title" id="section-simulator-title">
             <span class="section-title-icon" aria-hidden="true">🎮</span> Simulador de Eventos • TESTE LOCAL
@@ -468,6 +485,7 @@
           </div>
         </div>
 
+        <details class="event-monitor" open><summary>Interações recebidas nesta plataforma</summary><p class="sub-label">Somente dados informados pela fonte. Valores desconhecidos não são estimados. A confirmação de presentes corresponde ao ACK durável do jogo.</p><ol id="live-events" class="live-events"><li class="empty-state">Nenhuma interação recebida nesta execução.</li></ol></details>
         <!-- Metrics Counters Bar -->
         <div class="metrics-bar" aria-label="Contadores de métricas da LiveBridge">
           <div class="metric-card">
@@ -534,16 +552,16 @@
                 <tr>
                   <td class="table-data-num">1º</td>
                   <td>13 Lula</td>
-                  <td class="table-data-num">0.0m</td>
-                  <td class="table-data-num">12.0 m/s</td>
+                  <td class="table-data-num">—</td>
+                  <td class="table-data-num">—</td>
                   <td class="table-data-num">0</td>
                   <td>-</td>
                 </tr>
                 <tr>
                   <td class="table-data-num">2º</td>
                   <td>22 Flávio</td>
-                  <td class="table-data-num">0.0m</td>
-                  <td class="table-data-num">12.0 m/s</td>
+                  <td class="table-data-num">—</td>
+                  <td class="table-data-num">—</td>
                   <td class="table-data-num">0</td>
                   <td>-</td>
                 </tr>
@@ -572,10 +590,10 @@
   </div>
 
   <!-- Confirmation Modal for Restart -->
-  <div class="modal-overlay" id="modal-restart" role="dialog" aria-modal="true" aria-labelledby="modal-restart-title">
+  <div class="modal-overlay" id="modal-restart" role="dialog" aria-modal="true" aria-labelledby="modal-restart-title" aria-describedby="modal-restart-desc">
     <div class="modal-card">
       <h3 class="modal-title" id="modal-restart-title">⚠️ Reiniciar Partida?</h3>
-      <p class="modal-desc">
+      <p class="modal-desc" id="modal-restart-desc">
         Isso reiniciará os corredores para a linha de largada e reiniciará o cronômetro da corrida. Tem certeza?
       </p>
       <div class="modal-actions">
@@ -583,7 +601,7 @@
           Cancelar
         </button>
         <button type="button" class="btn btn-danger" id="btn-confirm-restart">
-          Sim, Reiniciar
+          Confirmar ação
         </button>
       </div>
     </div>

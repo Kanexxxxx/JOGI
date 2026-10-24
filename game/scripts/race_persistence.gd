@@ -166,7 +166,11 @@ func _capture_snapshot(cursor: int) -> Dictionary:
 	match_data.merge({
 		"current_round": _race.current_round, "cycle_number": _race.cycle_number,
 		"cycle_wins": _race.cycle_wins.duplicate(), "current_state": int(_race.current_state),
+		"round_history": _race.round_history.duplicate(true),
 		"race_paused": _race.race_paused, "result_recorded": _race._round_result_recorded,
+		"experience_ended": _race.experience_ended,
+		"experience_end_reason": _race.experience_end_reason,
+		"experience_ended_at": _race.experience_ended_at,
 		"recorded_winner_slot": _race._recorded_winner_slot,
 		"winner_slot": _race.winner.candidate_id if _race.winner != null else 0,
 		"match_events_count": _race.match_events_count,
@@ -222,6 +226,21 @@ func _validate_snapshot(state: Dictionary) -> bool:
 	if not _integer(state.get("journal_cursor"), 0, RaceSessionStore.MAX_JOURNAL_BYTES):
 		return false
 	var data: Dictionary = state["match"] as Dictionary
+	if data.has("round_history"):
+		if not data["round_history"] is Array or (data["round_history"] as Array).size() > 50:
+			return false
+		for result: Variant in data["round_history"] as Array:
+			if not result is Dictionary:
+				return false
+			if not _integer(result.get("cycle"), 1, 1000000000) or not _integer(result.get("round"), 1, 50) or not _integer(result.get("winner_slot"), 0, 2):
+				return false
+			if not _number(result.get("lula_m"), 0.0, 1000000000000.0) or not _number(result.get("flavio_m"), 0.0, 1000000000000.0):
+				return false
+	if data.has("experience_ended"):
+		if typeof(data["experience_ended"]) != TYPE_BOOL or not data.get("experience_end_reason") is String or not _number(data.get("experience_ended_at"), 0.0, 100000000000.0):
+			return false
+		if bool(data["experience_ended"]) and (not bool(data.get("race_paused", false)) or bool(data.get("auto_loop_after_podium", true))):
+			return false
 	if data.has("audio_settings"):
 		if not data["audio_settings"] is Dictionary:
 			return false
@@ -329,6 +348,10 @@ func _validate_snapshot(state: Dictionary) -> bool:
 
 func _apply_snapshot(state: Dictionary) -> void:
 	var data: Dictionary = state["match"] as Dictionary
+	_race.experience_ended = bool(data.get("experience_ended", false))
+	_race.experience_end_reason = String(data.get("experience_end_reason", ""))
+	_race.experience_ended_at = float(data.get("experience_ended_at", 0.0))
+	_bus.effects_suspended = _race.experience_ended
 	if data.has("audio_settings"):
 		_race.audio_settings = (data["audio_settings"] as Dictionary).duplicate()
 	_race.pending_round_effects = (data.get("pending_round_effects", {}) as Dictionary).duplicate(true)
@@ -351,6 +374,7 @@ func _apply_snapshot(state: Dictionary) -> void:
 	_race.current_round = int(data["current_round"])
 	_race.cycle_number = int(data["cycle_number"])
 	_race.cycle_wins.assign([int(data["cycle_wins"][0]), int(data["cycle_wins"][1])])
+	_race.round_history.assign(data.get("round_history", []) as Array)
 	_race.current_state = int(data["current_state"]) as RaceMain.RaceState
 	_race._round_result_recorded = bool(data["result_recorded"])
 	_race._recorded_winner_slot = int(data["recorded_winner_slot"])
@@ -406,6 +430,8 @@ func _apply_snapshot(state: Dictionary) -> void:
 func _valid_replay_tail(tail: Array[Dictionary]) -> bool:
 	var validator: LiveEventBusInstance = LiveEventBusInstance.new()
 	validator.auto_connect = false
+	validator.runtime_mode = _bus.runtime_mode
+	validator.session_platform = _bus.session_platform
 	var valid: bool = true
 	for gift: Dictionary in tail:
 		if gift.has("_reserved_next_round") and typeof(gift["_reserved_next_round"]) != TYPE_BOOL:
