@@ -61,6 +61,8 @@ class KwaiAdapterConfig:
     port: int = DEFAULT_KWAI_WEBHOOK_PORT
     webhook_path: str = DEFAULT_KWAI_WEBHOOK_PATH
     default_candidate_slot: int | None = None
+    collector_ttl_sec: float = 25.0
+    require_collector_room: bool = False
 
 
 @dataclass
@@ -76,6 +78,12 @@ class KwaiLiveAdapter(BaseLiveAdapter):
 
     _server: asyncio.Server | None = field(default=None, init=False, repr=False)
     _viewers: ViewerContext = field(default_factory=ViewerContext, init=False, repr=False)
+    _collector_status: str = field(default="", init=False, repr=False)
+    _collector_detail: str = field(default="", init=False, repr=False)
+    _collector_live_url: str = field(default="", init=False, repr=False)
+    _collector_seen_at: float | None = field(default=None, init=False, repr=False)
+    _collector_events_forwarded: int = field(default=0, init=False, repr=False)
+    _last_webhook_event_at: float | None = field(default=None, init=False, repr=False)
 
     def __post_init__(self) -> None:
         if not self.config.enabled:
@@ -88,9 +96,50 @@ class KwaiLiveAdapter(BaseLiveAdapter):
         else:
             self._status = "configured"
 
-    def is_connected(self) -> bool:
-        """Retorna True quando o servidor webhook local estiver ativo e escutando."""
+    @property
+    def bound_port(self) -> int:
+        if self._server is not None and getattr(self._server, "sockets", None):
+            for sock in self._server.sockets:
+                sockname = sock.getsockname()
+                if isinstance(sockname, tuple) and len(sockname) >= 2:
+                    return int(sockname[1])
+        return self.config.port
+
+    def is_webhook_listening(self) -> bool:
+        """Retorna True quando o receptor HTTP loopback está ativo."""
         return self._server is not None and self._server.is_serving() and self._status == "listening"
+
+    def _effective_status(self) -> str:
+        if not self.config.enabled:
+            return "DISABLED_NO_API"
+        if not self.is_webhook_listening():
+            return self._status
+        if (
+            self._collector_seen_at is not None
+            and (time.monotonic() - self._collector_seen_at) <= max(1.0, self.config.collector_ttl_sec)
+            and self._collector_status
+        ):
+            return self._collector_status
+        return "webhook_listening"
+
+    def is_connected(self) -> bool:
+        """Retorna True quando o receptor estiver ativo (e sala ativa quando require_collector_room=True)."""
+        if not self.is_webhook_listening():
+            return False
+        if self.config.require_collector_room:
+            return self._effective_status() == "connected"
+        return True
+
+    def _record_collector_heartbeat(self, raw_data: dict[str, Any]) -> None:
+        allowed = {"connected", "waiting_room", "login_required", "error", "idle"}
+        status_raw = str(raw_data.get("status") or "waiting_room").strip().lower()
+        self._collector_status = status_raw if status_raw in allowed else "waiting_room"
+        detail_raw = str(raw_data.get("detail") or "")
+        self._collector_detail = "".join(ch for ch in detail_raw if ord(ch) >= 32 and ord(ch) != 127).strip()[:160]
+        url_raw = str(raw_data.get("live_url") or "")
+        self._collector_live_url = "".join(ch for ch in url_raw if ord(ch) >= 33 and ord(ch) != 127).strip()[:240]
+        self._collector_events_forwarded = max(0, bounded_int(raw_data.get("events_forwarded"), 0, 1_000_000_000))
+        self._collector_seen_at = time.monotonic()
 
     async def ingest_raw_event(self, raw_data: dict[str, Any]) -> dict[str, Any] | None:
         """
@@ -102,6 +151,10 @@ class KwaiLiveAdapter(BaseLiveAdapter):
             return None
 
         event_type = str(raw_data.get("type") or raw_data.get("event_type") or "").strip().lower()
+        if event_type == "collector_status":
+            self._record_collector_heartbeat(raw_data)
+            return None
+
         user_info = raw_data.get("user") if isinstance(raw_data.get("user"), dict) else {}
         user_id = str(raw_data.get("user_id") or user_info.get("id") or user_info.get("user_id") or "anon_kwai")[:128]
         display_name = str(
@@ -188,6 +241,7 @@ class KwaiLiveAdapter(BaseLiveAdapter):
             return None
 
         if envelope is not None:
+            self._last_webhook_event_at = time.monotonic()
             await self.emit_envelope(envelope)
 
         return envelope
@@ -268,7 +322,7 @@ class KwaiLiveAdapter(BaseLiveAdapter):
                 try:
                     parsed_origin = urllib.parse.urlsplit(origin)
                     origin_allowed = bool(parsed_origin.scheme == "http" and parsed_origin.hostname in ("127.0.0.1", "localhost")
-                        and (parsed_origin.port or 80) == self.config.port and not parsed_origin.username
+                        and (parsed_origin.port or 80) == self.bound_port and not parsed_origin.username
                         and not parsed_origin.password and not parsed_origin.path and not parsed_origin.query and not parsed_origin.fragment)
                 except ValueError:
                     origin_allowed = False
@@ -300,6 +354,7 @@ class KwaiLiveAdapter(BaseLiveAdapter):
                 "status": "ok",
                 "ingested": emitted_envelope is not None,
                 "event_id": emitted_envelope.get("event_id") if emitted_envelope else None,
+                "adapter_status": self._effective_status(),
             }
             body_bytes = json.dumps(resp_payload).encode("utf-8")
             response = (
@@ -378,11 +433,23 @@ class KwaiLiveAdapter(BaseLiveAdapter):
 
     def get_stats(self) -> dict[str, Any]:
         """Retorna telemetria do adaptador Kwai."""
-        return self.build_base_stats(
+        collector_age = (
+            round(time.monotonic() - self._collector_seen_at, 2)
+            if self._collector_seen_at is not None
+            else None
+        )
+        base = self.build_base_stats(
             extra_metadata={
                 "enabled": self.config.enabled,
-                "webhook_port": self.config.port,
+                "webhook_listening": self.is_webhook_listening(),
+                "webhook_port": self.bound_port,
                 "webhook_path": self.config.webhook_path,
-                "disclaimer": "Receptor passivo loopback; coletor de eventos Kwai Brasil não integrado.",
+                "collector_detail": self._collector_detail,
+                "collector_live_url": self._collector_live_url,
+                "collector_age_seconds": collector_age,
+                "collector_events_forwarded": self._collector_events_forwarded,
+                "disclaimer": "Receptor loopback 127.0.0.1 + coletor local Playwright Kwai LIVE (sem API nuvem oficial).",
             }
         ).to_dict()
+        base["status"] = self._effective_status()
+        return base

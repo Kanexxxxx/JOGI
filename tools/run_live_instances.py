@@ -6,6 +6,7 @@ import argparse
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import time
@@ -18,6 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 BRIDGE_DIR = ROOT / "services" / "live_bridge"
 PUBLIC_ACCOUNTS = {"tiktok": "nostalgiia.br", "kwai": "mentalista.."}
 PORTS = {"tiktok": 8765, "kwai": 8766}
+KWAI_WEBHOOK_PORT = 8786
 DEFAULT_GODOT = Path(r"C:\Users\Kanex\Downloads\Godot_v4.7.2-stable_win64.exe\Godot_v4.7.2-stable_win64.exe")
 
 
@@ -40,7 +42,11 @@ def build_plan(platform: str, *, godot: Path = DEFAULT_GODOT, scene: str = "res:
         "godot_environment": {"LIVE_PLATFORM": platform,
                               "LIVE_BRIDGE_WS_URL": f"ws://127.0.0.1:{port}/ws/godot"},
         "panel": f"http://127.0.0.1:{port}/admin", "starts_platform_live": False,
-        "listen_live": platform == "tiktok" and not offline,
+        "listen_live": not offline,
+        "enable_kwai_collector": platform == "kwai" and not offline,
+        "kwai_webhook_port": KWAI_WEBHOOK_PORT,
+        "node": shutil.which("node") or r"C:\Program Files\nodejs\node.exe",
+        "kwai_collector_script": str(ROOT / "tools" / "kwai_live_collector.cjs"),
     }
 
 
@@ -61,6 +67,8 @@ def launch(plans: list[dict], *, bridge_only: bool = False) -> int:
             handles.append(log_file)
             server_args = [plan["python"], "-u", plan["bridge_script"], "--platform", plan["platform"],
                            "--account", plan["account"], "--port", str(plan["port"]), "--state-dir", plan["state_dir"]]
+            if plan["platform"] == "kwai":
+                server_args.extend(["--kwai-webhook-port", str(plan.get("kwai_webhook_port", KWAI_WEBHOOK_PORT))])
             if plan["listen_live"]:
                 server_args.append("--listen-live")
             flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" else 0
@@ -82,6 +90,33 @@ def launch(plans: list[dict], *, bridge_only: bool = False) -> int:
                     game.requires_attention = True
                     game.last_exit = "bridge_port_already_in_use"
                 children.append(game)
+            if plan.get("enable_kwai_collector") and Path(plan.get("node", "")).is_file() and Path(plan.get("kwai_collector_script", "")).is_file():
+                collector_log = (state_dir / f"kwai-collector-{time.strftime('%Y%m%d-%H%M%S')}.log").open("ab")
+                handles.append(collector_log)
+                webhook_port = int(plan.get("kwai_webhook_port", KWAI_WEBHOOK_PORT))
+                collector_args = [
+                    plan["node"],
+                    plan["kwai_collector_script"],
+                    "--account", plan["account"],
+                    "--bridge", f"http://127.0.0.1:{plan['port']}",
+                    "--webhook", f"http://127.0.0.1:{webhook_port}/webhook/kwai",
+                ]
+                collector = ManagedChild(
+                    plan["platform"],
+                    "collector",
+                    lambda command=collector_args, log=collector_log, creation_flags=flags: subprocess.Popen(
+                        command, cwd=ROOT, stdout=log, stderr=log, creationflags=creation_flags
+                    ),
+                    ready=lambda dependency=bridge, port=plan["port"]: (
+                        dependency.process is not None
+                        and (health(port) or {}).get("platform") == "kwai"
+                        and (health(port) or {}).get("platform_events_status") not in (None, "not_started", "kwai_requires_collector")
+                    ),
+                )
+                if existing is not None:
+                    collector.requires_attention = True
+                    collector.last_exit = "bridge_port_already_in_use"
+                children.append(collector)
             print(f"{plan['platform'].upper()}: painel {plan['panel']} | outbox {state_dir}", flush=True)
         supervisor = LiveSupervisor(children, state_dirs)
         print("Supervisão local ativa. Reinícios são isolados; Ctrl+C encerra os processos deste launcher.", flush=True)

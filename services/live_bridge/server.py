@@ -29,6 +29,7 @@ from live_goal import LiveGoalSettings
 from gift_catalog import GiftCatalog
 from gift_images import GiftImageCache
 from audio_settings import AudioSettings, AUDIO_KEYS
+from kwai_collector_settings import KwaiCollectorSettings
 
 from protocol import (
     CANDIDATES,
@@ -122,6 +123,7 @@ class LiveBridgeServer:
         outbox_path: pathlib.Path | None = None,
         gift_capacity: int = 5000,
         ack_retry_seconds: float = 5.0,
+        kwai_webhook_port: int = 8786,
     ) -> None:
         if platform not in ("local", "tiktok", "kwai"):
             raise ValueError("platform deve ser local, tiktok ou kwai.")
@@ -129,6 +131,7 @@ class LiveBridgeServer:
         self.port: int = int(port)
         self.platform = platform
         self.account = account.strip().lstrip("@")[:64]
+        self.kwai_webhook_port = int(kwai_webhook_port)
         self.ack_retry_seconds = max(0.05, ack_retry_seconds)
         self.outbox = GiftOutbox(outbox_path, platform=platform, capacity=gift_capacity)
         try:
@@ -136,6 +139,10 @@ class LiveBridgeServer:
             self.live_goal = LiveGoalSettings(outbox_path.parent / "live_goal.json" if outbox_path else None)
             self.gift_images = GiftImageCache(outbox_path.parent / "gift-icons" if outbox_path else None)
             self.audio_settings = AudioSettings(outbox_path.parent / "audio_settings.json" if outbox_path else None)
+            self.kwai_collector = KwaiCollectorSettings(
+                outbox_path.parent / "kwai_collector.json" if outbox_path else None,
+                default_account=self.account,
+            )
         except Exception:
             self.outbox.close()
             raise
@@ -184,11 +191,42 @@ class LiveBridgeServer:
         }
 
     def platform_listener_state(self) -> dict[str, Any]:
+        kwai_meta: dict[str, Any] = {}
+        if self.platform == "kwai":
+            webhook_port = (
+                int(getattr(self._live_adapter, "bound_port", self.kwai_webhook_port))
+                if self._live_adapter is not None
+                else self.kwai_webhook_port
+            )
+            adapter_extra = (
+                self._live_adapter.get_stats().get("extra_metadata", {})
+                if self._live_adapter is not None
+                else {}
+            )
+            kwai_meta = {
+                "kwai_collector": {
+                    **self.kwai_collector.value,
+                    "webhook_url": f"http://127.0.0.1:{webhook_port}/webhook/kwai",
+                    "webhook_port": webhook_port,
+                    "webhook_listening": bool(adapter_extra.get("webhook_listening", False)),
+                    "collector_detail": str(adapter_extra.get("collector_detail", "")),
+                    "collector_live_url": str(adapter_extra.get("collector_live_url", "")),
+                    "collector_age_seconds": adapter_extra.get("collector_age_seconds"),
+                    "collector_events_forwarded": int(adapter_extra.get("collector_events_forwarded", 0)),
+                }
+            }
         if self._live_adapter is not None:
-            return {"platform_events_connected": self._live_adapter.is_connected(),
-                    "platform_events_status": self._live_adapter.get_stats()["status"]}
-        return {"platform_events_connected": False,
-                "platform_events_status": "kwai_requires_collector" if self.platform == "kwai" else "not_started"}
+            stats = self._live_adapter.get_stats()
+            return {
+                "platform_events_connected": self._live_adapter.is_connected(),
+                "platform_events_status": stats["status"],
+                **kwai_meta,
+            }
+        return {
+            "platform_events_connected": False,
+            "platform_events_status": "kwai_requires_collector" if self.platform == "kwai" else "not_started",
+            **kwai_meta,
+        }
 
     async def _receive_adapter_event(self, envelope: dict[str, Any]) -> None:
         self.metrics["adapter_backpressure_pending"] += 1
@@ -204,8 +242,23 @@ class LiveBridgeServer:
             self.metrics["adapter_backpressure_pending"] -= 1
 
     async def start_live_listener(self) -> None:
+        if self.platform == "kwai":
+            if self._live_adapter is not None:
+                return
+            from adapters.kwai_adapter import KwaiAdapterConfig, KwaiLiveAdapter
+            self._live_adapter = KwaiLiveAdapter(
+                config=KwaiAdapterConfig(
+                    enabled=True,
+                    host="127.0.0.1",
+                    port=self.kwai_webhook_port,
+                    require_collector_room=True,
+                )
+            )
+            self._live_adapter.on_event(self._receive_adapter_event)
+            await self._live_adapter.start()
+            return
         if self.platform != "tiktok" or not self.account:
-            raise ValueError("Escuta pública automática disponível somente para TikTok com --account.")
+            raise ValueError("Escuta pública automática disponível somente para TikTok com --account ou Kwai.")
         if self._live_adapter is not None:
             return
         from adapters.tiktok_adapter import TikTokAdapterConfig, TikTokLiveAdapter
@@ -277,7 +330,7 @@ class LiveBridgeServer:
         out = []
         for slot in (1, 2):
             meta = CANDIDATES.get(slot, {})
-            name = meta.get("name", "Lula" if slot == 1 else "Bolsonaro")
+            name = meta.get("name", "Lula" if slot == 1 else "Flávio Bolsonaro")
             out.append(
                 {
                     "slot": slot,
@@ -393,6 +446,7 @@ class LiveBridgeServer:
             "godot_client_count": len(self.godot_clients),
             "metrics": dict(self.metrics),
             "candidates": candidates,
+            "performance": raw.get("performance", {}) if isinstance(raw.get("performance"), dict) else {},
             "telemetry": raw,
         }
 
@@ -548,6 +602,28 @@ class LiveBridgeServer:
             )
             return Response(200, "OK", headers, body)
 
+        if path_only in ("/api/kwai-collector", "/api/admin/kwai-collector"):
+            status_code = 200
+            try:
+                if path_only == "/api/admin/kwai-collector" and "live_url" in query_params:
+                    self.kwai_collector.update(query_params.get("live_url", [""])[0])
+                result = {
+                    "status": "ok",
+                    "platform": self.platform,
+                    "account": self.account,
+                    **self.platform_listener_state(),
+                }
+            except (ValueError, OSError) as exc:
+                status_code = 400
+                result = {"status": "error", "message": str(exc)}
+            body = json.dumps(result, ensure_ascii=False).encode("utf-8")
+            return Response(
+                status_code,
+                "OK" if status_code == 200 else "Bad Request",
+                Headers(cors_headers + [("Content-Type", "application/json; charset=utf-8"), ("Cache-Control", "no-store")]),
+                body,
+            )
+
         if path_only in ("/api/gifts", "/api/admin/gift"):
             status_code = 200
             try:
@@ -665,7 +741,7 @@ class LiveBridgeServer:
                     s = (i % 2) + 1
                     env = build_vote_envelope(
                         user_id=f"sim_burst_{i}",
-                        display_name=f"Torcedor {'Lula' if s == 1 else 'Bolsonaro'}",
+                        display_name=f"Torcedor {'Lula' if s == 1 else 'Flávio'}",
                         candidate_slot=s,
                         source="simulator",
                     )
@@ -1149,7 +1225,7 @@ class LiveBridgeServer:
                             s = (i % 2) + 1
                             env = build_vote_envelope(
                                 user_id=f"sim_burst_{i}",
-                                display_name=f"Torcedor {'Lula' if s == 1 else 'Bolsonaro'}",
+                                display_name=f"Torcedor {'Lula' if s == 1 else 'Flávio'}",
                                 candidate_slot=s,
                                 source="simulator",
                             )
@@ -1433,11 +1509,12 @@ class LiveBridgeServer:
 
 async def run_server_forever(host: str = DEFAULT_HOST, port: int = DEFAULT_PORT, *,
                              platform: str = "local", account: str = "",
-                             state_dir: pathlib.Path | None = None, listen_live: bool = False) -> None:
+                             state_dir: pathlib.Path | None = None, listen_live: bool = False,
+                             kwai_webhook_port: int = 8786) -> None:
     if state_dir is None:
         state_dir = pathlib.Path(os.environ.get("LOCALAPPDATA", str(pathlib.Path.home() / ".local"))) / "JOGI" / "live_bridge" / platform
     server = LiveBridgeServer(host=host, port=port, platform=platform, account=account,
-                              outbox_path=state_dir / "gifts.sqlite3")
+                              outbox_path=state_dir / "gifts.sqlite3", kwai_webhook_port=kwai_webhook_port)
     await server.start()
     stop_event = asyncio.Event()
     try:
@@ -1466,7 +1543,8 @@ def main() -> None:
     parser.add_argument("--account", default="", help="Identificador público da conta; não autentica nem abre live.")
     parser.add_argument("--state-dir", type=pathlib.Path, default=None,
                         help="Diretório local exclusivo da outbox; padrão LOCALAPPDATA/JOGI/live_bridge/<platform>.")
-    parser.add_argument("--listen-live", action="store_true", help="Ler eventos públicos do TikTok quando a conta abrir LIVE; não inicia transmissão.")
+    parser.add_argument("--listen-live", action="store_true", help="Ativar escuta local da plataforma (TikTok Live SDK ou receptor Webhook Kwai); não inicia transmissão.")
+    parser.add_argument("--kwai-webhook-port", type=int, default=8786, help="Porta TCP loopback do receptor KwaiLiveAdapter (padrão 8786).")
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -1476,7 +1554,8 @@ def main() -> None:
     port = args.port if args.port is not None else (8766 if args.platform == "kwai" else DEFAULT_PORT)
     try:
         asyncio.run(run_server_forever(host=args.host, port=port, platform=args.platform,
-                                       account=args.account, state_dir=args.state_dir, listen_live=args.listen_live))
+                                       account=args.account, state_dir=args.state_dir, listen_live=args.listen_live,
+                                       kwai_webhook_port=args.kwai_webhook_port))
     except KeyboardInterrupt:
         pass
 
