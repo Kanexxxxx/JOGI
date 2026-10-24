@@ -101,7 +101,10 @@ func _exit_tree() -> void:
 
 func is_loopback_ws_url(url: String) -> bool:
 	var normalized: String = url.strip_edges().to_lower()
-	return normalized.begins_with("ws://127.0.0.1:") or normalized.begins_with("ws://localhost:")
+	var pattern: RegEx = RegEx.new()
+	pattern.compile("^ws://(?:127\\.0\\.0\\.1|localhost):([0-9]{1,5})/ws/godot$")
+	var match_result: RegExMatch = pattern.search(normalized)
+	return match_result != null and int(match_result.get_string(1)) >= 1 and int(match_result.get_string(1)) <= 65535
 
 
 func _handshake_headers() -> PackedStringArray:

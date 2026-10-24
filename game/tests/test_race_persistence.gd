@@ -147,12 +147,20 @@ func _test_goal_legacy() -> bool:
 	var legacy_ok: bool = bool(context["initialized"]) and (context["race"] as RaceMain).live_goal["goal_target"] == 1000
 	_destroy(context)
 	state = store.load_snapshot()
+	(state["match"] as Dictionary).erase("live_goals")
+	state["match"]["live_goal"] = {"goal_kind": "gift_specific", "goal_target": 4321, "goal_label": "Rosas da sessão", "goal_gift_id": "rose_123"}
+	store.save_snapshot(state)
+	context = _new_context(RaceSessionStore.new("local", base))
+	var migrated: RaceMain = context["race"] as RaceMain
+	var migration_ok: bool = bool(context["initialized"]) and migrated.live_goals["gifts"]["goal_target"] == 4321 and migrated.live_goals["gifts"]["goal_gift_id"] == "rose_123" and migrated.live_goals["follows"]["goal_target"] == 10000
+	_destroy(context)
+	state = store.load_snapshot()
 	state["match"]["live_goal"]["goal_target"] = 0
 	store.save_snapshot(state)
 	context = _new_context(RaceSessionStore.new("local", base))
 	var invalid_rejected: bool = not bool(context["initialized"]) and (context["race"] as RaceMain).race_paused
 	_destroy(context)
-	return _check(legacy_ok and invalid_rejected, "Checkpoint legado ganha meta padrão; meta persistida inválida bloqueia recuperação")
+	return _check(legacy_ok and migration_ok and invalid_rejected, "Checkpoint legado migra a meta ao slot correto; meta inválida bloqueia recuperação")
 
 
 func _test_bad_checkpoint() -> bool:

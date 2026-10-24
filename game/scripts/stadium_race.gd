@@ -701,7 +701,7 @@ func _on_bus_admin_command(command: String, payload: Dictionary = {}) -> void:
 		send_telemetry_now()
 		return
 	if command == "set_live_goals":
-		var incoming: Dictionary = payload.get("goals", {}) as Dictionary
+		var incoming: Dictionary = payload["live_goals"] as Dictionary
 		for slot: String in ["likes", "gifts", "follows"]:
 			if not incoming.get(slot) is Dictionary:
 				continue

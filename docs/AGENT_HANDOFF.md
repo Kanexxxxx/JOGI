@@ -1,5 +1,17 @@
 # AGENT_HANDOFF.md — Registro Cronológico de Transferência entre Agentes
 
+## 2026-10-24 — Codex principal — auditoria de retorno, checkpoint1
+
+- Base recebida: `master@5f1cad12001be14f123b3095843a6d610f79cb95`; árvore limpa e fetchconfirmado. Trabalho prévio preservado.
+- Parecer apresentado ao usuário antes das alterações: manter redesign/metas/cache; corrigir integração real, URLWS, migração, cards e entrega Kwai. Detalhes em `auditorias/AUDITORIA_RETORNO_PRINCIPAL_2026-10-24.md`.
+- Corrigido o consumidor `set_live_goals` para `payload.live_goals`, conforme protocolo/backend. Fixture corrigida ao mesmo contrato. Antes: duasasserções falhavam; depois: integração strict passou.
+- Corrigida migração de checkpoint com meta única para o slot correspondente das três metas, preservando ID do presente específico. Nova regressão cobre meta4321porID e o alvo10K remanescente.
+- ValidaçãoWS agora exige loopback, porta1..65535e caminho `/ws/godot`; testes negativos não fazem conexões externas nem imprimem tokens.
+- Teste herdado de apresentação atualizado ao contrato já existente no baseline (teto3×, queda1,2s), acrescentando pausa e recuperação sem deslocamento residual. Não houve alteração de rostos/modelos/animações para fazer o teste passar.
+- Testes GDA strict: `test_stadium_integration`, `test_race_persistence`, `test_hero_presentation`: exit0, stderrvazio e diagnostics[]. Execução anterior à correção reproduziu as duas falhas; uma execução intermediária registrou aviso6ObjectDB, ausente nesta repetição.
+- Varredura de padrões conhecidos de credenciais:621arquivos textuais rastreados e691blobs históricos, sem candidatos; não é garantia contra todos os tipos de segredo. Valores nunca impressos.
+- Ainda em execução: correções independentes de cards/2027/crop, filaACKdo coletorKwai/cookiesporporta, QAvisual e benchmarkduplo10min. Nenhuma live pública ou geração paga nesta retomada.
+
 > **Aviso de Sessão de Salvamento (24/10/2026):** Esta sessão teve como missão exclusiva a consolidação, documentação e publicação no GitHub de todo o progresso desenvolvido até o momento, preparando o terreno para que o agente principal retome a missão de forma segura, com zero perda de trabalho e histórico transparente.
 
 ---

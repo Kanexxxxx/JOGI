@@ -110,10 +110,10 @@ func _execute_test_suite() -> bool:
 	if not _check(player.is_playing() and player.speed_scale == 1.0, "Corrida deve tocar na velocidade base"):
 		return false
 	presentation.update_motion(true, 120.0, 12.0, true, false, false, 1.0)
-	if not _check(presentation.target_animation_speed == 2.5, "Turbo deve respeitar teto de animação"):
+	if not _check(presentation.target_animation_speed == 3.0, "Turbo de até +200% respeita teto de animação3x"):
 		return false
 	presentation._process(0.1)
-	if not _check(player.speed_scale > 1.0 and player.speed_scale < 2.5, "Turbo deve acelerar animação suavemente"):
+	if not _check(player.speed_scale > 1.0 and player.speed_scale < 3.0, "Turbo deve acelerar animação suavemente"):
 		return false
 	presentation.update_motion(true, 0.0, 12.0, false, false, false, 1.0)
 	if not _check(is_equal_approx(presentation.target_animation_speed, 0.7), "Velocidade baixa deve respeitar piso de animação"):
@@ -129,10 +129,17 @@ func _execute_test_suite() -> bool:
 		return false
 	presentation.update_motion(true, 12.0, 12.0, false, true, false, 1.0)
 	presentation._process(0.10)
-	if not _check(presentation.rotation.x > 0.0 and presentation.rotation.x <= 0.12, "Impacto deve ser curto e limitado"):
+	if not _check(presentation.rotation.x < 0.0 and presentation.rotation.x >= -.73, "Queda inclina para frente com amplitude limitada"):
 		return false
 	presentation._process(0.30)
-	if not _check(presentation.rotation == Vector3.ZERO, "Impacto não deve causar inclinação crônica"):
+	var fallen_rotation: Vector3 = presentation.rotation
+	presentation.update_motion(true, 12.0, 12.0, false, true, true, 1.0)
+	presentation._process(2.0)
+	if not _check(presentation.rotation == fallen_rotation, "Pausa congela a reação de queda"):
+		return false
+	presentation.update_motion(true, 12.0, 12.0, false, false, false, 1.0)
+	presentation._process(.9)
+	if not _check(presentation.rotation == Vector3.ZERO and is_zero_approx(presentation.position.y), "Recuperação1,2s elimina inclinação e deslocamento residuais"):
 		return false
 	_runner.start_running()
 	_runner.apply_boost(8.0, 3.0)

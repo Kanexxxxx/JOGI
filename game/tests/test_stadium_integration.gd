@@ -27,6 +27,9 @@ func _run_suite() -> void:
 		runner.set_physics_process(false)
 	var bus: LiveEventBusInstance = _race.event_bus
 	bus.reset_deduplication()
+	_check(bus.is_loopback_ws_url("ws://127.0.0.1:8765/ws/godot") and bus.is_loopback_ws_url("ws://localhost:8766/ws/godot"), "WebSocket aceita apenas destinos locais com porta válida")
+	for unsafe_url: String in ["ws://127.0.0.1:8765@evil.example/ws/godot", "ws://localhost:0/ws/godot", "ws://localhost:65536/ws/godot", "ws://localhost:8765/ws/godot?next=external", "wss://localhost:8765/ws/godot", "ws://localhost:8765/other"]:
+		_check(not bus.is_loopback_ws_url(unsafe_url), "URL ambígua é rejeitada antes de anexar token")
 	_check(_race.runners.size() == 2 and _race.match_duration == 600.0, "Dois corredores e rodada de dez minutos")
 	var lula: StadiumRunner = _race.runners[0] as StadiumRunner
 	var flavio: StadiumRunner = _race.runners[1] as StadiumRunner
@@ -114,7 +117,7 @@ func _run_suite() -> void:
 		"user": {"user_id": "admin", "display_name": "Painel"},
 		"payload": {
 			"command": "set_live_goals",
-			"goals": {
+			"live_goals": {
 				"likes": {"goal_kind": "likes", "goal_target": 1500, "goal_label": "Meta Curtidas"},
 				"gifts": {"goal_kind": "gifts", "goal_target": 300, "goal_label": "Meta Presentes"},
 				"follows": {"goal_kind": "follows", "goal_target": 10000, "goal_label": "Meta 10K", "follower_baseline": 8400, "baseline_updated_at": "2026-10-24T15:00:00Z"}

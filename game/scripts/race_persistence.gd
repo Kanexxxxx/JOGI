@@ -338,6 +338,13 @@ func _apply_snapshot(state: Dictionary) -> void:
 			_race.live_goal["goal_gift_id"] = String(data["live_goal"]["goal_gift_id"])
 	if data.has("live_goals"):
 		_race.live_goals = (data["live_goals"] as Dictionary).duplicate(true)
+	else:
+		# Migração do checkpoint de meta única, preservando a configuração do operador.
+		_race.live_goals = RaceMain.default_live_goals()
+		if data.has("live_goal"):
+			var kind: String = String(_race.live_goal["goal_kind"])
+			var slot: String = "follows" if kind == "follows" else ("likes" if kind == "likes" else "gifts")
+			(_race.live_goals[slot] as Dictionary).merge(_race.live_goal, true)
 	for field_value: Variant in MATCH_FLOATS:
 		var field: String = String(field_value)
 		_race.set(field, float(data[field]))
