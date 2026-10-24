@@ -168,6 +168,8 @@ function normalizeFeedPayload(body, options = {}) {
     const displayName = String(
       raw.display_name || raw.username || userObj.userName || userObj.user_name || userObj.name || 'Espectador Kwai'
     ).slice(0, 64);
+    const rawAvatar = raw.avatar_url || raw.headUrl || userObj.headUrl || userObj.avatar || userObj.avatar_url;
+    const avatarUrl = typeof rawAvatar === 'string' && rawAvatar.startsWith('https://') ? rawAvatar.slice(0, 1024) : undefined;
     const rawId = raw.event_id || raw.id || raw.feedId || raw.comboKey || '';
 
     if (type === 'comment' || type === 'chat' || type === 'vote') {
@@ -179,6 +181,7 @@ function normalizeFeedPayload(body, options = {}) {
         user_id: userId,
         display_name: displayName,
         comment,
+        ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
       });
     } else if (type === 'gift' || type === 'present') {
       const giftId = String(raw.gift_id ?? raw.giftId ?? 'kwai_gift').slice(0, 64);
@@ -198,6 +201,7 @@ function normalizeFeedPayload(body, options = {}) {
         coin_value: coinValue,
         repeat_count: repeatCount,
         gift_image_url: typeof giftImage === 'string' ? giftImage : undefined,
+        ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
       });
     } else if (type === 'like' || type === 'like_batch' || type === 'heart') {
       const likeCount = Math.max(1, Math.min(50000, Math.trunc(Number(raw.like_count ?? raw.count ?? 1) || 1)));
@@ -207,6 +211,7 @@ function normalizeFeedPayload(body, options = {}) {
         user_id: userId,
         display_name: displayName,
         like_count: likeCount,
+        ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
       });
     } else if (type === 'share' || type === 'forward') {
       out.push({
@@ -214,6 +219,7 @@ function normalizeFeedPayload(body, options = {}) {
         event_id: rawId ? String(rawId).slice(0, 120) : makeEventId('share', [userId, String(raw.timestamp_ms || '')]),
         user_id: userId,
         display_name: displayName,
+        ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
       });
     } else if (type === 'follow' || type === 'new_follower') {
       out.push({
@@ -221,6 +227,7 @@ function normalizeFeedPayload(body, options = {}) {
         event_id: rawId ? String(rawId).slice(0, 120) : makeEventId('follow', [userId, String(raw.timestamp_ms || '')]),
         user_id: userId,
         display_name: displayName,
+        ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
       });
     }
   };
@@ -261,10 +268,19 @@ function normalizeFeedPayload(body, options = {}) {
   return { events: out, liveHint };
 }
 
+function localAuthHeaders(extra = {}) {
+  const raw = String(process.env.LIVE_BRIDGE_PRODUCER_TOKEN || process.env.LIVE_BRIDGE_LOCAL_TOKEN || '').trim();
+  const headers = { ...extra };
+  if (raw && raw !== 'change_me_local_random_token') {
+    headers['X-JOGI-Token'] = raw;
+  }
+  return headers;
+}
+
 async function postWebhook(webhookUrl, payload) {
   const res = await fetch(webhookUrl, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: localAuthHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(payload),
     signal: AbortSignal.timeout(4000),
   });
@@ -275,6 +291,7 @@ async function fetchTargetUrlFromBridge(bridgeBase, fallbackUrl, allowLocalTestU
   try {
     const res = await fetch(`${bridgeBase}/api/kwai-collector`, {
       method: 'GET',
+      headers: localAuthHeaders(),
       signal: AbortSignal.timeout(2500),
     });
     if (!res.ok) return fallbackUrl;

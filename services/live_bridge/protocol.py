@@ -11,6 +11,7 @@ import time
 from typing import Any
 import unicodedata
 from gift_images import safe_gift_image_url, safe_icon_path
+from avatar_images import safe_avatar_path, safe_avatar_url
 
 
 SCHEMA_VERSION: str = "1.0"
@@ -42,6 +43,7 @@ VALID_ADMIN_COMMANDS: frozenset[str] = frozenset(
         "attack",
         "spawn_obstacle",
         "set_live_goal",
+        "set_live_goals",
         "set_audio_settings",
     }
 )
@@ -65,6 +67,7 @@ VALID_ACTION_IDS: frozenset[str] = frozenset(
         "admin_shield",
         "admin_attack",
         "admin_set_live_goal",
+        "admin_set_live_goals",
         "admin_set_audio_settings",
         "bridge_connected",
         "bridge_reconnecting",
@@ -97,6 +100,8 @@ ALLOWED_PAYLOAD_KEYS: frozenset[str] = frozenset(
         "gift_id",
         "gift_image_url",
         "gift_icon_path",
+        "avatar_url",
+        "avatar_icon_path",
         "boost_percent",
         "repeat_count",
         "like_count",
@@ -109,6 +114,7 @@ ALLOWED_PAYLOAD_KEYS: frozenset[str] = frozenset(
         "goal_target",
         "goal_label",
         "goal_gift_id",
+        "live_goals",
         "voices_enabled",
         "sfx_enabled",
         "crowd_enabled",
@@ -471,6 +477,14 @@ def validate_envelope(data: Any, *, sanitize: bool = True) -> dict[str, Any]:
             raise ProtocolValidationError("coin_value deve ser unit_coin_value multiplicado pelo delta, uma vez.")
         clean_payload.update(unit_coin_value=unit_value, coin_value=total)
 
+    if event_type in ("vote", "gift", "like_batch", "share", "follow"):
+        avatar_url = safe_avatar_url(payload_raw.get("avatar_url"))
+        if avatar_url:
+            clean_payload["avatar_url"] = avatar_url
+        avatar_icon = safe_avatar_path(payload_raw.get("avatar_icon_path"))
+        if avatar_icon:
+            clean_payload["avatar_icon_path"] = avatar_icon
+
     if event_type == "gift":
         image_url = safe_gift_image_url(payload_raw.get("gift_image_url"))
         if image_url:
@@ -525,6 +539,12 @@ def validate_envelope(data: Any, *, sanitize: bool = True) -> dict[str, Any]:
             clean_payload["goal_gift_id"] = gift_id
     elif any(key in payload_raw for key in ("goal_kind", "goal_target", "goal_label", "goal_gift_id")):
         raise ProtocolValidationError("Campos de meta exigem command=set_live_goal.")
+
+    if payload_raw.get("command") == "set_live_goals":
+        clean_payload["live_goals"] = validate_live_goals_spec(payload_raw.get("live_goals"))
+    elif "live_goals" in payload_raw:
+        raise ProtocolValidationError("Campo live_goals exige command=set_live_goals.")
+
     audio_keys = ("voices_enabled", "sfx_enabled", "crowd_enabled", "memes_enabled")
     if payload_raw.get("command") == "set_audio_settings":
         for key in audio_keys:
@@ -549,6 +569,80 @@ def validate_envelope(data: Any, *, sanitize: bool = True) -> dict[str, Any]:
     }
 
 
+def validate_live_goals_spec(raw_goals: Any) -> dict[str, dict[str, Any]]:
+    """Valida as 3 metas simultâneas independentes (likes, gifts, follows)."""
+    if not isinstance(raw_goals, dict):
+        raise ProtocolValidationError("live_goals deve ser um objeto com likes, gifts e follows.")
+    allowed_slots = {"likes", "gifts", "follows"}
+    if set(raw_goals.keys()) != allowed_slots:
+        raise ProtocolValidationError("live_goals deve conter exatamente 'likes', 'gifts' e 'follows'.")
+
+    out: dict[str, dict[str, Any]] = {}
+    defaults_labels = {
+        "likes": "Meta de curtidas",
+        "gifts": "Meta de presentes",
+        "follows": "Meta de seguidores",
+    }
+    for slot in ("likes", "gifts", "follows"):
+        spec = raw_goals.get(slot)
+        if not isinstance(spec, dict):
+            raise ProtocolValidationError(f"live_goals.{slot} deve ser um objeto.")
+        allowed_item_keys = {"goal_kind", "goal_target", "goal_label"}
+        if slot == "gifts":
+            allowed_item_keys.add("goal_gift_id")
+        if slot == "follows":
+            allowed_item_keys.update({"follower_baseline", "baseline_updated_at"})
+        extra_keys = set(spec.keys()) - allowed_item_keys
+        if extra_keys:
+            raise ProtocolValidationError(f"Campos não permitidos em live_goals.{slot}: {sorted(extra_keys)}")
+
+        kind = spec.get("goal_kind", slot)
+        if slot == "likes" and kind != "likes":
+            raise ProtocolValidationError("live_goals.likes exige goal_kind='likes'.")
+        if slot == "follows" and kind != "follows":
+            raise ProtocolValidationError("live_goals.follows exige goal_kind='follows'.")
+        if slot == "gifts" and kind not in ("gifts", "coins", "gift_specific"):
+            raise ProtocolValidationError("live_goals.gifts exige goal_kind em ('gifts', 'coins', 'gift_specific').")
+
+        target = spec.get("goal_target")
+        if not _is_strict_int(target) or not (1 <= target <= 1_000_000_000):
+            raise ProtocolValidationError(f"live_goals.{slot}.goal_target deve ser inteiro entre 1 e 1000000000.")
+        label = spec.get("goal_label", defaults_labels[slot])
+        if not isinstance(label, str):
+            raise ProtocolValidationError(f"live_goals.{slot}.goal_label deve ser texto.")
+
+        item: dict[str, Any] = {
+            "goal_kind": kind,
+            "goal_target": target,
+            "goal_label": sanitize_display_name(label, max_len=40),
+        }
+        if slot == "gifts" and kind == "gift_specific":
+            gift_id = spec.get("goal_gift_id")
+            if (
+                not isinstance(gift_id, str)
+                or not (1 <= len(gift_id) <= 64)
+                or sanitize_display_name(gift_id, max_len=64) != gift_id
+            ):
+                raise ProtocolValidationError("Meta de presente específico exige goal_gift_id de 1 a 64 caracteres sem controles.")
+            item["goal_gift_id"] = gift_id
+        if slot == "follows":
+            baseline = spec.get("follower_baseline")
+            if baseline is None:
+                item["follower_baseline"] = None
+                item["baseline_updated_at"] = None
+            else:
+                if not _is_strict_int(baseline) or not (0 <= baseline <= 1_000_000_000):
+                    raise ProtocolValidationError("follower_baseline deve ser None ou inteiro entre 0 e 1000000000.")
+                item["follower_baseline"] = baseline
+                raw_stamp = spec.get("baseline_updated_at")
+                if isinstance(raw_stamp, str) and raw_stamp.strip():
+                    item["baseline_updated_at"] = sanitize_display_name(raw_stamp.strip(), max_len=32)
+                else:
+                    item["baseline_updated_at"] = time.strftime("%Y-%m-%dT%H:%MZ", time.gmtime())
+        out[slot] = item
+    return out
+
+
 def build_vote_envelope(
     *,
     user_id: str,
@@ -560,10 +654,20 @@ def build_vote_envelope(
     event_id: str | None = None,
     sequence: int = 0,
     boost_allowed: bool = True,
+    avatar_url: str | None = None,
 ) -> dict[str, Any]:
     """Constrói voto para equipe 1=Lula (13) ou 2=Flávio (22)."""
     ts = timestamp_ms if timestamp_ms is not None else int(time.time() * 1000)
     eid = event_id or make_deterministic_event_id(source, "vote", user_id, candidate_slot, ts, sequence)
+    payload: dict[str, Any] = {
+        "candidate_slot": candidate_slot,
+        "action_id": "vote_impulse",
+        "repeat_count": max(1, min(repeat_count, 1000)),
+        "boost_amount": 1.1 if boost_allowed else 0.0,
+        "boost_duration": 1.0,
+    }
+    if avatar_url is not None:
+        payload["avatar_url"] = avatar_url
     return validate_envelope(
         {
             "schema_version": SCHEMA_VERSION,
@@ -573,13 +677,7 @@ def build_vote_envelope(
             "timestamp_ms": ts,
             "priority": "P1",
             "user": {"user_id": user_id, "display_name": display_name},
-            "payload": {
-                "candidate_slot": candidate_slot,
-                "action_id": "vote_impulse",
-                "repeat_count": max(1, min(repeat_count, 1000)),
-                "boost_amount": 1.1 if boost_allowed else 0.0,
-                "boost_duration": 1.0,
-            },
+            "payload": payload,
         }
     )
 
@@ -594,6 +692,7 @@ def build_like_batch_envelope(
     timestamp_ms: int | None = None,
     event_id: str | None = None,
     sequence: int = 0,
+    avatar_url: str | None = None,
 ) -> dict[str, Any]:
     """Constrói um envelope validado de lote de curtidas (like_batch)."""
     ts = timestamp_ms if timestamp_ms is not None else int(time.time() * 1000)
@@ -606,6 +705,8 @@ def build_like_batch_envelope(
         "boost_amount": 0.9,
         "boost_duration": 1.5,
     }
+    if avatar_url is not None:
+        payload["avatar_url"] = avatar_url
     return validate_envelope(
         {
             "schema_version": SCHEMA_VERSION,
@@ -629,10 +730,20 @@ def build_share_envelope(
     timestamp_ms: int | None = None,
     event_id: str | None = None,
     sequence: int = 0,
+    avatar_url: str | None = None,
 ) -> dict[str, Any]:
     """Constrói um envelope validado de compartilhamento (share)."""
     ts = timestamp_ms if timestamp_ms is not None else int(time.time() * 1000)
     eid = event_id or make_deterministic_event_id(source, "share", user_id, candidate_slot, ts, sequence)
+    payload: dict[str, Any] = {
+        "candidate_slot": candidate_slot,
+        "action_id": "share_frenzy",
+        "repeat_count": 1,
+        "boost_amount": 2.4,
+        "boost_duration": 3.0,
+    }
+    if avatar_url is not None:
+        payload["avatar_url"] = avatar_url
     return validate_envelope(
         {
             "schema_version": SCHEMA_VERSION,
@@ -642,13 +753,7 @@ def build_share_envelope(
             "timestamp_ms": ts,
             "priority": "P1",
             "user": {"user_id": user_id, "display_name": display_name},
-            "payload": {
-                "candidate_slot": candidate_slot,
-                "action_id": "share_frenzy",
-                "repeat_count": 1,
-                "boost_amount": 2.4,
-                "boost_duration": 3.0,
-            },
+            "payload": payload,
         }
     )
 
@@ -671,14 +776,18 @@ def build_follow_envelope(
     *, user_id: str, display_name: str, candidate_slot: int | None = None,
     source: str = "simulator", timestamp_ms: int | None = None,
     event_id: str | None = None, sequence: int = 0,
+    avatar_url: str | None = None,
 ) -> dict[str, Any]:
     ts = timestamp_ms if timestamp_ms is not None else int(time.time() * 1000)
+    payload: dict[str, Any] = {"candidate_slot": candidate_slot, "action_id": "audience_follow", "repeat_count": 1}
+    if avatar_url is not None:
+        payload["avatar_url"] = avatar_url
     return validate_envelope({
         "schema_version": SCHEMA_VERSION,
         "event_id": event_id or make_deterministic_event_id(source, "follow", user_id, candidate_slot, ts, sequence),
         "source": source, "event_type": "follow", "timestamp_ms": ts, "priority": "P1",
         "user": {"user_id": user_id, "display_name": display_name},
-        "payload": {"candidate_slot": candidate_slot, "action_id": "audience_follow", "repeat_count": 1},
+        "payload": payload,
     })
 
 
@@ -697,6 +806,7 @@ def build_gift_envelope(
     gift_name: str | None = None,
     gift_id: str | None = None,
     gift_image_url: str | None = None,
+    avatar_url: str | None = None,
 ) -> dict[str, Any]:
     """Constrói um envelope validado de presente (T1 a T4) com prioridade P0."""
     if gift_tier not in GIFT_TIER_CATALOG:
@@ -712,6 +822,22 @@ def build_gift_envelope(
     gift_boost, gift_duration, gift_percent = gift_boost_for_total_coins(total_coins)
     ts = timestamp_ms if timestamp_ms is not None else int(time.time() * 1000)
     eid = event_id or make_deterministic_event_id(source, f"gift_{gift_tier}", user_id, candidate_slot, ts, sequence)
+    payload: dict[str, Any] = {
+        "candidate_slot": candidate_slot,
+        "gift_tier": gift_tier,
+        "gift_name": gift_name if gift_name is not None else spec["gift_name"],
+        "gift_id": gift_id,
+        "gift_image_url": gift_image_url,
+        "unit_coin_value": unit_value,
+        "coin_value": total_coins,
+        "repeat_count": count,
+        "action_id": spec["action_id"],
+        "boost_amount": gift_boost,
+        "boost_duration": gift_duration,
+        "boost_percent": gift_percent,
+    }
+    if avatar_url is not None:
+        payload["avatar_url"] = avatar_url
     return validate_envelope(
         {
             "schema_version": SCHEMA_VERSION,
@@ -721,20 +847,7 @@ def build_gift_envelope(
             "timestamp_ms": ts,
             "priority": spec["priority"],
             "user": {"user_id": user_id, "display_name": display_name},
-            "payload": {
-                "candidate_slot": candidate_slot,
-                "gift_tier": gift_tier,
-                "gift_name": gift_name if gift_name is not None else spec["gift_name"],
-                "gift_id": gift_id,
-                "gift_image_url": gift_image_url,
-                "unit_coin_value": unit_value,
-                "coin_value": total_coins,
-                "repeat_count": count,
-                "action_id": spec["action_id"],
-                "boost_amount": gift_boost,
-                "boost_duration": gift_duration,
-                "boost_percent": gift_percent,
-            },
+            "payload": payload,
         }
     )
 
@@ -754,6 +867,7 @@ def build_admin_command_envelope(
     goal_target: int | None = None,
     goal_label: str = "Meta da live",
     goal_gift_id: str | None = None,
+    live_goals: dict[str, Any] | None = None,
     voices_enabled: bool | None = None,
     sfx_enabled: bool | None = None,
     crowd_enabled: bool | None = None,
@@ -766,6 +880,8 @@ def build_admin_command_envelope(
     identity_kind = f"cmd_{command}"
     if command == "set_live_goal":
         identity_kind += f":{goal_kind}:{goal_target}:{goal_label}:{goal_gift_id}"
+    if command == "set_live_goals":
+        identity_kind += f":{repr(live_goals)}"
     if command == "set_audio_settings":
         identity_kind += f":{voices_enabled}:{sfx_enabled}:{crowd_enabled}:{memes_enabled}"
     eid = event_id or make_deterministic_event_id("admin", identity_kind, user_id, candidate_slot, ts, sequence)
@@ -795,6 +911,8 @@ def build_admin_command_envelope(
     if command == "set_live_goal":
         payload.update(action_id="admin_set_live_goal", goal_kind=goal_kind,
                        goal_target=goal_target, goal_label=goal_label, goal_gift_id=goal_gift_id)
+    if command == "set_live_goals":
+        payload.update(action_id="admin_set_live_goals", live_goals=live_goals)
     if command == "set_audio_settings":
         payload.update(action_id="admin_set_audio_settings", voices_enabled=voices_enabled,
                        sfx_enabled=sfx_enabled, crowd_enabled=crowd_enabled, memes_enabled=memes_enabled)
@@ -824,11 +942,26 @@ def build_attack_envelope(
     timestamp_ms: int | None = None,
     event_id: str | None = None,
     sequence: int = 0,
+    avatar_url: str | None = None,
 ) -> dict[str, Any]:
     """Constrói um envelope validado de ataque político com obstáculo na raia adversária."""
     ts = timestamp_ms if timestamp_ms is not None else int(time.time() * 1000)
     eid = event_id or make_deterministic_event_id(source, "attack", user_id, candidate_slot, ts, sequence)
     actual_target = target_slot if target_slot in (1, 2) else (2 if candidate_slot == 1 else 1)
+    payload: dict[str, Any] = {
+        "candidate_slot": candidate_slot,
+        "target_slot": actual_target,
+        "gift_tier": "T3",
+        "gift_name": "Pilha de Documentos",
+        "coin_value": 100,
+        "repeat_count": 1,
+        "action_id": "gift_t3_attack",
+        "obstacle_type": obstacle_type,
+        "boost_amount": 1.0,
+        "boost_duration": 2.0,
+    }
+    if avatar_url is not None:
+        payload["avatar_url"] = avatar_url
     return validate_envelope(
         {
             "schema_version": SCHEMA_VERSION,
@@ -838,18 +971,7 @@ def build_attack_envelope(
             "timestamp_ms": ts,
             "priority": "P0",
             "user": {"user_id": user_id, "display_name": display_name},
-            "payload": {
-                "candidate_slot": candidate_slot,
-                "target_slot": actual_target,
-                "gift_tier": "T3",
-                "gift_name": "Pilha de Documentos",
-                "coin_value": 100,
-                "repeat_count": 1,
-                "action_id": "gift_t3_attack",
-                "obstacle_type": obstacle_type,
-                "boost_amount": 1.0,
-                "boost_duration": 2.0,
-            },
+            "payload": payload,
         }
     )
 

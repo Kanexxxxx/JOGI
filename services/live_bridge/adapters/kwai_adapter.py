@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, field
+import hmac
 import json
 import logging
+import os
 import time
 import urllib.parse
 from typing import Any
@@ -13,6 +15,7 @@ from typing import Any
 from .base import BaseLiveAdapter
 from .normalization import ViewerContext, bounded_int
 from gift_images import extract_gift_image
+from avatar_images import extract_avatar_url
 
 try:
     from protocol import (
@@ -44,6 +47,11 @@ DEFAULT_KWAI_WEBHOOK_PATH: str = "/webhook/kwai"
 MAX_WEBHOOK_BODY_BYTES: int = 65_536
 
 
+def _clean_webhook_token(raw: str | None) -> str:
+    val = (raw or "").strip()
+    return "" if not val or val == "change_me_local_random_token" else val
+
+
 @dataclass
 class KwaiAdapterConfig:
     """
@@ -64,6 +72,7 @@ class KwaiAdapterConfig:
     default_candidate_slot: int | None = None
     collector_ttl_sec: float = 25.0
     require_collector_room: bool = False
+    webhook_token: str = ""
 
 
 @dataclass
@@ -165,6 +174,7 @@ class KwaiLiveAdapter(BaseLiveAdapter):
             or user_info.get("display_name")
             or "Espectador Kwai"
         )[:256]
+        avatar_url = extract_avatar_url(raw_data.get("avatar_url") or user_info)
         identity = self._viewers.identity(raw_data, "kwai", event_type)
         if identity is None:
             return None
@@ -185,6 +195,7 @@ class KwaiLiveAdapter(BaseLiveAdapter):
                     source="kwai",
                     repeat_count=1,
                     boost_allowed=self._viewers.allow_vote_boost(user_id),
+                    avatar_url=avatar_url,
                     **identity,
                 )
 
@@ -196,6 +207,7 @@ class KwaiLiveAdapter(BaseLiveAdapter):
                 like_count=max(1, min(likes, 50_000)),
                 candidate_slot=slot,
                 source="kwai",
+                avatar_url=avatar_url,
                 **identity,
             )
 
@@ -221,6 +233,7 @@ class KwaiLiveAdapter(BaseLiveAdapter):
                 gift_name=str(raw_data.get("gift_name") or "Presente Kwai"),
                 gift_id=str(raw_data["gift_id"])[:64] if raw_data.get("gift_id") is not None else None,
                 gift_image_url=extract_gift_image(raw_data.get("gift_image_url") or raw_data.get("gift_image")),
+                avatar_url=avatar_url,
                 **identity,
             )
 
@@ -230,12 +243,19 @@ class KwaiLiveAdapter(BaseLiveAdapter):
                 display_name=display_name,
                 candidate_slot=slot,
                 source="kwai",
+                avatar_url=avatar_url,
                 **identity,
             )
 
         elif event_type in ("follow", "new_follower"):
-            envelope = build_follow_envelope(user_id=user_id, display_name=display_name,
-                candidate_slot=slot, source="kwai", **identity)
+            envelope = build_follow_envelope(
+                user_id=user_id,
+                display_name=display_name,
+                candidate_slot=slot,
+                source="kwai",
+                avatar_url=avatar_url,
+                **identity,
+            )
 
         else:
             logger.debug("KwaiLiveAdapter: tipo de evento ignorado ou não suportado: %s", event_type)
@@ -292,11 +312,12 @@ class KwaiLiveAdapter(BaseLiveAdapter):
                 await writer.wait_closed()
                 return
 
-            # Lê cabeçalhos para extrair Content-Length
+            # Lê cabeçalhos para extrair Content-Length e token local do produtor
             content_length = 0
             origin: str | None = None
             fetch_site = ""
             host = ""
+            provided_token = ""
             header_bytes = 0
             while True:
                 header_line = await asyncio.wait_for(reader.readline(), timeout=5.0)
@@ -306,13 +327,20 @@ class KwaiLiveAdapter(BaseLiveAdapter):
                 if not header_line or header_line in (b"\r\n", b"\n"):
                     break
                 header_decoded = header_line.decode("latin1", errors="replace").strip()
-                if header_decoded.lower().startswith("origin:"):
+                lower_hdr = header_decoded.lower()
+                if lower_hdr.startswith("origin:"):
                     origin = header_decoded.split(":", 1)[1].strip()
-                if header_decoded.lower().startswith("host:"):
+                elif lower_hdr.startswith("host:"):
                     host = header_decoded.split(":", 1)[1].strip().split(":", 1)[0].lower()
-                if header_decoded.lower().startswith("sec-fetch-site:"):
+                elif lower_hdr.startswith("sec-fetch-site:"):
                     fetch_site = header_decoded.split(":", 1)[1].strip().lower()
-                if header_decoded.lower().startswith("content-length:"):
+                elif lower_hdr.startswith("x-jogi-token:"):
+                    provided_token = header_decoded.split(":", 1)[1].strip()
+                elif lower_hdr.startswith("authorization:"):
+                    auth_val = header_decoded.split(":", 1)[1].strip()
+                    if auth_val.lower().startswith("bearer "):
+                        provided_token = auth_val[7:].strip()
+                elif lower_hdr.startswith("content-length:"):
                     try:
                         content_length = int(header_decoded.split(":", 1)[1].strip())
                     except ValueError:
@@ -322,13 +350,37 @@ class KwaiLiveAdapter(BaseLiveAdapter):
             if origin is not None:
                 try:
                     parsed_origin = urllib.parse.urlsplit(origin)
-                    origin_allowed = bool(parsed_origin.scheme == "http" and parsed_origin.hostname in ("127.0.0.1", "localhost")
-                        and (parsed_origin.port or 80) == self.bound_port and not parsed_origin.username
-                        and not parsed_origin.password and not parsed_origin.path and not parsed_origin.query and not parsed_origin.fragment)
+                    origin_allowed = bool(
+                        parsed_origin.scheme == "http"
+                        and parsed_origin.hostname in ("127.0.0.1", "localhost")
+                        and (parsed_origin.port or 80) == self.bound_port
+                        and not parsed_origin.username
+                        and not parsed_origin.password
+                        and not parsed_origin.path
+                        and not parsed_origin.query
+                        and not parsed_origin.fragment
+                    )
                 except ValueError:
                     origin_allowed = False
             if not origin_allowed or fetch_site == "cross-site" or (host and host not in ("127.0.0.1", "localhost")):
                 writer.write(b"HTTP/1.1 403 Forbidden\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
+                await writer.drain()
+                return
+
+            expected_token = _clean_webhook_token(self.config.webhook_token) or _clean_webhook_token(
+                os.environ.get("LIVE_BRIDGE_PRODUCER_TOKEN") or os.environ.get("LIVE_BRIDGE_LOCAL_TOKEN")
+            )
+            if expected_token and (
+                not provided_token
+                or not hmac.compare_digest(provided_token.encode("utf-8"), expected_token.encode("utf-8"))
+            ):
+                err_unauth = b'{"error":"Unauthorized"}'
+                writer.write(
+                    b"HTTP/1.1 401 Unauthorized\r\n"
+                    b"Content-Type: application/json\r\n"
+                    b"Content-Length: " + str(len(err_unauth)).encode("ascii") + b"\r\n"
+                    b"Connection: close\r\n\r\n" + err_unauth
+                )
                 await writer.drain()
                 return
 
@@ -439,12 +491,17 @@ class KwaiLiveAdapter(BaseLiveAdapter):
             if self._collector_seen_at is not None
             else None
         )
+        has_token = bool(
+            _clean_webhook_token(self.config.webhook_token)
+            or _clean_webhook_token(os.environ.get("LIVE_BRIDGE_PRODUCER_TOKEN") or os.environ.get("LIVE_BRIDGE_LOCAL_TOKEN"))
+        )
         base = self.build_base_stats(
             extra_metadata={
                 "enabled": self.config.enabled,
                 "webhook_listening": self.is_webhook_listening(),
                 "webhook_port": self.bound_port,
                 "webhook_path": self.config.webhook_path,
+                "webhook_auth_required": has_token,
                 "collector_detail": self._collector_detail,
                 "collector_live_url": self._collector_live_url,
                 "collector_age_seconds": collector_age,

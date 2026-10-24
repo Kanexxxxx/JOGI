@@ -5,17 +5,21 @@ Oferece na MESMA porta 8765:
 - Canal WebSocket administrativo em ws://127.0.0.1:8765/ws/admin (streaming de telemetria e comandos autorizados)
 - Canal WebSocket do motor Godot 4 em ws://127.0.0.1:8765/ws/godot (recebe eventos e emite telemetria)
 - Canal WebSocket de ingestão em ws://127.0.0.1:8765/ws/ingest (Zero-Trust, bloqueia spoofing de source='admin')
-- Endpoints HTTP REST: /health, /api/state, /api/admin/command, /api/admin/simulate
+- Endpoints HTTP REST: /health, /api/state, /api/admin/session, /api/admin/command, /api/admin/simulate
 """
 
 from __future__ import annotations
 
 import argparse
 import asyncio
+import hashlib
+import hmac
+from http.cookies import SimpleCookie
 import json
 import logging
 import os
 import pathlib
+import secrets
 import sqlite3
 import time
 from typing import Any
@@ -28,6 +32,7 @@ from outbox import GiftOutbox
 from live_goal import LiveGoalSettings
 from gift_catalog import GiftCatalog
 from gift_images import GiftImageCache
+from avatar_images import AvatarImageCache
 from audio_settings import AudioSettings, AUDIO_KEYS
 from kwai_collector_settings import KwaiCollectorSettings
 
@@ -57,10 +62,18 @@ logger = logging.getLogger("live_bridge.server")
 DEFAULT_HOST: str = "127.0.0.1"
 DEFAULT_PORT: int = 8765
 ALLOWED_LOOPBACK_HOSTS: frozenset[str] = frozenset({"127.0.0.1", "localhost"})
+ADMIN_COOKIE_NAME: str = "jogi_admin_session"
 
 
 class SecurityBindError(PermissionError):
     """Erro lançado ao tentar vincular o servidor fora do loopback local (127.0.0.1)."""
+
+
+def normalize_secret_token(raw: str | None) -> str:
+    val = (raw or "").strip()
+    if not val or val == "change_me_local_random_token":
+        return ""
+    return val
 
 
 def validate_bind_host(host: str) -> str:
@@ -82,9 +95,16 @@ def is_allowed_origin(origin: str | None, port: int) -> bool:
         return True
     try:
         parsed = urllib.parse.urlsplit(origin)
-        return bool(parsed.scheme == "http" and parsed.hostname in ALLOWED_LOOPBACK_HOSTS
-                    and (parsed.port or 80) == port and not parsed.username and not parsed.password
-                    and not parsed.path and not parsed.query and not parsed.fragment)
+        return bool(
+            parsed.scheme == "http"
+            and parsed.hostname in ALLOWED_LOOPBACK_HOSTS
+            and (parsed.port or 80) == port
+            and not parsed.username
+            and not parsed.password
+            and not parsed.path
+            and not parsed.query
+            and not parsed.fragment
+        )
     except ValueError:
         return False
 
@@ -124,6 +144,8 @@ class LiveBridgeServer:
         gift_capacity: int = 5000,
         ack_retry_seconds: float = 5.0,
         kwai_webhook_port: int = 8786,
+        local_token: str | None = None,
+        producer_token: str | None = None,
     ) -> None:
         if platform not in ("local", "tiktok", "kwai"):
             raise ValueError("platform deve ser local, tiktok ou kwai.")
@@ -133,11 +155,24 @@ class LiveBridgeServer:
         self.account = account.strip().lstrip("@")[:64]
         self.kwai_webhook_port = int(kwai_webhook_port)
         self.ack_retry_seconds = max(0.05, ack_retry_seconds)
+        raw_local_token = os.environ.get("LIVE_BRIDGE_LOCAL_TOKEN", "") if local_token is None else local_token
+        raw_producer_token = (
+            os.environ.get("LIVE_BRIDGE_PRODUCER_TOKEN", "") if producer_token is None else producer_token
+        )
+        self.local_token: str = normalize_secret_token(raw_local_token)
+        self.producer_token: str = normalize_secret_token(raw_producer_token)
+        self._cookie_secret: bytes = (
+            (self.local_token or self.producer_token).encode("utf-8")
+            if (self.local_token or self.producer_token)
+            else secrets.token_bytes(32)
+        )
+
         self.outbox = GiftOutbox(outbox_path, platform=platform, capacity=gift_capacity)
         try:
             self.gift_catalog = GiftCatalog(self.outbox.db)
             self.live_goal = LiveGoalSettings(outbox_path.parent / "live_goal.json" if outbox_path else None)
             self.gift_images = GiftImageCache(outbox_path.parent / "gift-icons" if outbox_path else None)
+            self.avatar_images = AvatarImageCache(outbox_path.parent / "viewer-avatars" if outbox_path else None)
             self.audio_settings = AudioSettings(outbox_path.parent / "audio_settings.json" if outbox_path else None)
             self.kwai_collector = KwaiCollectorSettings(
                 outbox_path.parent / "kwai_collector.json" if outbox_path else None,
@@ -171,6 +206,7 @@ class LiveBridgeServer:
         self._dispatch_task: asyncio.Task[None] | None = None
         self._running: bool = False
         self._seq: int = 0
+        self._started_monotonic: float = time.monotonic()
         self._ingest_viewers: dict[str, ViewerContext] = {
             source: ViewerContext() for source in ("tiktok", "kwai", "simulator")
         }
@@ -188,7 +224,106 @@ class LiveBridgeServer:
             "platform_rejected": 0,
             "p1_shed_dropped": 0,
             "adapter_backpressure_pending": 0,
+            "unauthorized_rejected": 0,
         }
+
+    @property
+    def auth_mode(self) -> str:
+        if self.local_token:
+            return "local_token"
+        if self.producer_token:
+            return "producer_token"
+        return "loopback_only"
+
+    def _expected_admin_cookie(self) -> str:
+        msg = f"jogi-admin-v1:{self.platform}:{self.bound_port}".encode("utf-8")
+        return hmac.new(self._cookie_secret, msg, hashlib.sha256).hexdigest()
+
+    def _admin_set_cookie_header(self) -> tuple[str, str]:
+        return (
+            "Set-Cookie",
+            f"{ADMIN_COOKIE_NAME}={self._expected_admin_cookie()}; HttpOnly; SameSite=Strict; Path=/",
+        )
+
+    def _extract_header_token(self, headers: Any) -> str:
+        direct = str(headers.get("X-JOGI-Token", "") or "").strip()
+        if direct:
+            return direct
+        auth_hdr = str(headers.get("Authorization", "") or "").strip()
+        if auth_hdr.lower().startswith("bearer "):
+            return auth_hdr[7:].strip()
+        return ""
+
+    def _has_valid_header_token(self, headers: Any, *, allow_producer: bool = True) -> bool:
+        candidate = self._extract_header_token(headers)
+        if not candidate:
+            return False
+        cand_bytes = candidate.encode("utf-8")
+        if self.local_token and hmac.compare_digest(cand_bytes, self.local_token.encode("utf-8")):
+            return True
+        if allow_producer and self.producer_token and hmac.compare_digest(cand_bytes, self.producer_token.encode("utf-8")):
+            return True
+        return False
+
+    def _has_valid_admin_cookie(self, headers: Any) -> bool:
+        raw_cookie = str(headers.get("Cookie", "") or "")
+        if not raw_cookie:
+            return False
+        jar = SimpleCookie()
+        try:
+            jar.load(raw_cookie)
+        except Exception:
+            return False
+        morsel = jar.get(ADMIN_COOKIE_NAME)
+        if morsel is None or not morsel.value:
+            return False
+        expected = self._expected_admin_cookie()
+        return hmac.compare_digest(morsel.value.encode("utf-8"), expected.encode("utf-8"))
+
+    def _is_producer_authorized(self, headers: Any) -> bool:
+        if not self.local_token and not self.producer_token:
+            return True
+        return self._has_valid_header_token(headers, allow_producer=True)
+
+    def _is_admin_authorized(self, headers: Any) -> bool:
+        if not self.local_token:
+            return True
+        return self._has_valid_header_token(headers, allow_producer=False) or self._has_valid_admin_cookie(headers)
+
+    def _is_media_authorized(self, headers: Any) -> bool:
+        if not self.local_token and not self.producer_token:
+            return True
+        if self._has_valid_header_token(headers, allow_producer=True) or self._has_valid_admin_cookie(headers):
+            return True
+        # When only producer_token is active (no explicit operator LIVE_BRIDGE_LOCAL_TOKEN),
+        # loopback readers stay permitted while LIVE_BRIDGE_LOCAL_TOKEN locks media strictly.
+        return not bool(self.local_token)
+
+    def _unauthorized_response(self, cors_headers: list[tuple[str, str]], message: str = "Sessão local não autorizada.") -> Response:
+        self.metrics["unauthorized_rejected"] += 1
+        body = json.dumps(
+            {
+                "status": "error",
+                "code": "UNAUTHORIZED",
+                "auth_required": True,
+                "auth_mode": self.auth_mode,
+                "message": message,
+            },
+            ensure_ascii=False,
+        ).encode("utf-8")
+        return Response(
+            401,
+            "Unauthorized",
+            Headers(
+                cors_headers
+                + [
+                    ("Content-Type", "application/json; charset=utf-8"),
+                    ("Content-Length", str(len(body))),
+                    ("Cache-Control", "no-store"),
+                ]
+            ),
+            body,
+        )
 
     def platform_listener_state(self) -> dict[str, Any]:
         kwai_meta: dict[str, Any] = {}
@@ -199,7 +334,7 @@ class LiveBridgeServer:
                 else self.kwai_webhook_port
             )
             adapter_extra = (
-                self._live_adapter.get_stats().get("extra_metadata", {})
+                self._live_adapter.get_stats().get("metadata", {})
                 if self._live_adapter is not None
                 else {}
             )
@@ -209,6 +344,7 @@ class LiveBridgeServer:
                     "webhook_url": f"http://127.0.0.1:{webhook_port}/webhook/kwai",
                     "webhook_port": webhook_port,
                     "webhook_listening": bool(adapter_extra.get("webhook_listening", False)),
+                    "webhook_auth_required": bool(adapter_extra.get("webhook_auth_required", False)),
                     "collector_detail": str(adapter_extra.get("collector_detail", "")),
                     "collector_live_url": str(adapter_extra.get("collector_live_url", "")),
                     "collector_age_seconds": adapter_extra.get("collector_age_seconds"),
@@ -252,6 +388,7 @@ class LiveBridgeServer:
                     host="127.0.0.1",
                     port=self.kwai_webhook_port,
                     require_collector_room=True,
+                    webhook_token=self.producer_token or self.local_token,
                 )
             )
             self._live_adapter.on_event(self._receive_adapter_event)
@@ -282,10 +419,15 @@ class LiveBridgeServer:
         """Inicia o servidor unificado HTTP + WebSocket em 127.0.0.1 e a task de despacho."""
         validate_bind_host(self.host)
         self._running = True
+        self._started_monotonic = time.monotonic()
         try:
             self._server = await websockets.serve(
-                self._handle_client, self.host, self.port,
-                max_size=MAX_PACKET_BYTES, ping_interval=10.0, ping_timeout=20.0,
+                self._handle_client,
+                self.host,
+                self.port,
+                max_size=MAX_PACKET_BYTES,
+                ping_interval=10.0,
+                ping_timeout=20.0,
                 process_request=self._process_http_or_ws_request,
             )
         except Exception:
@@ -294,11 +436,12 @@ class LiveBridgeServer:
             raise
         self._dispatch_task = asyncio.create_task(self._dispatch_loop())
         logger.info(
-            "LiveBridgeServer unificado escutando em ws://%s:%d e http://%s:%d/admin",
+            "LiveBridgeServer unificado escutando em ws://%s:%d e http://%s:%d/admin (auth=%s)",
             self.host,
             self.bound_port,
             self.host,
             self.bound_port,
+            self.auth_mode,
         )
 
     async def stop(self) -> None:
@@ -320,6 +463,7 @@ class LiveBridgeServer:
             await self._server.wait_closed()
             self._server = None
         await self.gift_images.stop()
+        await self.avatar_images.stop()
         self.outbox.close()
 
     def _get_fallback_candidates(self) -> list[dict[str, Any]]:
@@ -349,9 +493,13 @@ class LiveBridgeServer:
 
     def _build_admin_state_payload(self) -> dict[str, Any]:
         """Gera o snapshot completo do estado para o painel web admin (conforme CONTRACT.md)."""
-        telemetry_age = (time.monotonic() - self._telemetry_received_at
-                         if self._telemetry_received_at is not None else None)
+        telemetry_age = (
+            time.monotonic() - self._telemetry_received_at
+            if self._telemetry_received_at is not None
+            else None
+        )
         telemetry_fresh = bool(self.godot_clients and telemetry_age is not None and telemetry_age <= 5.0)
+        telemetry_stale = bool(self.godot_clients and telemetry_age is not None and telemetry_age > 5.0)
         raw = self.latest_telemetry if telemetry_fresh else {}
         runners = raw.get("runners", [])
         colors = {
@@ -404,7 +552,10 @@ class LiveBridgeServer:
 
         state_name = str(raw.get("state_name", "LOBBY_VOTACAO"))
         elapsed = round(float(raw.get("race_elapsed_time", 0.0)), 1)
-        phase_timer = round(float(raw.get("match_timer_remaining", raw.get("state_timer", raw.get("phase_timer_seconds", 300.0)))), 1)
+        phase_timer = round(
+            float(raw.get("match_timer_remaining", raw.get("state_timer", raw.get("phase_timer_seconds", 300.0)))),
+            1,
+        )
         goal = dict(self.live_goal.value)
         reported_goal = raw.get("live_goal", {})
         goal_applied = False
@@ -412,24 +563,65 @@ class LiveBridgeServer:
             if not self.live_goal.configured or all(reported_goal.get(key) == value for key, value in goal.items()):
                 goal.update(reported_goal)
                 goal_applied = True
+
+        goals_state = self.live_goal.snapshot_goals()
+        reported_goals = raw.get("live_goals", {})
+        goals_applied = False
+        if isinstance(reported_goals, dict) and reported_goals:
+            matches_all = True
+            for slot_name, slot_cfg in goals_state.items():
+                rep_slot = reported_goals.get(slot_name)
+                if not isinstance(rep_slot, dict):
+                    matches_all = False
+                    continue
+                if self.live_goal.multi_configured and (
+                    rep_slot.get("goal_kind") != slot_cfg.get("goal_kind")
+                    or rep_slot.get("goal_target") != slot_cfg.get("goal_target")
+                ):
+                    matches_all = False
+                goals_state[slot_name] = {**slot_cfg, **rep_slot}
+            goals_applied = matches_all
+
         reported_audio = raw.get("audio", {})
-        audio_applied = (isinstance(reported_audio, dict)
-                         and all(isinstance(reported_audio.get(key), bool) for key in AUDIO_KEYS)
-                         and (not self.audio_settings.configured or all(reported_audio[key] == self.audio_settings.value[key] for key in AUDIO_KEYS)))
+        audio_applied = (
+            isinstance(reported_audio, dict)
+            and all(isinstance(reported_audio.get(key), bool) for key in AUDIO_KEYS)
+            and (
+                not self.audio_settings.configured
+                or all(reported_audio[key] == self.audio_settings.value[key] for key in AUDIO_KEYS)
+            )
+        )
 
         return {
             "status": "ok",
             "platform": self.platform,
             "account": self.account,
+            "auth_mode": self.auth_mode,
+            "uptime_seconds": round(max(0.0, time.monotonic() - self._started_monotonic), 1),
             **self.platform_listener_state(),
             "telemetry_fresh": telemetry_fresh,
+            "telemetry_stale": telemetry_stale,
             "telemetry_age_seconds": round(telemetry_age, 2) if telemetry_age is not None else None,
             "gift_delivery": "at_least_once_ack",
             "dispatch_online": bool(self._dispatch_task and not self._dispatch_task.done()),
             "pending_gifts": self.outbox.pending_count(),
-            "queue_sizes": {"p0_admin": self.p0_queue.qsize(), "p1": self.p1_queue.qsize(), "p2": self.p2_queue.qsize()},
+            "queue_sizes": {
+                "p0_admin": self.p0_queue.qsize(),
+                "p1": self.p1_queue.qsize(),
+                "p2": self.p2_queue.qsize(),
+            },
+            "image_caches": {
+                "gift_icons": {
+                    "ready": len(self.gift_images.ready),
+                    "pending": len(self.gift_images.pending),
+                    "attempted": len(self.gift_images.attempted),
+                },
+                "viewer_avatars": self.avatar_images.stats(),
+            },
             "live_goal": goal,
             "live_goal_applied": goal_applied,
+            "live_goals": goals_state,
+            "live_goals_applied": goals_applied,
             "audience": raw.get("audience", {}),
             "audio": raw.get("audio", {}),
             "audio_settings_applied": audio_applied,
@@ -454,8 +646,9 @@ class LiveBridgeServer:
         """
         Intercepta requisições HTTP na mesma porta 8765 do WebSocket:
         - Valida Host e Origin (proteção Zero-Trust contra CSRF e CSWSH)
+        - Aplica autenticação local compatível (`LIVE_BRIDGE_LOCAL_TOKEN` / `LIVE_BRIDGE_PRODUCER_TOKEN`)
         - Serve /admin (HTML, CSS, JS) e REST endpoints
-        - Retorna None para rotas /ws/* para permitir o upgrade do WebSocket
+        - Retorna None para rotas /ws/* autorizadas para permitir o upgrade do WebSocket
         """
         # 1. Validação estrita de Host
         host_hdr = str(request.headers.get("Host", "")).split(":")[0].strip().lower()
@@ -474,41 +667,138 @@ class LiveBridgeServer:
         if not is_allowed_origin(origin_hdr, self.bound_port) or sec_fetch_site == "cross-site":
             logger.warning("Bloqueio de segurança: Origin/site não autorizado.")
             return Response(
-                403, "Forbidden",
+                403,
+                "Forbidden",
                 Headers([("Content-Type", "text/plain; charset=utf-8"), ("Connection", "close")]),
                 b"Forbidden: Cross-Origin request not permitted",
             )
 
-        cors_headers = [
+        cors_headers: list[tuple[str, str]] = [
             ("Access-Control-Allow-Origin", origin_hdr or f"http://127.0.0.1:{self.bound_port}"),
             ("Access-Control-Allow-Methods", "GET, POST, OPTIONS"),
-            ("Access-Control-Allow-Headers", "Content-Type, Authorization"),
+            ("Access-Control-Allow-Headers", "Content-Type, Authorization, X-JOGI-Token"),
         ]
 
-        if request.method == "OPTIONS":
+        method = str(getattr(request, "method", "GET") or "GET").upper()
+        if method == "OPTIONS":
             return Response(204, "No Content", Headers(cors_headers), b"")
 
         raw_path = request.path or "/admin"
         path_only = raw_path.split("?", 1)[0]
         query_str = raw_path.split("?", 1)[1] if "?" in raw_path else ""
         query_params = urllib.parse.parse_qs(query_str)
+
         if path_only.startswith("/gift-icons/"):
+            if not self._is_media_authorized(request.headers):
+                return self._unauthorized_response(cors_headers, "Token local necessário para miniaturas.")
             icon = self.gift_images.get(path_only)
             if icon is None:
                 return Response(404, "Not Found", Headers(cors_headers + [("Cache-Control", "no-store")]), b"")
             content, content_type = icon
-            return Response(200, "OK", Headers(cors_headers + [("Content-Type", content_type),
-                ("Content-Length", str(len(content))), ("X-Content-Type-Options", "nosniff"),
-                ("Cache-Control", "private, max-age=86400")]), content)
+            return Response(
+                200,
+                "OK",
+                Headers(
+                    cors_headers
+                    + [
+                        ("Content-Type", content_type),
+                        ("Content-Length", str(len(content))),
+                        ("X-Content-Type-Options", "nosniff"),
+                        ("Cache-Control", "private, max-age=86400"),
+                    ]
+                ),
+                content,
+            )
+
+        if path_only.startswith("/viewer-avatars/"):
+            if not self._is_media_authorized(request.headers):
+                return self._unauthorized_response(cors_headers, "Token local necessário para avatares.")
+            avatar = self.avatar_images.get(path_only)
+            if avatar is None:
+                return Response(404, "Not Found", Headers(cors_headers + [("Cache-Control", "no-store")]), b"")
+            content, content_type = avatar
+            return Response(
+                200,
+                "OK",
+                Headers(
+                    cors_headers
+                    + [
+                        ("Content-Type", content_type),
+                        ("Content-Length", str(len(content))),
+                        ("X-Content-Type-Options", "nosniff"),
+                        ("Cache-Control", "private, max-age=3600"),
+                    ]
+                ),
+                content,
+            )
+
         if path_only == "/favicon.ico":
             return Response(204, "No Content", Headers(cors_headers), b"")
 
-        # Rotas WebSocket: passam adiante para o handshake
+        # Rotas WebSocket: autenticar antes do upgrade
         if path_only.startswith("/ws/") or path_only in ("/ws/godot", "/ws/admin", "/ws/ingest"):
+            if path_only.startswith("/ws/admin"):
+                if not self._is_admin_authorized(request.headers):
+                    return self._unauthorized_response(cors_headers, "Sessão administrativa não autenticada.")
+            else:
+                if not self._is_producer_authorized(request.headers):
+                    return self._unauthorized_response(cors_headers, "Canal produtor/motor exige X-JOGI-Token válido.")
             return None
 
-        # Rota de raiz: redireciona / atende /admin
+        # Rota explícita de troca de token por cookie HttpOnly SameSite=Strict (sem expor segredo em HTML/JS/URL)
+        if path_only == "/api/admin/session":
+            if not self.local_token:
+                body = json.dumps({"status": "ok", "authenticated": True, "auth_mode": self.auth_mode}).encode("utf-8")
+                return Response(
+                    200,
+                    "OK",
+                    Headers(
+                        cors_headers
+                        + [
+                            self._admin_set_cookie_header(),
+                            ("Content-Type", "application/json; charset=utf-8"),
+                            ("Cache-Control", "no-store"),
+                        ]
+                    ),
+                    body,
+                )
+            if not self._has_valid_header_token(request.headers, allow_producer=False):
+                return self._unauthorized_response(cors_headers, "LIVE_BRIDGE_LOCAL_TOKEN inválido.")
+            body = json.dumps({"status": "ok", "authenticated": True, "auth_mode": self.auth_mode}).encode("utf-8")
+            return Response(
+                200,
+                "OK",
+                Headers(
+                    cors_headers
+                    + [
+                        self._admin_set_cookie_header(),
+                        ("Content-Type", "application/json; charset=utf-8"),
+                        ("Cache-Control", "no-store"),
+                    ]
+                ),
+                body,
+            )
+
+        # Rota de raiz: redireciona / atende /admin (nunca embute segredos no HTML)
         if path_only in ("/", "/admin", "/admin/", "/admin/index.html"):
+            if self.local_token and "token" in query_params:
+                supplied = (query_params.get("token", [""])[0] or "").strip()
+                if supplied and hmac.compare_digest(supplied.encode("utf-8"), self.local_token.encode("utf-8")):
+                    return Response(
+                        303,
+                        "See Other",
+                        Headers(
+                            cors_headers
+                            + [
+                                self._admin_set_cookie_header(),
+                                ("Location", "/admin"),
+                                ("Cache-Control", "no-store"),
+                            ]
+                        ),
+                        b"",
+                    )
+                return self._unauthorized_response(cors_headers, "Token de inicialização inválido.")
+
             index_file = self._admin_dir / "index.html"
             if not index_file.exists():
                 return Response(
@@ -518,8 +808,10 @@ class LiveBridgeServer:
                     b"Arquivo admin/index.html nao encontrado.",
                 )
             content = index_file.read_bytes()
+            extra_cookie = [self._admin_set_cookie_header()] if not self.local_token else []
             headers = Headers(
                 cors_headers
+                + extra_cookie
                 + [
                     ("Content-Type", "text/html; charset=utf-8"),
                     ("Content-Length", str(len(content))),
@@ -576,6 +868,7 @@ class LiveBridgeServer:
                 "status": "ok",
                 "bound_host": self.host,
                 "bound_port": self.bound_port,
+                "auth_mode": self.auth_mode,
                 "godot_connected": len(self.godot_clients) > 0,
                 "admin_clients": len(self.admin_clients),
                 "ingest_clients": len(self.ingest_clients),
@@ -596,6 +889,27 @@ class LiveBridgeServer:
             )
             return Response(200, "OK", headers, body)
 
+        if path_only == "/api/kwai-collector":
+            if not (self._is_producer_authorized(request.headers) or self._is_admin_authorized(request.headers)):
+                return self._unauthorized_response(cors_headers)
+            result = {
+                "status": "ok",
+                "platform": self.platform,
+                "account": self.account,
+                **self.platform_listener_state(),
+            }
+            body = json.dumps(result, ensure_ascii=False).encode("utf-8")
+            return Response(
+                200,
+                "OK",
+                Headers(cors_headers + [("Content-Type", "application/json; charset=utf-8"), ("Cache-Control", "no-store")]),
+                body,
+            )
+
+        # Todas as demais rotas /api/* exigem autorização administrativa quando LIVE_BRIDGE_LOCAL_TOKEN estiver ativo
+        if path_only.startswith("/api/") and not self._is_admin_authorized(request.headers):
+            return self._unauthorized_response(cors_headers, "Autenticação local necessária para acessar o painel.")
+
         if path_only == "/api/state":
             state_data = self._build_admin_state_payload()
             body = json.dumps(state_data, ensure_ascii=False).encode("utf-8")
@@ -604,15 +918,16 @@ class LiveBridgeServer:
                 + [
                     ("Content-Type", "application/json; charset=utf-8"),
                     ("Content-Length", str(len(body))),
+                    ("Cache-Control", "no-store"),
                 ]
             )
             return Response(200, "OK", headers, body)
 
-        if path_only in ("/api/kwai-collector", "/api/admin/kwai-collector"):
+        if path_only == "/api/admin/kwai-collector":
             status_code = 200
             try:
                 raw_query_params = urllib.parse.parse_qs(query_str, keep_blank_values=True)
-                if path_only == "/api/admin/kwai-collector" and "live_url" in raw_query_params:
+                if "live_url" in raw_query_params:
                     self.kwai_collector.update(raw_query_params.get("live_url", [""])[0])
                 result = {
                     "status": "ok",
@@ -635,16 +950,32 @@ class LiveBridgeServer:
             status_code = 200
             try:
                 if path_only == "/api/admin/gift":
-                    self.gift_catalog.set_action(query_params.get("source", [self.platform])[0],
-                        query_params.get("gift_id", [""])[0], query_params.get("action", [""])[0])
-                result = {"status":"ok", "platform":self.platform,
-                    **self.gift_catalog.listing(int(query_params.get("limit", [200])[0]), int(query_params.get("offset", [0])[0]))}
+                    self.gift_catalog.set_action(
+                        query_params.get("source", [self.platform])[0],
+                        query_params.get("gift_id", [""])[0],
+                        query_params.get("action", [""])[0],
+                    )
+                result = {
+                    "status": "ok",
+                    "platform": self.platform,
+                    **self.gift_catalog.listing(
+                        int(query_params.get("limit", [200])[0]),
+                        int(query_params.get("offset", [0])[0]),
+                    ),
+                }
             except (ValueError, TypeError):
-                status_code = 400; result = {"status":"error","message":"Parâmetros do catálogo inválidos."}
+                status_code = 400
+                result = {"status": "error", "message": "Parâmetros do catálogo inválidos."}
             except LookupError:
-                status_code = 404; result = {"status":"error","message":"Presente ainda não observado nesta fonte."}
+                status_code = 404
+                result = {"status": "error", "message": "Presente ainda não observado nesta fonte."}
             body = json.dumps(result, ensure_ascii=False).encode("utf-8")
-            return Response(status_code, "OK" if status_code == 200 else "Bad Request", Headers(cors_headers + [("Content-Type","application/json; charset=utf-8"),("Cache-Control","no-store")]), body)
+            return Response(
+                status_code,
+                "OK" if status_code == 200 else "Bad Request",
+                Headers(cors_headers + [("Content-Type", "application/json; charset=utf-8"), ("Cache-Control", "no-store")]),
+                body,
+            )
 
         if path_only == "/api/admin/command":
             cmd = (
@@ -678,23 +1009,40 @@ class LiveBridgeServer:
                     err_body,
                 )
 
-            goal_options = {}
             if cmd == "set_live_goal":
                 try:
-                    goal_options = {"goal_kind": query_params.get("goal_kind", ["likes"])[0],
-                                    "goal_target": int(query_params.get("goal_target", [0])[0]),
-                                    "goal_label": query_params.get("goal_label", ["Meta da live"])[0],
-                                    "goal_gift_id": query_params.get("goal_gift_id", [None])[0]}
+                    goal_options = {
+                        "goal_kind": query_params.get("goal_kind", ["likes"])[0],
+                        "goal_target": int(query_params.get("goal_target", [0])[0]),
+                        "goal_label": query_params.get("goal_label", ["Meta da live"])[0],
+                        "goal_gift_id": query_params.get("goal_gift_id", [None])[0],
+                    }
                     env = build_admin_command_envelope(command=cmd, **goal_options)
                 except (ProtocolValidationError, ValueError, TypeError):
                     body = b'{"status":"error","message":"Meta invalida."}'
                     return Response(400, "Bad Request", Headers(cors_headers + [("Content-Type", "application/json")]), body)
+            elif cmd == "set_live_goals":
+                try:
+                    raw_goals = query_params.get("live_goals", [query_params.get("live_goals_json", [""])[0]])[0]
+                    parsed_goals = json.loads(raw_goals) if isinstance(raw_goals, str) else raw_goals
+                    env = build_admin_command_envelope(command=cmd, live_goals=parsed_goals)
+                except (ProtocolValidationError, ValueError, TypeError, json.JSONDecodeError):
+                    body = b'{"status":"error","message":"Configuracao das 3 metas invalida."}'
+                    return Response(400, "Bad Request", Headers(cors_headers + [("Content-Type", "application/json")]), body)
             elif cmd == "set_audio_settings":
                 try:
-                    options = {key: {"true": True, "false": False}[query_params.get(key, [""])[0]] for key in AUDIO_KEYS}
+                    options = {
+                        key: {"true": True, "false": False}[query_params.get(key, [""])[0]]
+                        for key in AUDIO_KEYS
+                    }
                     env = build_admin_command_envelope(command=cmd, **options)
                 except (KeyError, ProtocolValidationError, ValueError, TypeError):
-                    return Response(400, "Bad Request", Headers(cors_headers + [("Content-Type", "application/json")]), b'{"status":"error","message":"Audio switches require true/false."}')
+                    return Response(
+                        400,
+                        "Bad Request",
+                        Headers(cors_headers + [("Content-Type", "application/json")]),
+                        b'{"status":"error","message":"Audio switches require true/false."}',
+                    )
             else:
                 env = build_admin_command_envelope(command=cmd, candidate_slot=slot)
             outcome = self.enqueue_envelope(env)
@@ -727,9 +1075,11 @@ class LiveBridgeServer:
             slot_val = query_params.get("candidate_slot", [query_params.get("slot", [1])[0]])[0]
             if isinstance(slot_val, str):
                 s_str = slot_val.strip().lower()
-                if s_str in ("lula", "1", "#1"):
+                if s_str in ("0", "none", "neutral", "neutro"):
+                    slot = None
+                elif s_str in ("lula", "1", "#1", "13", "#13"):
                     slot = 1
-                elif s_str in ("bolsonaro", "2", "#2"):
+                elif s_str in ("bolsonaro", "2", "#2", "22", "#22"):
                     slot = 2
                 elif s_str.isdigit():
                     slot = 2 if int(s_str) == 2 else 1
@@ -769,12 +1119,13 @@ class LiveBridgeServer:
                     "utf-8"
                 )
             elif evt_type in ("attack", "attack_obstacle"):
-                target_slot = 2 if slot == 1 else 1
+                eff_slot = slot if slot in (1, 2) else 1
+                target_slot = 2 if eff_slot == 1 else 1
                 obs_type = query_params.get("obstacle_type", ["pilha_documentos"])[0]
                 env = build_attack_envelope(
                     user_id="sim_attacker",
                     display_name="Torcedor",
-                    candidate_slot=slot,
+                    candidate_slot=eff_slot,
                     target_slot=target_slot,
                     obstacle_type=obs_type,
                     source="simulator",
@@ -812,16 +1163,22 @@ class LiveBridgeServer:
                     "utf-8"
                 )
             elif evt_type == "follow":
-                env = build_follow_envelope(user_id=f"sim_follow_{self._seq}", display_name="Novo seguidor",
-                    candidate_slot=slot, source="simulator", sequence=self._seq)
+                env = build_follow_envelope(
+                    user_id=f"sim_follow_{self._seq}",
+                    display_name="Novo seguidor",
+                    candidate_slot=slot,
+                    source="simulator",
+                    sequence=self._seq,
+                )
                 self._seq += 1
                 outcome = self.enqueue_envelope(env)
                 res_body = json.dumps({"status": outcome, "event_id": env["event_id"]}).encode("utf-8")
             else:
+                eff_slot = slot if slot in (1, 2) else 1
                 env = build_vote_envelope(
                     user_id="sim_voter",
                     display_name="Torcedor",
-                    candidate_slot=slot,
+                    candidate_slot=eff_slot,
                     repeat_count=max(1, count),
                     source="simulator",
                 )
@@ -879,6 +1236,7 @@ class LiveBridgeServer:
         source = str(raw_data.get("source") or "simulator").lower()
         user_id = str(raw_data.get("user_id") or "anon_user")
         display_name = str(raw_data.get("display_name") or raw_data.get("username") or "Espectador")
+        avatar_url = raw_data.get("avatar_url") if isinstance(raw_data.get("avatar_url"), str) else None
         viewers = self._ingest_viewers.get(source)
         raw_slot = raw_data.get("candidate_slot")
         selected_slot = int(raw_slot) if isinstance(raw_slot, int) and not isinstance(raw_slot, bool) else None
@@ -910,6 +1268,7 @@ class LiveBridgeServer:
                 event_id=event_id,
                 sequence=self._seq,
                 boost_allowed=viewers.allow_vote_boost(user_id) if viewers else True,
+                avatar_url=avatar_url,
             )
 
         if shorthand_type in ("like", "like_batch"):
@@ -922,6 +1281,7 @@ class LiveBridgeServer:
                 timestamp_ms=timestamp_ms,
                 event_id=event_id,
                 sequence=self._seq,
+                avatar_url=avatar_url,
             )
 
         if shorthand_type == "share":
@@ -933,6 +1293,7 @@ class LiveBridgeServer:
                 timestamp_ms=timestamp_ms,
                 event_id=event_id,
                 sequence=self._seq,
+                avatar_url=avatar_url,
             )
 
         if shorthand_type == "gift":
@@ -947,21 +1308,43 @@ class LiveBridgeServer:
                 timestamp_ms=timestamp_ms,
                 event_id=event_id,
                 sequence=self._seq,
-                unit_coin_value=(bounded_int(raw_data.get("unit_coin_value", raw_data.get("coin_value")), 0)
-                                 if source in ("tiktok", "kwai") or "unit_coin_value" in raw_data or "coin_value" in raw_data else None),
+                unit_coin_value=(
+                    bounded_int(raw_data.get("unit_coin_value", raw_data.get("coin_value")), 0)
+                    if source in ("tiktok", "kwai") or "unit_coin_value" in raw_data or "coin_value" in raw_data
+                    else None
+                ),
                 gift_name=raw_data.get("gift_name"),
                 gift_id=str(raw_data["gift_id"]) if raw_data.get("gift_id") is not None else None,
                 gift_image_url=raw_data.get("gift_image_url"),
+                avatar_url=avatar_url,
             )
 
         if shorthand_type == "follow":
-            return build_follow_envelope(user_id=user_id, display_name=display_name,
-                candidate_slot=selected_slot, source=source, timestamp_ms=timestamp_ms,
-                event_id=event_id, sequence=self._seq)
+            return build_follow_envelope(
+                user_id=user_id,
+                display_name=display_name,
+                candidate_slot=selected_slot,
+                source=source,
+                timestamp_ms=timestamp_ms,
+                event_id=event_id,
+                sequence=self._seq,
+                avatar_url=avatar_url,
+            )
 
         raise ProtocolValidationError(
             "Formato de mensagem desconhecido ou campos obrigatorios ausentes."
         )
+
+    def _prepare_viewer_avatar(self, envelope: dict[str, Any]) -> dict[str, Any]:
+        payload = envelope.get("payload")
+        if not isinstance(payload, dict) or "avatar_url" not in payload:
+            return envelope
+        raw_avatar_url = payload.get("avatar_url")
+        next_payload = {k: v for k, v in payload.items() if k != "avatar_url"}
+        avatar_icon = self.avatar_images.request(raw_avatar_url)
+        if avatar_icon:
+            next_payload["avatar_icon_path"] = avatar_icon
+        return {**envelope, "payload": next_payload}
 
     def enqueue_envelope(self, envelope: dict[str, Any]) -> str:
         """
@@ -972,6 +1355,8 @@ class LiveBridgeServer:
         if self.platform != "local" and envelope["source"] not in (self.platform, "admin", "simulator"):
             self.metrics["platform_rejected"] += 1
             return "rejected_platform"
+        if envelope["event_type"] in ("gift", "vote", "like_batch", "share", "follow"):
+            envelope = self._prepare_viewer_avatar(envelope)
         if envelope["event_type"] == "gift":
             try:
                 envelope = self.gift_catalog.apply(envelope)
@@ -1006,6 +1391,13 @@ class LiveBridgeServer:
         if envelope["event_type"] == "admin_command" and envelope["payload"].get("command") == "set_live_goal":
             try:
                 self.live_goal.update(envelope)
+            except OSError:
+                self.metrics["storage_errors"] += 1
+                self.deduplicator.forget(event_id)
+                return "busy"
+        if envelope["event_type"] == "admin_command" and envelope["payload"].get("command") == "set_live_goals":
+            try:
+                self.live_goal.update_goals(envelope)
             except OSError:
                 self.metrics["storage_errors"] += 1
                 self.deduplicator.forget(event_id)
@@ -1147,7 +1539,15 @@ class LiveBridgeServer:
                     cmd = str(data.get("command", "")).strip()
                     params = data.get("params", {})
                     if not isinstance(params, dict):
-                        await ws.send(json.dumps({"type": "command_ack", "status": "error", "message": "Parâmetros do comando devem ser objeto."}))
+                        await ws.send(
+                            json.dumps(
+                                {
+                                    "type": "command_ack",
+                                    "status": "error",
+                                    "message": "Parâmetros do comando devem ser objeto.",
+                                }
+                            )
+                        )
                         continue
                     slot = params.get("candidate_slot") if isinstance(params, dict) else None
                     if slot is not None:
@@ -1162,14 +1562,30 @@ class LiveBridgeServer:
 
                     if cmd in VALID_ADMIN_COMMANDS:
                         try:
-                            goal_options = {}
+                            goal_options: dict[str, Any] = {}
                             if cmd == "set_live_goal":
-                                goal_options = {key: params.get(key) for key in ("goal_kind", "goal_target", "goal_label", "goal_gift_id")}
+                                goal_options = {
+                                    key: params.get(key)
+                                    for key in ("goal_kind", "goal_target", "goal_label", "goal_gift_id")
+                                }
+                            elif cmd == "set_live_goals":
+                                raw_lg = params.get("live_goals")
+                                if isinstance(raw_lg, str):
+                                    raw_lg = json.loads(raw_lg)
+                                goal_options = {"live_goals": raw_lg}
                             elif cmd == "set_audio_settings":
                                 goal_options = {key: params.get(key) for key in AUDIO_KEYS}
                             env = build_admin_command_envelope(command=cmd, candidate_slot=slot, **goal_options)
-                        except (ProtocolValidationError, TypeError, ValueError):
-                            await ws.send(json.dumps({"type": "command_ack", "status": "error", "message": "Parâmetros do comando inválidos."}))
+                        except (ProtocolValidationError, TypeError, ValueError, json.JSONDecodeError):
+                            await ws.send(
+                                json.dumps(
+                                    {
+                                        "type": "command_ack",
+                                        "status": "error",
+                                        "message": "Parâmetros do comando inválidos.",
+                                    }
+                                )
+                            )
                             continue
                         outcome = self.enqueue_envelope(env)
                         ack = {
@@ -1187,7 +1603,7 @@ class LiveBridgeServer:
                                 "timestamp_ms": int(time.time() * 1000),
                             }
                         )
-                        if cmd == "set_live_goal":
+                        if cmd in ("set_live_goal", "set_live_goals"):
                             await self.broadcast_to_admin({"type": "state_update", **self._build_admin_state_payload()})
                     else:
                         ack = {
@@ -1223,8 +1639,11 @@ class LiveBridgeServer:
                     outcome = "accepted"
                     evt_type = str(data.get("event_type", "vote")).strip().lower()
                     evt_data = data.get("data", {}) if isinstance(data.get("data"), dict) else {}
-                    slot = int(evt_data.get("candidate_slot", 1))
-                    slot = 2 if slot == 2 else 1
+                    raw_slot = evt_data.get("candidate_slot", 1)
+                    if raw_slot in (None, 0, "0", "none", "neutral"):
+                        slot = None
+                    else:
+                        slot = 2 if int(raw_slot) == 2 else 1
                     count = int(evt_data.get("count", 1))
 
                     if evt_type == "burst":
@@ -1247,12 +1666,13 @@ class LiveBridgeServer:
                         )
                         self.enqueue_envelope(env)
                     elif evt_type in ("attack", "attack_obstacle"):
-                        target_slot = 2 if slot == 1 else 1
+                        eff_slot = slot if slot in (1, 2) else 1
+                        target_slot = 2 if eff_slot == 1 else 1
                         obs_type = str(evt_data.get("obstacle_type", "pilha_documentos"))
                         env = build_attack_envelope(
                             user_id=str(evt_data.get("user_id", "sim_attacker")),
                             display_name=str(evt_data.get("display_name", "Torcedor")),
-                            candidate_slot=slot,
+                            candidate_slot=eff_slot,
                             target_slot=target_slot,
                             obstacle_type=obs_type,
                             source="simulator",
@@ -1281,15 +1701,19 @@ class LiveBridgeServer:
                         )
                         self.enqueue_envelope(env)
                     elif evt_type == "follow":
-                        env = build_follow_envelope(user_id=str(evt_data.get("user_id", "sim_follow")),
+                        env = build_follow_envelope(
+                            user_id=str(evt_data.get("user_id", "sim_follow")),
                             display_name=str(evt_data.get("display_name", "Novo seguidor")),
-                            candidate_slot=slot, source="simulator")
+                            candidate_slot=slot,
+                            source="simulator",
+                        )
                         outcome = self.enqueue_envelope(env)
                     else:
+                        eff_slot = slot if slot in (1, 2) else 1
                         env = build_vote_envelope(
                             user_id=str(evt_data.get("user_id", "sim_user")),
                             display_name=str(evt_data.get("display_name", "Torcedor")),
-                            candidate_slot=slot,
+                            candidate_slot=eff_slot,
                             repeat_count=count,
                             source="simulator",
                         )
@@ -1340,6 +1764,15 @@ class LiveBridgeServer:
                 for pending in retained:
                     self.p0_queue.put_nowait(pending)
                 await ws.send(json.dumps(self.live_goal.envelope(), ensure_ascii=False))
+            if self.live_goal.multi_configured:
+                retained = []
+                while not self.p0_queue.empty():
+                    pending = self.p0_queue.get_nowait()
+                    if pending["payload"].get("command") != "set_live_goals":
+                        retained.append(pending)
+                for pending in retained:
+                    self.p0_queue.put_nowait(pending)
+                await ws.send(json.dumps(self.live_goal.multi_envelope(), ensure_ascii=False))
             if self.audio_settings.configured:
                 retained = []
                 while not self.p0_queue.empty():
@@ -1514,14 +1947,31 @@ class LiveBridgeServer:
         return delivered
 
 
-async def run_server_forever(host: str = DEFAULT_HOST, port: int = DEFAULT_PORT, *,
-                             platform: str = "local", account: str = "",
-                             state_dir: pathlib.Path | None = None, listen_live: bool = False,
-                             kwai_webhook_port: int = 8786) -> None:
+async def run_server_forever(
+    host: str = DEFAULT_HOST,
+    port: int = DEFAULT_PORT,
+    *,
+    platform: str = "local",
+    account: str = "",
+    state_dir: pathlib.Path | None = None,
+    listen_live: bool = False,
+    kwai_webhook_port: int = 8786,
+) -> None:
     if state_dir is None:
-        state_dir = pathlib.Path(os.environ.get("LOCALAPPDATA", str(pathlib.Path.home() / ".local"))) / "JOGI" / "live_bridge" / platform
-    server = LiveBridgeServer(host=host, port=port, platform=platform, account=account,
-                              outbox_path=state_dir / "gifts.sqlite3", kwai_webhook_port=kwai_webhook_port)
+        state_dir = (
+            pathlib.Path(os.environ.get("LOCALAPPDATA", str(pathlib.Path.home() / ".local")))
+            / "JOGI"
+            / "live_bridge"
+            / platform
+        )
+    server = LiveBridgeServer(
+        host=host,
+        port=port,
+        platform=platform,
+        account=account,
+        outbox_path=state_dir / "gifts.sqlite3",
+        kwai_webhook_port=kwai_webhook_port,
+    )
     await server.start()
     stop_event = asyncio.Event()
     try:
@@ -1548,10 +1998,23 @@ def main() -> None:
     )
     parser.add_argument("--platform", choices=("local", "tiktok", "kwai"), default="local")
     parser.add_argument("--account", default="", help="Identificador público da conta; não autentica nem abre live.")
-    parser.add_argument("--state-dir", type=pathlib.Path, default=None,
-                        help="Diretório local exclusivo da outbox; padrão LOCALAPPDATA/JOGI/live_bridge/<platform>.")
-    parser.add_argument("--listen-live", action="store_true", help="Ativar escuta local da plataforma (TikTok Live SDK ou receptor Webhook Kwai); não inicia transmissão.")
-    parser.add_argument("--kwai-webhook-port", type=int, default=8786, help="Porta TCP loopback do receptor KwaiLiveAdapter (padrão 8786).")
+    parser.add_argument(
+        "--state-dir",
+        type=pathlib.Path,
+        default=None,
+        help="Diretório local exclusivo da outbox; padrão LOCALAPPDATA/JOGI/live_bridge/<platform>.",
+    )
+    parser.add_argument(
+        "--listen-live",
+        action="store_true",
+        help="Ativar escuta local da plataforma (TikTok Live SDK ou receptor Webhook Kwai); não inicia transmissão.",
+    )
+    parser.add_argument(
+        "--kwai-webhook-port",
+        type=int,
+        default=8786,
+        help="Porta TCP loopback do receptor KwaiLiveAdapter (padrão 8786).",
+    )
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -1560,9 +2023,17 @@ def main() -> None:
     )
     port = args.port if args.port is not None else (8766 if args.platform == "kwai" else DEFAULT_PORT)
     try:
-        asyncio.run(run_server_forever(host=args.host, port=port, platform=args.platform,
-                                       account=args.account, state_dir=args.state_dir, listen_live=args.listen_live,
-                                       kwai_webhook_port=args.kwai_webhook_port))
+        asyncio.run(
+            run_server_forever(
+                host=args.host,
+                port=port,
+                platform=args.platform,
+                account=args.account,
+                state_dir=args.state_dir,
+                listen_live=args.listen_live,
+                kwai_webhook_port=args.kwai_webhook_port,
+            )
+        )
     except KeyboardInterrupt:
         pass
 

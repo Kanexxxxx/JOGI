@@ -6,6 +6,7 @@ import argparse
 import json
 import os
 from pathlib import Path
+import secrets
 import shutil
 import subprocess
 import sys
@@ -31,17 +32,31 @@ def health(port: int) -> dict | None:
         return None
 
 
-def build_plan(platform: str, *, godot: Path = DEFAULT_GODOT, scene: str = "res://scenes/main/stadium_race.tscn", offline: bool = False) -> dict:
+def build_plan(
+    platform: str,
+    *,
+    godot: Path = DEFAULT_GODOT,
+    scene: str = "res://scenes/main/stadium_race.tscn",
+    offline: bool = False,
+) -> dict:
     port = PORTS[platform]
     state_dir = Path(os.environ.get("LOCALAPPDATA", str(Path.home() / ".local"))) / "JOGI" / "live_bridge" / platform
     return {
-        "platform": platform, "account": PUBLIC_ACCOUNTS[platform], "port": port,
+        "platform": platform,
+        "account": PUBLIC_ACCOUNTS[platform],
+        "port": port,
         "python": str(BRIDGE_DIR / ".venv" / "Scripts" / "python.exe"),
-        "bridge_script": str(BRIDGE_DIR / "server.py"), "state_dir": str(state_dir),
-        "godot": str(godot), "project": str(ROOT / "game"), "scene": scene,
-        "godot_environment": {"LIVE_PLATFORM": platform,
-                              "LIVE_BRIDGE_WS_URL": f"ws://127.0.0.1:{port}/ws/godot"},
-        "panel": f"http://127.0.0.1:{port}/admin", "starts_platform_live": False,
+        "bridge_script": str(BRIDGE_DIR / "server.py"),
+        "state_dir": str(state_dir),
+        "godot": str(godot),
+        "project": str(ROOT / "game"),
+        "scene": scene,
+        "godot_environment": {
+            "LIVE_PLATFORM": platform,
+            "LIVE_BRIDGE_WS_URL": f"ws://127.0.0.1:{port}/ws/godot",
+        },
+        "panel": f"http://127.0.0.1:{port}/admin",
+        "starts_platform_live": False,
         "listen_live": not offline,
         "enable_kwai_collector": platform == "kwai" and not offline,
         "kwai_webhook_port": KWAI_WEBHOOK_PORT,
@@ -65,52 +80,90 @@ def launch(plans: list[dict], *, bridge_only: bool = False) -> int:
             state_dir.mkdir(parents=True, exist_ok=True)
             log_file = (state_dir / f"bridge-{time.strftime('%Y%m%d-%H%M%S')}.log").open("ab")
             handles.append(log_file)
-            server_args = [plan["python"], "-u", plan["bridge_script"], "--platform", plan["platform"],
-                           "--account", plan["account"], "--port", str(plan["port"]), "--state-dir", plan["state_dir"]]
+
+            # Ephemeral per-instance producer token binds bridge, Godot, and Kwai collector
+            # without storing secrets in git or HTML. Operator LIVE_BRIDGE_LOCAL_TOKEN is preserved if set.
+            instance_producer_token = secrets.token_urlsafe(32)
+            shared_env = os.environ.copy()
+            shared_env["LIVE_BRIDGE_PRODUCER_TOKEN"] = instance_producer_token
+
+            server_args = [
+                plan["python"],
+                "-u",
+                plan["bridge_script"],
+                "--platform",
+                plan["platform"],
+                "--account",
+                plan["account"],
+                "--port",
+                str(plan["port"]),
+                "--state-dir",
+                plan["state_dir"],
+            ]
             if plan["platform"] == "kwai":
                 server_args.extend(["--kwai-webhook-port", str(plan.get("kwai_webhook_port", KWAI_WEBHOOK_PORT))])
             if plan["listen_live"]:
                 server_args.append("--listen-live")
             flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" else 0
-            bridge = ManagedChild(plan["platform"], "bridge",
-                lambda command=server_args, log=log_file, creation_flags=flags: subprocess.Popen(command, cwd=BRIDGE_DIR, stdout=log, stderr=log, creationflags=creation_flags))
+            bridge = ManagedChild(
+                plan["platform"],
+                "bridge",
+                lambda command=server_args, log=log_file, creation_flags=flags, environment=shared_env: subprocess.Popen(
+                    command, cwd=BRIDGE_DIR, env=environment, stdout=log, stderr=log, creationflags=creation_flags
+                ),
+            )
             if existing is not None:
                 bridge.requires_attention = True
                 bridge.last_exit = "port_already_in_use"
                 print(f"{plan['platform']}: porta ocupada; precisa de atenção. Processo existente preservado.", flush=True)
             children.append(bridge)
             if not bridge_only:
-                env = os.environ.copy()
-                env.update(plan["godot_environment"])
+                game_env = dict(shared_env)
+                game_env.update(plan["godot_environment"])
                 # The game is intentionally visible for OBS/TikTok Studio capture.
-                game = ManagedChild(plan["platform"], "game",
-                    lambda args=[plan["godot"], "--path", plan["project"], plan["scene"]], environment=env: subprocess.Popen(args, cwd=ROOT, env=environment),
-                    ready=lambda dependency=bridge, port=plan["port"], platform=plan["platform"]: dependency.process is not None and (health(port) or {}).get("platform") == platform)
+                game = ManagedChild(
+                    plan["platform"],
+                    "game",
+                    lambda args=[plan["godot"], "--path", plan["project"], plan["scene"]], environment=game_env: subprocess.Popen(
+                        args, cwd=ROOT, env=environment
+                    ),
+                    ready=lambda dependency=bridge, port=plan["port"], platform=plan["platform"]: (
+                        dependency.process is not None and (health(port) or {}).get("platform") == platform
+                    ),
+                )
                 if existing is not None:
                     game.requires_attention = True
                     game.last_exit = "bridge_port_already_in_use"
                 children.append(game)
-            if plan.get("enable_kwai_collector") and Path(plan.get("node", "")).is_file() and Path(plan.get("kwai_collector_script", "")).is_file():
+            if (
+                plan.get("enable_kwai_collector")
+                and Path(plan.get("node", "")).is_file()
+                and Path(plan.get("kwai_collector_script", "")).is_file()
+            ):
                 collector_log = (state_dir / f"kwai-collector-{time.strftime('%Y%m%d-%H%M%S')}.log").open("ab")
                 handles.append(collector_log)
                 webhook_port = int(plan.get("kwai_webhook_port", KWAI_WEBHOOK_PORT))
                 collector_args = [
                     plan["node"],
                     plan["kwai_collector_script"],
-                    "--account", plan["account"],
-                    "--bridge", f"http://127.0.0.1:{plan['port']}",
-                    "--webhook", f"http://127.0.0.1:{webhook_port}/webhook/kwai",
+                    "--account",
+                    plan["account"],
+                    "--bridge",
+                    f"http://127.0.0.1:{plan['port']}",
+                    "--webhook",
+                    f"http://127.0.0.1:{webhook_port}/webhook/kwai",
                 ]
                 collector = ManagedChild(
                     plan["platform"],
                     "collector",
-                    lambda command=collector_args, log=collector_log, creation_flags=flags: subprocess.Popen(
-                        command, cwd=ROOT, stdout=log, stderr=log, creationflags=creation_flags
+                    lambda command=collector_args, log=collector_log, creation_flags=flags, environment=shared_env: subprocess.Popen(
+                        command, cwd=ROOT, env=environment, stdout=log, stderr=log, creationflags=creation_flags
                     ),
                     ready=lambda dependency=bridge, port=plan["port"]: (
                         dependency.process is not None
                         and (health(port) or {}).get("platform") == "kwai"
-                        and (health(port) or {}).get("platform_events_status") not in (None, "not_started", "kwai_requires_collector")
+                        and (health(port) or {}).get("platform_events_status")
+                        not in (None, "not_started", "kwai_requires_collector")
                     ),
                 )
                 if existing is not None:

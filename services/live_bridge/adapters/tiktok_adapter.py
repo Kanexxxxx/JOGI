@@ -12,6 +12,7 @@ from typing import Any
 from .base import BaseLiveAdapter
 from .normalization import ViewerContext, bounded_int, read_field
 from gift_images import extract_gift_image
+from avatar_images import extract_avatar_url
 
 try:
     from protocol import (
@@ -135,6 +136,9 @@ class TikTokLiveAdapter(BaseLiveAdapter):
         nickname = str(read_field(user, "nickname") or read_field(event, "display_name") or user_id)[:256]
         return user_id, nickname
 
+    def _extract_user_avatar(self, event: Any) -> str | None:
+        return extract_avatar_url(read_field(event, "user") or read_field(event, "avatar_url"))
+
     async def handle_comment_event(self, event: Any) -> dict[str, Any] | None:
         """
         Processa comentários públicos da live.
@@ -165,6 +169,7 @@ class TikTokLiveAdapter(BaseLiveAdapter):
             source="tiktok",
             repeat_count=1,
             boost_allowed=self._viewers.allow_vote_boost(user_id),
+            avatar_url=self._extract_user_avatar(event),
             **identity,
         )
         await self.emit_envelope(envelope)
@@ -184,6 +189,7 @@ class TikTokLiveAdapter(BaseLiveAdapter):
             like_count=max(1, min(likes, 50_000)),
             candidate_slot=slot,
             source="tiktok",
+            avatar_url=self._extract_user_avatar(event),
             **identity,
         )
         await self.emit_envelope(envelope)
@@ -249,6 +255,7 @@ class TikTokLiveAdapter(BaseLiveAdapter):
                 gift_name=gift_name, unit_coin_value=diamond_count, **part_identity,
                 gift_id=gift_id[:64] if raw_gift_id else None,
                 gift_image_url=gift_image_url,
+                avatar_url=self._extract_user_avatar(event),
             )
             await self.emit_envelope(envelope)
         return envelope
@@ -266,6 +273,7 @@ class TikTokLiveAdapter(BaseLiveAdapter):
             display_name=display_name,
             candidate_slot=slot,
             source="tiktok",
+            avatar_url=self._extract_user_avatar(event),
             **identity,
         )
         await self.emit_envelope(envelope)
@@ -278,7 +286,7 @@ class TikTokLiveAdapter(BaseLiveAdapter):
             return None
         envelope = build_follow_envelope(user_id=user_id, display_name=display_name,
             candidate_slot=self._viewers.team(user_id, self.config.default_candidate_slot),
-            source="tiktok", **identity)
+            source="tiktok", avatar_url=self._extract_user_avatar(event), **identity)
         await self.emit_envelope(envelope)
         return envelope
 
