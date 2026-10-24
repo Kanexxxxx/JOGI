@@ -134,3 +134,11 @@ Quando o agente principal assumir a execução do projeto:
 4. **Executar o benchmark de 10 minutos das duas instâncias**:
    - Monitorar consumo de CPU, GPU e memória e gerar o relatório em `docs/TESTES_FINAIS.md`.
 5. **Auditar com revisor independente e entregar o relatório final ao usuário**.
+
+## 2026-10-24 — Estabilização final autorizada, primeiro checkpoint
+
+- Novo prazo técnico: 21h de 24/10, Brasília. Base e remoto conferidos em `3e22ce5`, inicialmente sem diferenças. GDA MCP respondeu à consulta `version` com 0.24.1; agora está conectado ao Codex.
+- Portas do operador preservadas: 8765/PID37364 e 8766/PID28176, ambos Python. Nenhum processo foi encerrado; testes usam portas efêmeras e diretórios privados.
+- Contratos de produção, confirmação de comandos e encerramento absoluto acordados entre os agentes em `CONTRATO_ESTABILIZACAO_2026-10-24.md`. Implementação backend/admin/Godot ainda em andamento neste checkpoint.
+- Corrigido coletor Kwai para priorizar preço unitário explícito sobre valor total de combo, preservar zero e persistir o campo na fila. Três regressões reproduziram falha antes da correção; oito testes Node passaram depois. Isso não homologa a semântica de uma sala Kwai real.
+- Verificação eleitoral oficial encontrou restrição temporal relevante; estreia pública bloqueada até avaliação específica, conforme `CONFORMIDADE_ELEITORAL_2026-10-24.md`. Sem live pública ou uso de APIs pagas.

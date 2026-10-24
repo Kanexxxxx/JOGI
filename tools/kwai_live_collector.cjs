@@ -187,7 +187,11 @@ function normalizeFeedPayload(body, options = {}) {
     } else if (type === 'gift' || type === 'present') {
       const giftId = String(raw.gift_id ?? raw.giftId ?? 'kwai_gift').slice(0, 64);
       const giftName = String(raw.gift_name || raw.giftName || 'Presente Kwai').slice(0, 64);
-      const coinValue = Math.max(0, Math.trunc(Number(raw.coin_value ?? raw.unit_coin_value ?? raw.coins ?? raw.price ?? 0) || 0));
+      // Explicit unit metadata is authoritative. Canonical feeds may carry a
+      // total coin_value alongside it; treating that total as unit doubles combos.
+      // The legacy webhook coin_value field is defined as a UNIT price.
+      const rawUnit = Number(raw.unit_coin_value ?? raw.coin_value ?? raw.coins ?? raw.price ?? 0);
+      const coinValue = Number.isFinite(rawUnit) && rawUnit >= 0 && rawUnit <= 100000 && Number.isInteger(rawUnit) ? rawUnit : 0;
       const repeatCount = Math.max(1, Math.min(1000, Math.trunc(Number(raw.repeat_count ?? raw.batchSize ?? raw.count ?? 1) || 1)));
       const giftImage = raw.gift_image_url || raw.giftUrl || raw.picUrl || undefined;
       out.push({
@@ -200,6 +204,7 @@ function normalizeFeedPayload(body, options = {}) {
         gift_id: giftId,
         gift_name: giftName,
         coin_value: coinValue,
+        unit_coin_value: coinValue,
         repeat_count: repeatCount,
         gift_image_url: typeof giftImage === 'string' ? giftImage : undefined,
         ...(avatarUrl ? { avatar_url: avatarUrl } : {}),

@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { DurableGiftDelivery } = require('./kwai_gift_delivery.cjs');
-const { postGiftWebhook } = require('./kwai_live_collector.cjs');
+const { postGiftWebhook, normalizeFeedPayload } = require('./kwai_live_collector.cjs');
 const http = require('node:http');
 
 const gift = id => ({ type: 'gift', event_id: id, user_id: 'u', display_name: 'Teste',
@@ -13,6 +13,37 @@ const gift = id => ({ type: 'gift', event_id: id, user_id: 'u', display_name: 'T
   avatar_url: 'https://p16-sign-va.tiktokcdn.com/private-avatar.png',
   gift_image_url: 'https://p16-sign-va.tiktokcdn.com/gift.png' });
 const ack = event => ({ acknowledged: true, raw_event_id: event.event_id, delivery_status: 'accepted' });
+
+test('explicit unit price wins over a total coin_value in the same gift', () => {
+  const result = normalizeFeedPayload({data:{isLiving:true,giftFeeds:[{
+    id:'gift-unit-total', user_id:'u', unit_coin_value:5, coin_value:15, repeat_count:3,
+  }]}});
+  assert.equal(result.events.length, 1);
+  assert.equal(result.events[0].unit_coin_value, 5);
+  assert.equal(result.events[0].coin_value, 5, 'legacy webhook field remains unit price');
+  assert.equal(result.events[0].repeat_count, 3);
+});
+
+test('explicit zero unit price is preserved; missing value does not infer a tier price', () => {
+  const result = normalizeFeedPayload({data:{isLiving:true,giftFeeds:[
+    {id:'zero-unit', user_id:'u', unit_coin_value:0, coin_value:100, repeat_count:2},
+    {id:'unknown-price', user_id:'u', gift_name:'Leão', repeat_count:2},
+  ]}});
+  assert.deepEqual(result.events.map(event=>event.unit_coin_value), [0, 0]);
+  assert.deepEqual(result.events.map(event=>event.coin_value), [0, 0]);
+});
+
+test('restart retains explicit unit price including zero', async () => {
+  await withDatabase(async filename => {
+    const first = new DurableGiftDelivery(filename, {send:async()=>({acknowledged:false})});
+    first.accept({...gift('unit-persist'),unit_coin_value:0,coin_value:0});
+    await first.close();
+    let received;
+    const second = new DurableGiftDelivery(filename,{send:async event=>{received=event;return ack(event);}});
+    try { await second.flushDue(); assert.equal(received.unit_coin_value,0); }
+    finally { await second.close(); }
+  });
+});
 
 async function withDatabase(run) {
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'jogi-kwai-delivery-test-'));

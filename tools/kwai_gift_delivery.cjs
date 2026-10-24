@@ -51,7 +51,7 @@ class DurableGiftDelivery {
       throw new Error('Fila durável cheia: presentes anteriores preservados; intervenção do operador necessária.');
     }
     const payload = {};
-    for (const key of ['type', 'event_id', 'user_id', 'display_name', 'gift_id', 'gift_name', 'coin_value', 'repeat_count', 'gift_tier']) {
+    for (const key of ['type', 'event_id', 'user_id', 'display_name', 'gift_id', 'gift_name', 'coin_value', 'unit_coin_value', 'repeat_count', 'gift_tier']) {
       if (event[key] !== undefined) payload[key] = event[key];
     }
     const serialized = JSON.stringify(payload);
