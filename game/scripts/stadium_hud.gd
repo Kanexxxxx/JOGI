@@ -38,6 +38,7 @@ var _event_root: Control = null
 var _event_text: Label = null
 var _event_style: StyleBoxFlat = null
 var _event_tween: Tween = null
+var _experience_ended: bool = false
 var _lula_badge: Control = null
 var _flavio_badge: Control = null
 var _lula_screen: Vector2 = Vector2(-1000.0, -1000.0)
@@ -108,6 +109,7 @@ class StadiumArtwork:
 	var leader_slot: int = 0
 	var _styles: Dictionary = {}
 	var gift_image_active: Array[bool] = [false, false, false, false]
+	var abilities_visible: bool = true
 
 	func _ready() -> void:
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -142,6 +144,8 @@ class StadiumArtwork:
 			Color("38bdf8", 0.80)
 		]
 		for index: int in range(4):
+			if not abilities_visible:
+				break
 			var card_x: float = 42.0 + float(index) * 252.0
 			_card(Rect2(card_x, 1606.0, 240.0, 112.0), Color("051338", 0.92), ability_borders[index], 20, 2)
 			var icon_center: Vector2 = Vector2(card_x + 120.0, 1636.0)
@@ -713,6 +717,7 @@ func _build_social_and_ranking_panels() -> void:
 
 
 func update_leaderboard(entries: Array[Dictionary]) -> void:
+	_ranking_empty_label.text = "Sem presentes registrados nesta sessão" if _experience_ended else "Presentes com moedas entram no ranking"
 	_latest_ranking = entries.duplicate(true)
 	var max_rows: int = 3 if _podium_mode else 5
 	var visible_rows: int = mini(entries.size(), max_rows)
@@ -790,6 +795,8 @@ func _fit_line(label: Label, minimum_size: int = 16) -> void:
 
 
 func show_participation(participant: Dictionary) -> void:
+	if _experience_ended:
+		return
 	var team: int = int(participant.get("team", 0))
 	var raw_display_name: String = _sanitize_single_line(str(participant.get("display_name", "Espectador")))
 	if raw_display_name.is_empty():
@@ -981,7 +988,7 @@ func _refresh_interaction_cards() -> void:
 
 
 func _restore_audience_prompt() -> void:
-	_audience_label.text = "COMENTE 13 OU 22 · ENTRE NA TORCIDA"
+	_audience_label.text = "OBRIGADO PELA PARTICIPAÇÃO" if _experience_ended else "COMENTE 13 OU 22 · ENTRE NA TORCIDA"
 	_fit_line(_audience_label, 13)
 	_audience_label.add_theme_color_override("font_color", GOLD)
 
@@ -1046,6 +1053,8 @@ func _refresh_chat() -> void:
 
 
 func set_gift_legend(entries: Array[Dictionary]) -> void:
+	if _experience_ended:
+		return
 	var actions: Array[String] = ["boost", "shield", "attack", "super_turbo"]
 	var defaults: Array[String] = ["IMPULSO", "ESCUDO", "ATAQUE", "SUPER TURBO"]
 	for index: int in range(4):
@@ -1157,6 +1166,7 @@ func _position_badge(badge: Control, screen_position: Vector2) -> void:
 func apply_state(state: Dictionary) -> void:
 	if timer_label == null:
 		return
+	_experience_ended = _experience_ended or bool(state.get("experience_ended", false))
 	var remaining: int = int(ceilf(_number(state.get("remaining", 600.0), 600.0, 359999.0)))
 	timer_label.text = "%02d:%02d" % [remaining / 60, remaining % 60]
 	_fit_line(timer_label, 28)
@@ -1209,10 +1219,34 @@ func apply_state(state: Dictionary) -> void:
 			advantage_label.text = "EMPATE NA RODADA"
 		if state.has("next_round_in"):
 			phase_label.text = "NOVA RODADA EM %02d s" % ceili(_number(state["next_round_in"], 0.0, 3600.0))
-	if bool(state.get("experience_ended", false)):
+	if _experience_ended:
 		advantage_label.text = "EXPERIÊNCIA ENCERRADA"
 		phase_label.text = "OBRIGADO PELA PARTICIPAÇÃO · RESULTADOS FICTÍCIOS"
 		timer_label.text = "--:--"
+		lula_speed.text = "0,0"
+		flavio_speed.text = "0,0"
+		lula_status.text = "ENCERRADO"
+		flavio_status.text = "ENCERRADO"
+		_artwork.lula_active = false
+		_artwork.flavio_active = false
+		_artwork.abilities_visible = false
+		_artwork.queue_redraw()
+		for index: int in range(_gift_images.size()):
+			_gift_images[index].hide()
+			_gift_captions[index].hide()
+			_gift_subtitles[index].hide()
+		if _event_tween != null and _event_tween.is_valid():
+			_event_tween.kill()
+		_event_root.hide()
+		_event_text.text = ""
+		_interaction_entries.clear()
+		_chat_entries.clear()
+		_refresh_interaction_cards()
+		_refresh_chat()
+		if _audience_tween != null and _audience_tween.is_valid():
+			_audience_tween.kill()
+		_restore_audience_prompt()
+		update_leaderboard(_latest_ranking)
 	_fit_line(advantage_label, 15)
 	_fit_line(phase_label, 14)
 
@@ -1235,7 +1269,7 @@ func _status(state: Dictionary, prefix: String, fallback: String) -> String:
 
 
 func show_event(text: String, team: int = 0, kind: String = "boost") -> void:
-	if _event_root == null:
+	if _event_root == null or _experience_ended:
 		return
 	if _event_tween != null and _event_tween.is_valid():
 		_event_tween.kill()

@@ -119,9 +119,11 @@ func is_loopback_ws_url(url: String) -> bool:
 
 
 func _handshake_headers() -> PackedStringArray:
-	var token: String = OS.get_environment("LIVE_BRIDGE_PRODUCER_TOKEN").strip_edges()
+	var token: String = OS.get_environment("LIVE_BRIDGE_ENGINE_TOKEN").strip_edges()
 	if token.is_empty() or token == "change_me_local_random_token":
 		token = OS.get_environment("LIVE_BRIDGE_LOCAL_TOKEN").strip_edges()
+	if (token.is_empty() or token == "change_me_local_random_token") and runtime_mode == "development":
+		token = OS.get_environment("LIVE_BRIDGE_PRODUCER_TOKEN").strip_edges()
 	if token.is_empty() or token == "change_me_local_random_token":
 		return PackedStringArray()
 	return PackedStringArray(["X-JOGI-Token: " + token])

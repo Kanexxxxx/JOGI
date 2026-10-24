@@ -4,6 +4,12 @@
 
 O jogo apresenta uma disputa satírica entre **Lula (13)** e **Flávio Bolsonaro (22)** em uma arena monumental em Brasília com destino ao Palácio do Planalto (2027). A plateia da transmissão controla a corrida em tempo real através de curtidas, comentários de torcida, novos seguidores e presentes virtuais que acionam turbos de velocidade, escudos de proteção, ataques com obstáculos físicos 3D (pilhas de processos judiciais) e super turbos cinematográficos.
 
+## Operação atual — 24/10/2026
+
+TikTok: **@xinka_**. Kwai: **@mentalista..**. Comece pelo [guia completo](docs/GUIA_COMPLETO_OPERACAO_LIVES.md) e [checklist](docs/CHECKLIST_PRE_LIVE.md). Produção e prévia usam dados separados; sessões antigas são preservadas e exigem classificação antes de recuperação.
+
+**Estreia pública bloqueada** pela avaliação de conformidade eleitoral e homologação das contas/eventos. Captura e áudio nos transmissores ainda precisam de validação; consulte [situação dos aplicativos](docs/evidencias/CONFIGURACAO_APPS_2026-10-24.md). Os atalhos nunca iniciam LIVE.
+
 ---
 
 ## 🛠️ Tecnologias Utilizadas

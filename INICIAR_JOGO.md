@@ -9,13 +9,17 @@ Os atalhos não iniciam a transmissão. Mantenha a janela do supervisor aberta d
 
 No OBS/TikTok Studio, capture a janela **Corrida Presidencial - Tiktok** ou **Corrida Presidencial - Kwai**, conforme a conta. Use tela vertical **1080 × 1920**. Confirme imagem e áudio em uma gravação local antes de clicar em transmitir. A captura e o áudio no OBS ainda não foram validados nesta etapa.
 
+## Conta e guia completo
+
+TikTok oficial: **@xinka_**. Kwai mantém **@mentalista..**. Os dados da conta antiga são preservados e não são importados automaticamente. Consulte [o guia completo](docs/GUIA_COMPLETO_OPERACAO_LIVES.md) e [o checklist](docs/CHECKLIST_PRE_LIVE.md).
+
 ## Interação
 
 - Comentários **13** e **22** escolhem a equipe e dão impulsos pequenos com intervalo por pessoa.
 - Presentes usam o valor recebido da plataforma. O painel aprende os IDs observados; permite escolher impulso, escudo, ataque ou super turbo por presente. Sem preço recebido, o sistema não inventa moedas.
 - Top 5 de presentes durante a corrida; Top 3 dos mesmos apoiadores entre rodadas.
 - Cada rodada dura **10 minutos**. Vence quem percorreu mais metros. Após 50 rodadas, começa um novo ciclo.
-- O painel controla pausa, continuação, reinício, ações de teste e meta da live. Eventos de teste são simulações locais e não comprovam recebimento real de presentes.
+- O painel controla pausa, continuação, reinício, três metas da live. Ações de simulação ficam restritas ao modo de desenvolvimento. Eventos de teste são simulações locais e não comprovam recebimento real de presentes.
 
 ## Recuperação e limites verificados
 

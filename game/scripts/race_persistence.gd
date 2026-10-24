@@ -46,6 +46,8 @@ func setup(race: RaceMain, audience: AudienceDirector, bus: LiveEventBusInstance
 	if not _valid_runtime() or not RaceSessionStore.CHANNELS.has(channel):
 		return _fail("invalid_persistence_setup")
 	_store = store_override if store_override != null else RaceSessionStore.new(channel)
+	if not _store.last_error.is_empty():
+		return _fail("storage_" + _store.last_error)
 	if _store.get_storage_directory().get_file() != channel:
 		return _fail("persistence_channel_mismatch")
 	_bus.gift_commit_hook = _deny_gift

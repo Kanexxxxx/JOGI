@@ -693,6 +693,9 @@ func get_telemetry_snapshot() -> Dictionary:
 
 
 func _on_bus_admin_command(command: String, payload: Dictionary = {}) -> bool:
+	if is_production_mode() and (persistence == null or not persistence.is_ready) and command not in ["pause", "pause_race", "end_experience", "set_live_goal", "set_live_goals", "set_audio_settings"]:
+		set_race_paused(true)
+		return false
 	if command == "set_audio_settings":
 		for key: String in ["voices_enabled", "sfx_enabled", "crowd_enabled", "memes_enabled"]:
 			audio_settings[key] = bool(payload[key])

@@ -135,7 +135,9 @@ func _process(delta: float) -> void:
 
 
 func _request_headers() -> PackedStringArray:
-	var token: String = OS.get_environment("LIVE_BRIDGE_PRODUCER_TOKEN").strip_edges()
+	var token: String = OS.get_environment("LIVE_BRIDGE_ENGINE_TOKEN").strip_edges()
+	if token.is_empty() or token == "change_me_local_random_token":
+		token = OS.get_environment("LIVE_BRIDGE_PRODUCER_TOKEN").strip_edges()
 	if token.is_empty() or token == "change_me_local_random_token":
 		token = OS.get_environment("LIVE_BRIDGE_LOCAL_TOKEN").strip_edges()
 	if token.is_empty() or token == "change_me_local_random_token":

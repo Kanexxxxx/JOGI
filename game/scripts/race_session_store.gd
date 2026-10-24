@@ -38,7 +38,19 @@ func configure(channel: String, base_directory: String = DEFAULT_DIRECTORY) -> b
 		return false
 	_channel = channel
 	var mode: String = "development" if OS.get_environment("JOGI_MODE").strip_edges().to_lower() == "development" else "production"
+	var account: String = OS.get_environment("LIVE_ACCOUNT").strip_edges().to_lower().trim_prefix("@")
 	_directory = base_directory.path_join(mode).path_join(channel) if base_directory == DEFAULT_DIRECTORY else base_directory.path_join(channel)
+	if base_directory == DEFAULT_DIRECTORY and not account.is_empty():
+		_directory = base_directory.path_join(mode).path_join("accounts").path_join(account.sha256_text().substr(0, 16)).path_join(channel)
+	if base_directory == DEFAULT_DIRECTORY and mode == "production":
+		var legacy_directories: Array[String] = [base_directory.path_join(channel)]
+		if not account.is_empty():
+			legacy_directories.append(base_directory.path_join(mode).path_join(channel))
+		for legacy: String in legacy_directories:
+			for filename: String in ["snapshot.json", "snapshot.json.bak", "gifts.jsonl"]:
+				if FileAccess.file_exists(legacy.path_join(filename)):
+					last_error = "legacy_session_requires_review"
+					return false
 	_configured = true
 	return true
 
