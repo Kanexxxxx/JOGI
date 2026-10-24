@@ -11,12 +11,12 @@
     <!-- Header: Tactical Broadcast Bar -->
     <header class="tactical-header" role="banner">
       <div class="brand-wrapper">
-        <div class="on-air-pill" aria-label="Painel de controle local">
+        <div class="on-air-pill" id="channel-pill" aria-label="Canal desta instância">
           <span class="on-air-dot" aria-hidden="true"></span>
-          <span>PAINEL LOCAL</span>
+          <span id="channel-pill-text">PAINEL LOCAL</span>
         </div>
         <h1 class="brand-title">
-          Corrida dos Candidatos <span class="accent">• Lula vs. Flávio</span>
+          Corrida dos Candidatos <span class="accent" id="brand-subtitle">• Lula vs. Flávio</span>
         </h1>
       </div>
 
@@ -63,7 +63,7 @@
             <div class="timers-row">
               <div class="timer-item">
                 <span class="sub-label">Cronômetro da Partida</span>
-                <span class="timer-display active tabular-nums" id="timer-phase">05:00</span>
+                <span class="timer-display active tabular-nums" id="timer-phase">10:00</span>
               </div>
               <div class="timer-item">
                 <span class="sub-label">Tempo Decorrido</span>
@@ -101,6 +101,26 @@
             </button>
           </div>
         </div>
+      </section>
+
+      <!-- Seção exclusiva da instância Kwai: Coletor Local & Webhook Loopback -->
+      <section class="panel-section kwai-collector-panel" id="kwai-collector-section" aria-labelledby="section-kwai-title" hidden>
+        <div class="section-header">
+          <h2 class="section-title" id="section-kwai-title">
+            <span class="section-title-icon" aria-hidden="true">📡</span> Coletor Local Kwai LIVE (Loopback :8786)
+          </h2>
+          <span class="sub-label tabular-nums" id="kwai-webhook-badge">Webhook: http://127.0.0.1:8786/webhook/kwai</span>
+        </div>
+        <p class="sub-label" id="kwai-collector-detail">
+          Receptor local passivo + navegador dedicado Playwright sem CORS. Se o Kwai pedir login na primeira vez, execute ABRIR_NAVEGADOR_KWAI.cmd.
+        </p>
+        <form id="kwai-collector-form" class="goal-controls">
+          <label class="kwai-url-label">URL pública da live Kwai (opcional; vazio usa @mentalista..)
+            <input id="kwai-live-url" class="form-select" type="url" maxlength="240" placeholder="https://www.kwai.com/@mentalista.." aria-label="URL pública da live Kwai">
+          </label>
+          <button type="submit" class="btn btn-primary" id="btn-save-kwai-url">Salvar URL Kwai</button>
+          <button type="button" class="btn btn-secondary" id="btn-reset-kwai-url">Usar @mentalista..</button>
+        </form>
       </section>
 
       <section class="panel-section" aria-labelledby="section-goal-title">
@@ -175,20 +195,20 @@
               </div>
             </div>
             <div class="candidate-badges-row" id="c1-badges"></div>
-            <div class="candidate-quick-actions" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+            <div class="candidate-quick-actions">
               <button type="button" class="btn btn-turbo" data-slot="1" data-action="turbo" aria-label="Turbo Lula">
                 ⚡ Turbo
               </button>
               <button type="button" class="btn btn-shield" data-slot="1" data-action="shield" aria-label="Escudo Lula">
                 🛡️ Escudo
               </button>
-              <button type="button" class="btn btn-warning" data-slot="1" data-action="attack" style="background: #991B1B; border-color: #EF4444;" aria-label="Atacar Bolsonaro com Processos">
-                📁 Atacar Bolso
+              <button type="button" class="btn btn-warning" data-slot="1" data-action="attack" style="background: #991B1B; border-color: #EF4444;" aria-label="Atacar Flávio com Processos">
+                📁 Atacar Flávio
               </button>
             </div>
           </div>
 
-          <!-- Candidato #2: Bolsonaro -->
+          <!-- Candidato #2: Flávio -->
           <div class="candidate-card c2" id="card-cand-2" data-slot="2" style="border-color: #FACC15;">
             <div class="candidate-card-header">
               <div class="candidate-title-wrap">
@@ -217,11 +237,11 @@
               </div>
             </div>
             <div class="candidate-badges-row" id="c2-badges"></div>
-            <div class="candidate-quick-actions" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
-              <button type="button" class="btn btn-turbo" data-slot="2" data-action="turbo" aria-label="Turbo Bolsonaro">
+            <div class="candidate-quick-actions">
+              <button type="button" class="btn btn-turbo" data-slot="2" data-action="turbo" aria-label="Turbo Flávio">
                 ⚡ Turbo
               </button>
-              <button type="button" class="btn btn-shield" data-slot="2" data-action="shield" aria-label="Escudo Bolsonaro">
+              <button type="button" class="btn btn-shield" data-slot="2" data-action="shield" aria-label="Escudo Flávio">
                 🛡️ Escudo
               </button>
               <button type="button" class="btn btn-warning" data-slot="2" data-action="attack" style="background: #1E3A8A; border-color: #38BDF8;" aria-label="Atacar Lula com Processos">
@@ -375,6 +395,34 @@
           <div class="metric-card">
             <span class="metric-label">Erros / Rejeitados</span>
             <span class="metric-value rejected tabular-nums" id="metric-rejected">0</span>
+          </div>
+        </div>
+
+        <!-- Engine Performance Strip (Godot 4 Real-Time Telemetry) -->
+        <div class="metrics-bar perf-strip" id="engine-perf-strip" aria-label="Desempenho em tempo real do motor Godot 4">
+          <div class="metric-card perf-card">
+            <span class="metric-label">Motor FPS</span>
+            <span class="metric-value tabular-nums" id="perf-fps">—</span>
+          </div>
+          <div class="metric-card perf-card">
+            <span class="metric-label">Tempo de Quadro</span>
+            <span class="metric-value tabular-nums" id="perf-frame-ms">—</span>
+          </div>
+          <div class="metric-card perf-card">
+            <span class="metric-label">Memória Godot</span>
+            <span class="metric-value tabular-nums" id="perf-mem-mb">—</span>
+          </div>
+          <div class="metric-card perf-card">
+            <span class="metric-label">Draw Calls</span>
+            <span class="metric-value tabular-nums" id="perf-draw-calls">—</span>
+          </div>
+          <div class="metric-card perf-card">
+            <span class="metric-label">Orphan Nodes</span>
+            <span class="metric-value tabular-nums" id="perf-orphans">—</span>
+          </div>
+          <div class="metric-card perf-card">
+            <span class="metric-label">Rodada / Ciclo</span>
+            <span class="metric-value tabular-nums" id="perf-round-cycle">—</span>
           </div>
         </div>
 

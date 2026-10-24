@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const get = (id) => document.getElementById(id);
-  const state = { ws: null, reconnect: null, snapshot: {}, online: false, goalDirty: false, audioDirty: false, sequence: 0 };
+  const state = { ws: null, reconnect: null, snapshot: {}, online: false, goalDirty: false, audioDirty: false, kwaiUrlDirty: false, sequence: 0 };
   const base = window.location.origin;
   const text = (id, value) => { const element = get(id); if (element) element.textContent = String(value); };
   const clock = (value) => {
@@ -21,20 +21,74 @@
   }
   function render(data) {
     state.snapshot = data;
-    text('text-backend-status', `${String(data.platform || 'local').toUpperCase()} · ${state.online ? 'Online local' : 'Sem conexão'}`);
+    const platform = String(data.platform || 'local').toLowerCase();
+    const accountLabel = data.account ? ` · @${data.account}` : '';
+    text('text-backend-status', `${platform.toUpperCase()}${accountLabel} · ${state.online ? 'Online local' : 'Sem conexão'}`);
+    const pill = get('channel-pill');
+    if (pill) {
+      pill.className = `on-air-pill ${platform === 'tiktok' ? 'channel-tiktok' : platform === 'kwai' ? 'channel-kwai' : ''}`;
+    }
+    text('channel-pill-text', platform === 'tiktok' ? `TIKTOK :${window.location.port || 8765}` : platform === 'kwai' ? `KWAI :${window.location.port || 8766}` : 'PAINEL LOCAL');
     const backend = get('dot-backend'); if (backend) backend.className = `status-indicator-dot ${state.online ? 'online' : ''}`;
     text('text-godot-status', data.godot_connected ? (data.telemetry_fresh ? 'Telemetria recente' : 'Conectado; telemetria pendente') : 'Aguardando jogo');
     const game = get('dot-godot'); if (game) game.className = `status-indicator-dot ${data.godot_connected && data.telemetry_fresh ? 'online' : ''}`;
     const collector = data.platform_events_status;
-    text('phase-label-info', data.platform_events_connected ? 'Eventos reais conectados'
-      : collector === 'waiting_room' ? 'TikTok: aguardando a live pública'
+    text('phase-label-info', data.platform_events_connected ? `Eventos ${platform.toUpperCase()} conectados`
+      : collector === 'waiting_room' ? `${platform === 'kwai' ? 'Kwai' : 'TikTok'}: aguardando sala AO VIVO`
+      : collector === 'webhook_listening' ? 'Kwai: receptor :8786 ativo · aguardando coletor/sala'
+      : collector === 'login_required' ? 'Kwai: login único necessário (ABRIR_NAVEGADOR_KWAI.cmd)'
       : collector === 'kwai_requires_collector' ? 'Kwai: coletor externo pendente'
       : `Coletor: ${collector || 'não conectado'} · testes locais disponíveis`);
-    text('race-state-badge', data.race_state || 'Aguardando');
+    const stateName = String(data.race_state || 'Aguardando');
+    text('race-state-badge', stateName);
+    const stateBadge = get('race-state-badge');
+    if (stateBadge) {
+      const stateClass = stateName === 'RACING' ? 'state-racing'
+        : stateName === 'COUNTDOWN' ? 'state-countdown'
+        : stateName === 'PHOTO_FINISH' ? 'state-photofinish'
+        : stateName === 'PODIO' ? 'state-podio'
+        : 'state-lobby';
+      stateBadge.className = `race-state-badge ${stateClass}`;
+    }
     text('timer-phase', clock(data.phase_timer_seconds)); text('timer-total', clock(data.race_timer_seconds));
     text('advantage-display', `${data.advantage_leader || 'Empate'} · ${Number(data.advantage_meters || 0).toFixed(1)} m`);
     const metrics = data.metrics || {};
     for (const [id, key] of [['metric-received', 'received_total'], ['metric-accepted', 'accepted_total'], ['metric-dropped', 'duplicates_dropped'], ['metric-rejected', 'invalid_rejected']]) text(id, metrics[key] || 0);
+
+    const perf = (data.telemetry_fresh && (data.performance || data.telemetry?.performance)) || {};
+    const rawTelemetry = data.telemetry_fresh ? (data.telemetry || {}) : {};
+    const fpsVal = Number(perf.fps);
+    const fpsEl = get('perf-fps');
+    if (fpsEl) {
+      fpsEl.textContent = Number.isFinite(fpsVal) && fpsVal > 0 ? `${fpsVal.toFixed(1)} FPS` : '—';
+      fpsEl.className = `metric-value tabular-nums ${!Number.isFinite(fpsVal) || fpsVal <= 0 ? '' : fpsVal >= 55 ? 'ok' : fpsVal >= 40 ? 'warn' : 'danger'}`;
+    }
+    text('perf-frame-ms', Number.isFinite(Number(perf.frame_ms)) && data.telemetry_fresh ? `${Number(perf.frame_ms).toFixed(2)} ms` : '—');
+    text('perf-mem-mb', Number.isFinite(Number(perf.static_mem_mb)) && data.telemetry_fresh ? `${Number(perf.static_mem_mb).toFixed(1)} MB` : '—');
+    text('perf-draw-calls', Number.isFinite(Number(perf.draw_calls)) && data.telemetry_fresh ? `${Number(perf.draw_calls)}` : '—');
+    const orphans = Number(perf.orphan_nodes);
+    const orphanEl = get('perf-orphans');
+    if (orphanEl) {
+      orphanEl.textContent = Number.isFinite(orphans) && data.telemetry_fresh ? `${orphans}` : '—';
+      orphanEl.className = `metric-value tabular-nums ${!data.telemetry_fresh || !Number.isFinite(orphans) ? '' : orphans === 0 ? 'ok' : 'warn'}`;
+    }
+    text('perf-round-cycle', data.telemetry_fresh && rawTelemetry.current_round ? `R${String(rawTelemetry.current_round).padStart(2, '0')}/50 · C${rawTelemetry.cycle_number || 1}` : '—');
+
+    const kwaiSection = get('kwai-collector-section');
+    if (kwaiSection) {
+      kwaiSection.hidden = platform !== 'kwai';
+      if (platform === 'kwai') {
+        const kw = data.kwai_collector || {};
+        text('kwai-webhook-badge', `Webhook: ${kw.webhook_url || 'http://127.0.0.1:8786/webhook/kwai'} (${kw.webhook_listening ? 'ESCUTANDO' : 'OFFLINE'})`);
+        text('kwai-collector-detail', kw.collector_detail
+          ? `${kw.collector_detail} · Alvo: ${kw.target_url || '@mentalista..'} · Encaminhados: ${Number(kw.collector_events_forwarded || 0)}`
+          : `Alvo atual: ${kw.target_url || 'https://www.kwai.com/@mentalista..'} · Aguardando batimento do coletor local.`);
+        const urlInput = get('kwai-live-url');
+        if (urlInput && !state.kwaiUrlDirty && document.activeElement !== urlInput) {
+          urlInput.value = kw.live_url || '';
+        }
+      }
+    }
     const runners = Array.isArray(data.candidates) ? data.candidates : [];
     const farthest = Math.max(1, ...runners.map((r) => Number(r.distance_meters) || 0));
     const table = get('telemetry-table-body'); if (table) table.replaceChildren();
@@ -154,7 +208,8 @@
   async function send(message) {
     try {
       if (state.ws?.readyState === WebSocket.OPEN) {
-        state.ws.send(JSON.stringify(message)); log('solicitação', message.command || `Simular ${message.event_type}`); return true;
+        const label = message.command || (message.action ? `Ação ${message.action} (#${message.candidate_slot || 1})` : `Simular ${message.event_type || 'evento'}`);
+        state.ws.send(JSON.stringify(message)); log('solicitação', label); return true;
       }
       const simulation = message.type === 'simulate_event';
       const values = simulation ? { event_type: message.event_type, ...(message.data || {}) }
@@ -210,6 +265,28 @@
   click('btn-refresh-gifts', refreshCatalog);
   get('goal-form')?.addEventListener('input', () => { state.goalDirty = true; });
   get('audio-form')?.addEventListener('input', () => { state.audioDirty = true; });
+  get('kwai-collector-form')?.addEventListener('input', () => { state.kwaiUrlDirty = true; });
+  const saveKwaiUrl = async (rawUrl) => {
+    try {
+      const query = new URLSearchParams({ live_url: String(rawUrl || '').trim() });
+      const res = await fetch(`${base}/api/admin/kwai-collector?${query}`, { cache: 'no-store' });
+      const payload = await res.json();
+      if (!res.ok || payload.status !== 'ok') throw new Error(payload.message || 'URL Kwai inválida');
+      state.kwaiUrlDirty = false;
+      log('recibo', payload.kwai_collector?.live_url ? `URL Kwai atualizada: ${payload.kwai_collector.live_url}` : 'Coletor Kwai restaurado para @mentalista..');
+      await poll();
+    } catch (error) {
+      log('erro', error.message);
+    }
+  };
+  get('kwai-collector-form')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    await saveKwaiUrl(get('kwai-live-url')?.value || '');
+  });
+  click('btn-reset-kwai-url', async () => {
+    const input = get('kwai-live-url'); if (input) input.value = '';
+    await saveKwaiUrl('');
+  });
   get('audio-form')?.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (get('audio-apply').disabled) return;
