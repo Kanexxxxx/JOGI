@@ -76,8 +76,23 @@ function loadPlaywright() {
   const candidates = [
     'playwright',
     path.join(
-      process.env.USERPROFILE || os.homedir(),
-      '.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright'
+      process.env.APPDATA || '',
+      'npm',
+      'node_modules',
+      '@playwright',
+      'cli',
+      'node_modules',
+      'playwright'
+    ),
+    path.join(
+      os.homedir(),
+      '.cache',
+      'codex-runtimes',
+      'codex-primary-runtime',
+      'dependencies',
+      'node',
+      'node_modules',
+      'playwright'
     ),
   ];
   for (const mod of candidates) {
@@ -85,38 +100,38 @@ function loadPlaywright() {
       return require(mod);
     } catch (_) {}
   }
-  throw new Error('Playwright nao encontrado no ambiente local Node.');
+  throw new Error('Playwright nao encontrado para o coletor local do Kwai.');
 }
 
 function findChromiumExecutable() {
-  const installed = path.join(process.env.LOCALAPPDATA || '', 'ms-playwright');
-  if (!installed || !fs.existsSync(installed)) return undefined;
-  const dirs = fs
-    .readdirSync(installed)
-    .filter(name => /^chromium-\d+$/.test(name))
-    .sort((a, b) => Number(b.split('-')[1]) - Number(a.split('-')[1]));
-  for (const dir of dirs) {
-    const exe = path.join(installed, dir, 'chrome-win64', 'chrome.exe');
-    if (fs.existsSync(exe)) return exe;
-  }
+  const base = path.join(process.env.LOCALAPPDATA || '', 'ms-playwright');
+  try {
+    for (const entry of fs.readdirSync(base).sort().reverse()) {
+      if (!entry.startsWith('chromium-')) continue;
+      for (const sub of ['chrome-win64', 'chrome-win']) {
+        const exe = path.join(base, entry, sub, 'chrome.exe');
+        if (fs.existsSync(exe)) return exe;
+      }
+    }
+  } catch (_) {}
   return undefined;
 }
 
 class BoundedSet {
   constructor(limit = 10000) {
     this.limit = limit;
-    this.map = new Map();
+    this.set = new Set();
   }
   has(key) {
-    return this.map.has(key);
+    return this.set.has(key);
   }
   add(key) {
-    if (this.map.has(key)) this.map.delete(key);
-    this.map.set(key, true);
-    while (this.map.size > this.limit) {
-      const oldest = this.map.keys().next().value;
-      this.map.delete(oldest);
+    if (this.set.has(key)) return;
+    if (this.set.size >= this.limit) {
+      const oldest = this.set.values().next().value;
+      if (oldest !== undefined) this.set.delete(oldest);
     }
+    this.set.add(key);
   }
 }
 
@@ -125,13 +140,22 @@ function makeEventId(prefix, parts) {
   return `kwai_${prefix}_${digest}`;
 }
 
-function normalizeFeedPayload(body) {
+function isLiveApiUrl(rawUrl) {
+  return /\/live\/|liveStream|webcast|live\/feed/i.test(String(rawUrl || ''));
+}
+
+function normalizeFeedPayload(body, options = {}) {
   const out = [];
   let liveHint = false;
   if (!body || typeof body !== 'object') return { events: out, liveHint };
 
   const root = body.data && typeof body.data === 'object' ? body.data : body;
-  if (root.isLiving === true || root.liveStreamId || root.live_active === true) {
+  if (root.isLiving === false || root.live_active === false) {
+    return { events: out, liveHint: false };
+  }
+
+  const explicitLive = Boolean(root.isLiving === true || root.liveStreamId || root.live_active === true);
+  if (explicitLive) {
     liveHint = true;
   }
 
@@ -201,25 +225,39 @@ function normalizeFeedPayload(body) {
     }
   };
 
-  if (Array.isArray(root.events)) {
-    liveHint = true;
-    for (const item of root.events) pushEvent(item, item?.type);
-  }
-  const feedMappings = [
+  // Specific live webcast feed arrays (never present on recorded VOD APIs)
+  const liveSpecificMappings = [
     ['commentFeeds', 'comment'],
-    ['comments', 'comment'],
     ['giftFeeds', 'gift'],
-    ['gifts', 'gift'],
     ['likeFeeds', 'like'],
     ['shareFeeds', 'share'],
     ['followFeeds', 'follow'],
   ];
-  for (const [field, kind] of feedMappings) {
-    if (Array.isArray(root[field])) {
+  for (const [field, kind] of liveSpecificMappings) {
+    if (Array.isArray(root[field]) && root[field].length > 0) {
       liveHint = true;
       for (const item of root[field]) pushEvent(item, kind);
     }
   }
+
+  // Generic keys (`events`, `comments`, `gifts`) are accepted ONLY when backed by explicit live room metadata or a trusted live source
+  const allowGenericKeys = explicitLive || Boolean(options.trustedLiveSource);
+  if (allowGenericKeys) {
+    if (Array.isArray(root.events)) {
+      if (root.events.length > 0 && Boolean(options.allowHintFromGeneric)) liveHint = true;
+      for (const item of root.events) pushEvent(item, item?.type);
+    }
+    for (const [field, kind] of [
+      ['comments', 'comment'],
+      ['gifts', 'gift'],
+    ]) {
+      if (Array.isArray(root[field])) {
+        if (root[field].length > 0 && Boolean(options.allowHintFromGeneric)) liveHint = true;
+        for (const item of root[field]) pushEvent(item, kind);
+      }
+    }
+  }
+
   return { events: out, liveHint };
 }
 
@@ -249,6 +287,27 @@ async function fetchTargetUrlFromBridge(bridgeBase, fallbackUrl, allowLocalTestU
   return fallbackUrl;
 }
 
+function isPidAlive(pid) {
+  const num = Number(pid);
+  if (!Number.isInteger(num) || num <= 0) return false;
+  try {
+    process.kill(num, 0);
+    return true;
+  } catch (err) {
+    return Boolean(err && err.code === 'EPERM');
+  }
+}
+
+function isHeadedLoginActive(lockPath) {
+  try {
+    if (!fs.existsSync(lockPath)) return false;
+    const raw = JSON.parse(fs.readFileSync(lockPath, 'utf8'));
+    if (raw && isPidAlive(raw.pid)) return true;
+    fs.unlinkSync(lockPath);
+  } catch (_) {}
+  return false;
+}
+
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 async function main() {
@@ -264,12 +323,16 @@ async function main() {
   const { chromium } = loadPlaywright();
   const executablePath = findChromiumExecutable();
   fs.mkdirSync(args.profileDir, { recursive: true });
+  const headedLockPath = path.join(path.dirname(args.profileDir), 'headed_login.lock');
 
   const seenIds = new BoundedSet(10000);
   let eventsForwarded = 0;
   let lastFeedLiveAt = 0;
   let stopping = false;
   let context = null;
+  let page = null;
+  let activeTargetUrl = '';
+  let lastGotoAt = 0;
 
   const forwardEvent = async rawEvent => {
     if (!rawEvent || typeof rawEvent !== 'object') return;
@@ -282,16 +345,57 @@ async function main() {
     } catch (_) {}
   };
 
+  const cleanupLock = () => {
+    if (!args.headed) return;
+    try {
+      if (fs.existsSync(headedLockPath)) {
+        const raw = JSON.parse(fs.readFileSync(headedLockPath, 'utf8'));
+        if (!raw || Number(raw.pid) === process.pid) fs.unlinkSync(headedLockPath);
+      }
+    } catch (_) {}
+  };
+
   process.on('SIGINT', () => { stopping = true; });
   process.on('SIGTERM', () => { stopping = true; });
+  process.on('exit', cleanupLock);
 
-  try {
-    context = await chromium.launchPersistentContext(args.profileDir, {
-      headless: !args.headed,
-      executablePath,
-      viewport: { width: 1280, height: 800 },
-      args: ['--disable-blink-features=AutomationControlled', '--mute-audio'],
-    });
+  if (args.headed) {
+    fs.writeFileSync(headedLockPath, JSON.stringify({ pid: process.pid, started_at: Date.now() }), 'utf8');
+  }
+
+  const closeContext = async () => {
+    if (context) {
+      await context.close().catch(() => {});
+      context = null;
+      page = null;
+      lastGotoAt = 0;
+    }
+  };
+
+  const ensureBrowserOpen = async () => {
+    if (context && page) return true;
+    const maxAttempts = args.headed ? 8 : 2;
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      try {
+        context = await chromium.launchPersistentContext(args.profileDir, {
+          headless: !args.headed,
+          executablePath,
+          viewport: { width: 1280, height: 800 },
+          args: ['--disable-blink-features=AutomationControlled', '--mute-audio'],
+        });
+        break;
+      } catch (err) {
+        if (attempt === maxAttempts) {
+          if (args.headed) {
+            throw new Error(
+              `Perfil do navegador Kwai ocupado. Aguarde 3s ou feche ABRIR_KWAI.cmd / ABRIR_DUAS_LIVES.cmd antes do login: ${err.message || err}`
+            );
+          }
+          return false;
+        }
+        await sleep(800);
+      }
+    }
 
     await context.route('**/*', async route => {
       const req = route.request();
@@ -306,8 +410,14 @@ async function main() {
 
     await context.exposeBinding('__jogiKwaiEmit', async (_source, item) => {
       if (!item || typeof item !== 'object') return;
-      const { events, liveHint } = normalizeFeedPayload({ events: [item] });
-      if (liveHint) lastFeedLiveAt = Date.now();
+      const isExplicit = item.__jogiExplicit === true;
+      const { events } = normalizeFeedPayload(
+        { events: [item] },
+        { trustedLiveSource: true, allowHintFromGeneric: false }
+      );
+      if (isExplicit) {
+        lastFeedLiveAt = Date.now();
+      }
       for (const ev of events) {
         await forwardEvent(ev);
       }
@@ -315,29 +425,40 @@ async function main() {
 
     await context.addInitScript(() => {
       const seenDom = new Set();
+      function rememberDom(key) {
+        if (seenDom.has(key)) return false;
+        if (seenDom.size >= 5000) seenDom.clear();
+        seenDom.add(key);
+        return true;
+      }
+      function isLiveDomRoom() {
+        if (document.querySelector('[data-jogi-live-active="true"]') !== null) return true;
+        if (!/\/live\/|liveStream/i.test(window.location.href)) return false;
+        const videos = Array.from(document.querySelectorAll('video'));
+        return videos.some(v => v.readyState >= 2 && !v.ended && v.videoWidth > 0);
+      }
       function scanNode(root) {
         if (!root || !root.querySelectorAll) return;
         const explicitNodes = root.querySelectorAll('[data-jogi-kwai-event]');
         for (const el of explicitNodes) {
           const rawJson = el.getAttribute('data-jogi-kwai-event');
-          if (!rawJson || seenDom.has(rawJson)) continue;
-          seenDom.add(rawJson);
+          if (!rawJson || !rememberDom(rawJson)) continue;
           try {
             const parsed = JSON.parse(rawJson);
-            if (typeof window.__jogiKwaiEmit === 'function') window.__jogiKwaiEmit(parsed);
+            if (parsed && typeof parsed === 'object' && typeof window.__jogiKwaiEmit === 'function') {
+              window.__jogiKwaiEmit({ ...parsed, __jogiExplicit: true });
+            }
           } catch (_) {}
         }
-        const chatNodes = root.querySelectorAll(
-          '[class*="chat-item"], [class*="comment-item"], [class*="barrage-item"]'
-        );
+        if (!isLiveDomRoom()) return;
+        const chatNodes = root.querySelectorAll('[class*="chat-item"], [class*="barrage-item"]');
         let idx = 0;
         for (const el of chatNodes) {
           idx += 1;
           const text = (el.textContent || '').replace(/\s+/g, ' ').trim();
           if (!text || text.length > 240) continue;
           const key = `${el.dataset?.id || ''}|${text}`;
-          if (seenDom.has(key)) continue;
-          seenDom.add(key);
+          if (!rememberDom(key)) continue;
           const userEl = el.querySelector('[class*="name"], [class*="user"], [class*="author"]');
           const contentEl = el.querySelector('[class*="content"], [class*="text"], [class*="msg"]');
           const displayName = (userEl ? userEl.textContent : 'Espectador Kwai').replace(/[:：]\s*$/, '').trim();
@@ -374,14 +495,18 @@ async function main() {
       }
     });
 
-    const page = context.pages()[0] || (await context.newPage());
+    page = context.pages()[0] || (await context.newPage());
 
     page.on('response', async response => {
       try {
         const ct = (response.headers()['content-type'] || '').toLowerCase();
         if (!ct.includes('json')) return;
         const body = await response.json();
-        const { events, liveHint } = normalizeFeedPayload(body);
+        const trustedLiveApi = isLiveApiUrl(response.url());
+        const { events, liveHint } = normalizeFeedPayload(body, {
+          trustedLiveSource: trustedLiveApi,
+          allowHintFromGeneric: trustedLiveApi,
+        });
         if (liveHint) lastFeedLiveAt = Date.now();
         for (const ev of events) {
           await forwardEvent(ev);
@@ -394,7 +519,11 @@ async function main() {
         try {
           if (typeof frame.payload !== 'string' || !frame.payload.startsWith('{')) return;
           const body = JSON.parse(frame.payload);
-          const { events, liveHint } = normalizeFeedPayload(body);
+          const trustedWs = isLiveApiUrl(ws.url());
+          const { events, liveHint } = normalizeFeedPayload(body, {
+            trustedLiveSource: trustedWs,
+            allowHintFromGeneric: trustedWs,
+          });
           if (liveHint) lastFeedLiveAt = Date.now();
           for (const ev of events) {
             await forwardEvent(ev);
@@ -403,58 +532,96 @@ async function main() {
       });
     });
 
-    let activeTargetUrl = args.liveUrl
-      ? defaultUrl
-      : await fetchTargetUrlFromBridge(bridgeBase, defaultUrl, args.allowLocalTestUrl);
-    let lastGotoAt = 0;
+    return true;
+  };
 
-    const inspectPageStatus = async () => {
-      try {
-        const probe = await page.evaluate(() => {
-          const explicitActive = document.querySelector('[data-jogi-live-active="true"]') !== null;
-          const loginWall =
-            document.querySelector('[class*="login-modal"], [class*="captcha"], [id*="captcha"]') !== null;
-          const videos = Array.from(document.querySelectorAll('video'));
-          const activeVideo = videos.some(v => v.readyState >= 2 && !v.ended && v.videoWidth > 0);
-          const isLiveRoute = /\/live\/|liveStream/i.test(window.location.href);
-          return {
-            explicitActive,
-            loginWall,
-            activeVideo,
-            isLiveRoute,
-            href: window.location.href,
-          };
-        });
-        const feedRecent = Date.now() - lastFeedLiveAt < 30000;
-        if (probe.explicitActive || feedRecent || (probe.isLiveRoute && probe.activeVideo)) {
-          return {
-            status: 'connected',
-            detail: `Sala Kwai LIVE ativa (${eventsForwarded} eventos encaminhados)`,
-            liveUrl: probe.href || activeTargetUrl,
-          };
-        }
-        if (probe.loginWall) {
-          return {
-            status: 'login_required',
-            detail: 'Kwai solicitou login/verificação; use ABRIR_NAVEGADOR_KWAI.cmd uma vez.',
-            liveUrl: probe.href || activeTargetUrl,
-          };
-        }
+  const inspectPageStatus = async () => {
+    if (!page) {
+      return {
+        status: 'waiting_room',
+        detail: 'Aguardando disponibilidade do perfil do navegador Kwai',
+        liveUrl: activeTargetUrl || defaultUrl,
+      };
+    }
+    try {
+      const probe = await page.evaluate(() => {
+        const explicitActive = document.querySelector('[data-jogi-live-active="true"]') !== null;
+        const loginWall =
+          document.querySelector('[class*="login-modal"], [class*="captcha"], [id*="captcha"]') !== null;
+        const videos = Array.from(document.querySelectorAll('video'));
+        const activeVideo = videos.some(v => v.readyState >= 2 && !v.ended && v.videoWidth > 0);
+        const isLiveRoute = /\/live\/|liveStream/i.test(window.location.href);
         return {
-          status: 'waiting_room',
-          detail: `Aguardando LIVE ativa em ${activeTargetUrl}`,
+          explicitActive,
+          loginWall,
+          activeVideo,
+          isLiveRoute,
+          href: window.location.href,
+        };
+      });
+      const feedRecent = Date.now() - lastFeedLiveAt < 30000;
+      if (probe.explicitActive || feedRecent || (probe.isLiveRoute && probe.activeVideo)) {
+        return {
+          status: 'connected',
+          detail: `Sala Kwai LIVE ativa (${eventsForwarded} eventos encaminhados)`,
           liveUrl: probe.href || activeTargetUrl,
         };
-      } catch (err) {
+      }
+      if (probe.loginWall) {
         return {
-          status: 'waiting_room',
-          detail: `Verificando página Kwai (${String(err.message || err).slice(0, 72)})`,
-          liveUrl: activeTargetUrl,
+          status: 'login_required',
+          detail: 'Kwai solicitou login/verificação; use ABRIR_NAVEGADOR_KWAI.cmd uma vez.',
+          liveUrl: probe.href || activeTargetUrl,
         };
       }
-    };
+      return {
+        status: 'waiting_room',
+        detail: `Aguardando LIVE ativa em ${activeTargetUrl}`,
+        liveUrl: probe.href || activeTargetUrl,
+      };
+    } catch (err) {
+      return {
+        status: 'waiting_room',
+        detail: `Verificando página Kwai (${String(err.message || err).slice(0, 72)})`,
+        liveUrl: activeTargetUrl,
+      };
+    }
+  };
+
+  try {
+    activeTargetUrl = args.liveUrl
+      ? defaultUrl
+      : await fetchTargetUrlFromBridge(bridgeBase, defaultUrl, args.allowLocalTestUrl);
 
     while (!stopping) {
+      if (!args.headed && isHeadedLoginActive(headedLockPath)) {
+        await closeContext();
+        await postWebhook(webhookUrl, {
+          type: 'collector_status',
+          status: 'waiting_room',
+          detail: 'Navegador visível Kwai aberto para login; feche-o ao concluir para retomar a coleta automática.',
+          live_url: activeTargetUrl || defaultUrl,
+          events_forwarded: eventsForwarded,
+        }).catch(() => {});
+        if (args.once) break;
+        await sleep(1200);
+        continue;
+      }
+
+      const browserReady = await ensureBrowserOpen();
+      if (!browserReady) {
+        await postWebhook(webhookUrl, {
+          type: 'collector_status',
+          status: 'waiting_room',
+          detail: 'Perfil do navegador Kwai temporariamente ocupado; tentando novamente...',
+          live_url: activeTargetUrl || defaultUrl,
+          events_forwarded: eventsForwarded,
+        }).catch(() => {});
+        if (args.once) break;
+        await sleep(args.heartbeatMs);
+        continue;
+      }
+
       const desiredUrl = args.liveUrl
         ? defaultUrl
         : await fetchTargetUrlFromBridge(bridgeBase, defaultUrl, args.allowLocalTestUrl);
@@ -469,7 +636,7 @@ async function main() {
         lastGotoAt = Date.now();
         try {
           await page.goto(activeTargetUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
-        } catch (navErr) {
+        } catch (_) {
           await postWebhook(webhookUrl, {
             type: 'collector_status',
             status: 'waiting_room',
@@ -497,9 +664,8 @@ async function main() {
       await sleep(args.heartbeatMs);
     }
   } finally {
-    if (context) {
-      await context.close().catch(() => {});
-    }
+    await closeContext();
+    cleanupLock();
   }
 }
 

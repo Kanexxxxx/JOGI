@@ -39,6 +39,43 @@ class _MockKwaiRoomHandler(BaseHTTPRequestHandler):
         return
 
     def do_GET(self) -> None:  # noqa: N802
+        if self.path.startswith("/api/vod/comments"):
+            payload = {
+                "data": {
+                    "isLiving": False,
+                    "comments": [
+                        {"id": "vod_cmt_1", "user": {"id": "u_vod_1", "userName": "Gravado"}, "content": "13"}
+                    ],
+                    "gifts": [],
+                }
+            }
+            raw = json.dumps(payload).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(raw)))
+            self.end_headers()
+            self.wfile.write(raw)
+            return
+
+        if self.path.startswith("/@mentalista.."):
+            html = """<!doctype html>
+<html lang="pt-BR">
+<head><meta charset="utf-8"><title>Perfil Offline</title></head>
+<body>
+  <div class="comment-item" data-id="vod_dom_13">
+    <span class="author-name">GravadoDOM:</span>
+    <span class="msg-content">13</span>
+  </div>
+  <script>fetch('/api/vod/comments').catch(() => {});</script>
+</body>
+</html>""".encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(html)))
+            self.end_headers()
+            self.wfile.write(html)
+            return
+
         if self.path.startswith("/api/live/feed"):
             payload = {
                 "data": {
@@ -174,6 +211,36 @@ class KwaiCollectorTests(unittest.IsolatedAsyncioTestCase):
                 server._live_adapter._collector_seen_at -= 2.0
                 self.assertFalse(server.platform_listener_state()["platform_events_connected"])
                 self.assertEqual(server.platform_listener_state()["platform_events_status"], "webhook_listening")
+
+                # Admin HTTP endpoint sets AND resets (blank ?live_url=) custom Kwai URL + serves CSP header on /admin
+                base = f"http://127.0.0.1:{server.bound_port}"
+                set_res = await asyncio.to_thread(
+                    lambda: json.loads(
+                        urllib.request.urlopen(
+                            f"{base}/api/admin/kwai-collector?live_url=https%3A%2F%2Fwww.kwai.com%2Flive%2Fsala99",
+                            timeout=4.0,
+                        ).read().decode("utf-8")
+                    )
+                )
+                self.assertTrue(set_res["kwai_collector"]["configured"])
+                self.assertEqual(set_res["kwai_collector"]["target_url"], "https://www.kwai.com/live/sala99")
+
+                reset_res = await asyncio.to_thread(
+                    lambda: json.loads(
+                        urllib.request.urlopen(f"{base}/api/admin/kwai-collector?live_url=", timeout=4.0)
+                        .read()
+                        .decode("utf-8")
+                    )
+                )
+                self.assertFalse(reset_res["kwai_collector"]["configured"])
+                self.assertEqual(reset_res["kwai_collector"]["live_url"], "")
+                self.assertEqual(reset_res["kwai_collector"]["target_url"], "https://www.kwai.com/@mentalista..")
+
+                csp_hdr = await asyncio.to_thread(
+                    lambda: urllib.request.urlopen(f"{base}/admin", timeout=4.0).headers.get("Content-Security-Policy")
+                )
+                self.assertIsNotNone(csp_hdr)
+                self.assertIn("default-src 'self'", csp_hdr)
             finally:
                 await server.stop()
 
@@ -236,6 +303,56 @@ class KwaiCollectorTests(unittest.IsolatedAsyncioTestCase):
                     self.assertIn("vote", event_types)
                     self.assertIn("follow", event_types)
                     self.assertEqual(vote_slots, {1, 2})
+
+                    # Offline profile with VOD comments + DOM comment-item must stay waiting_room and enqueue zero events
+                    offline_proc = await asyncio.to_thread(
+                        subprocess.run,
+                        [
+                            node_bin,
+                            str(COLLECTOR_SCRIPT),
+                            "--bridge", bridge_url,
+                            "--webhook", webhook_url,
+                            "--live-url", f"http://127.0.0.1:{mock_port}/@mentalista..",
+                            "--profile-dir", str(profile_dir),
+                            "--allow-local-test-url",
+                            "--once",
+                        ],
+                        capture_output=True,
+                        text=True,
+                        timeout=30,
+                    )
+                    self.assertEqual(offline_proc.returncode, 0, msg=offline_proc.stderr)
+                    offline_state = server.platform_listener_state()
+                    self.assertFalse(offline_state["platform_events_connected"])
+                    self.assertEqual(offline_state["platform_events_status"], "waiting_room")
+                    self.assertTrue(server.p1_queue.empty())
+
+                    # Active headed_login.lock yields cleanly without launching/crashing Chromium
+                    lock_file = profile_dir.parent / "headed_login.lock"
+                    import os
+                    lock_file.write_text(json.dumps({"pid": os.getpid(), "started_at": 1}), encoding="utf-8")
+                    try:
+                        yield_proc = await asyncio.to_thread(
+                            subprocess.run,
+                            [
+                                node_bin,
+                                str(COLLECTOR_SCRIPT),
+                                "--bridge", bridge_url,
+                                "--webhook", webhook_url,
+                                "--live-url", f"http://127.0.0.1:{mock_port}/live/mentalista",
+                                "--profile-dir", str(profile_dir),
+                                "--allow-local-test-url",
+                                "--once",
+                            ],
+                            capture_output=True,
+                            text=True,
+                            timeout=15,
+                        )
+                        self.assertEqual(yield_proc.returncode, 0, msg=yield_proc.stderr)
+                        self.assertFalse(server.platform_listener_state()["platform_events_connected"])
+                        self.assertEqual(server.platform_listener_state()["platform_events_status"], "waiting_room")
+                    finally:
+                        lock_file.unlink(missing_ok=True)
                 finally:
                     await server.stop()
         finally:

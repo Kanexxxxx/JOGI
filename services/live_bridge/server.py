@@ -470,7 +470,8 @@ class LiveBridgeServer:
 
         # 2. Validação estrita de Origin (anti-CSWSH / anti-CSRF)
         origin_hdr = request.headers.get("Origin")
-        if not is_allowed_origin(origin_hdr, self.bound_port) or request.headers.get("Sec-Fetch-Site") == "cross-site":
+        sec_fetch_site = str(request.headers.get("Sec-Fetch-Site", "")).strip().lower()
+        if not is_allowed_origin(origin_hdr, self.bound_port) or sec_fetch_site == "cross-site":
             logger.warning("Bloqueio de segurança: Origin/site não autorizado.")
             return Response(
                 403, "Forbidden",
@@ -523,6 +524,11 @@ class LiveBridgeServer:
                     ("Content-Type", "text/html; charset=utf-8"),
                     ("Content-Length", str(len(content))),
                     ("Cache-Control", "no-cache"),
+                    ("X-Frame-Options", "DENY"),
+                    (
+                        "Content-Security-Policy",
+                        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws://127.0.0.1:* ws://localhost:*; frame-ancestors 'none'",
+                    ),
                 ]
             )
             return Response(200, "OK", headers, content)
@@ -605,8 +611,9 @@ class LiveBridgeServer:
         if path_only in ("/api/kwai-collector", "/api/admin/kwai-collector"):
             status_code = 200
             try:
-                if path_only == "/api/admin/kwai-collector" and "live_url" in query_params:
-                    self.kwai_collector.update(query_params.get("live_url", [""])[0])
+                raw_query_params = urllib.parse.parse_qs(query_str, keep_blank_values=True)
+                if path_only == "/api/admin/kwai-collector" and "live_url" in raw_query_params:
+                    self.kwai_collector.update(raw_query_params.get("live_url", [""])[0])
                 result = {
                     "status": "ok",
                     "platform": self.platform,

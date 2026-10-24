@@ -149,8 +149,11 @@
     }
     const lead = get('tug-of-war-fill');
     if (lead && runners.length === 2) {
-      const total = runners.reduce((sum, r) => sum + Number(r.distance_meters || 0), 0);
-      lead.style.width = `${total ? 100 * Number(runners[0].distance_meters || 0) / total : 50}%`;
+      const r1 = runners.find(r => Number(r.slot || 1) === 1) || runners[0];
+      const r2 = runners.find(r => Number(r.slot || 2) === 2) || runners[1];
+      const diff = Number(r1?.distance_meters || 0) - Number(r2?.distance_meters || 0);
+      const pct = Math.abs(diff) < 0.01 ? 50 : Math.max(8, Math.min(92, 50 + (diff / 50) * 42));
+      lead.style.width = `${pct.toFixed(1)}%`;
     }
   }
   async function poll() {

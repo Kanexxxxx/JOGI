@@ -1,33 +1,28 @@
-# Kwai: bloqueio de eventos e caminho possível — 24/10/2026
+# Kwai: arquitetura local implementada e limites reais — 24/10/2026
 
-O usuário confirmou que as duas contas permitem live e presentes. Isso resolve
-a elegibilidade declarada; não fornece automaticamente acesso programático aos eventos.
+O usuário confirmou que as duas contas permitem live e presentes (`@nostalgiia.br` no TikTok e `@mentalista..` no Kwai).
 
-Há documentação oficial **Kuaishou SmallPlay** de callbacks para presentes,
-comentários, likes, follows e shares. Ela exige cadastro/app, credenciais,
-permissões liberadas pela plataforma, vínculo da sala por `roomCode` e callback
-HTTPS com assinatura. A identificação da mensagem e os valores unitário/total
-estão documentados. Não obtive evidência de que a conta **Kwai Brasil** possa
-usar esse produto do portal Kuaishou com o acesso atual. Isso precisa ser
-confirmado pela plataforma/integração aprovada. [Documentação oficial](https://open.kuaishou.com/miniPlayDocs/technologyrelated/Affiliatedability/basicability/localdevelopment.html).
+## 1. Limite da nuvem oficial Kuaishou / Kwai Brasil
 
-O portal internacional encontrado é **Kwai for Business Marketing API**; sua
-existência não comprova uma API de presentes/chat de live para o jogo.
-[Portal oficial](https://developers.kwai.com/). A página de criadores confirma
-o recurso de presentes, sem apresentar esse acesso técnico.
-[Kwai for creators](https://www.kwai.com/creators/earn).
+- A documentação oficial **Kuaishou SmallPlay** para callbacks de presentes/chat exige app registrado, credenciais de parceiro, vínculo por `roomCode` e callback HTTPS público assinado ([documentação oficial](https://open.kuaishou.com/miniPlayDocs/technologyrelated/Affiliatedability/basicability/localdevelopment.html)). Não há evidência de habilitação regional direta desse produto para contas comuns do **Kwai Brasil**.
+- O portal internacional **Kwai for Business Marketing API** ([developers.kwai.com](https://developers.kwai.com/)) foca em anúncios e não expõe WebSocket público de sala de live como o TikTok.
 
-No projeto, `127.0.0.1:8786/webhook/kwai` é apenas um receptor passivo local.
-Faltam um produtor autorizado de eventos da sala, IDs estáveis e valores reais,
-mais a autenticação/verificação do transporte escolhido. Um callback da nuvem
-não alcança diretamente um endereço de loopback; nenhum endpoint público foi
-publicado e nenhum app/parceria regional foi aprovado nesta tarefa.
+## 2. Solução local implementada neste projeto (Zero-CORS Loopback + Playwright)
 
-Alternativa viável hoje: TikTok com o SDK preparado; no Kwai, transmitir a imagem
-do jogo e operar interações manualmente, identificadas como operação/teste, ou
-conectar um integrador já autorizado e documentado que entregue eventos ao bridge.
-Isso não equivale a duas plataformas totalmente automatizadas. Sem esse produtor,
-a automação de comentários/presentes do Kwai é um bloqueio técnico real.
+Para permitir que a sessão **Kwai (`127.0.0.1:8766`)** opere no mesmo PC sem depender de servidor externo nem expor portas na internet:
 
-Não comprei serviço, acessei conta, extraí cookie, usei OCR como prova de presentes
-nem inventei conexão. O painel informa `kwai_requires_collector`.
+1. **Receptor Loopback (`KwaiLiveAdapter` em `http://127.0.0.1:8786/webhook/kwai`)**:
+   - Ativado automaticamente por `LiveBridgeServer.start_live_listener()` quando `--platform kwai` está em uso (`require_collector_room=True`).
+   - Só marca `platform_events_connected = True` (`status = "connected"`) quando recebe batimentos recentes (`TTL = 25s`) confirmando **sala de live ativa**; caso contrário, informa honestamente `webhook_listening`, `waiting_room` ou `login_required`.
+2. **Coletor Local Dedicado (`tools/kwai_live_collector.cjs`)**:
+   - Executado e supervisionado automaticamente por `tools/run_live_instances.py` em `ABRIR_KWAI.cmd` e `ABRIR_DUAS_LIVES.cmd`.
+   - Usa Chromium via Playwright com perfil persistente isolado em `%LOCALAPPDATA%\JOGI\live_bridge\kwai\browser_profile` e bloqueio estrito de navegação top-frame fora de `https://*.kwai.com` (`validate_kwai_live_url`).
+   - Extrai eventos em 3 camadas (respostas JSON de endpoints de live, frames WebSocket e `MutationObserver` da sala ao vivo) e entrega direto do processo Node para `http://127.0.0.1:8786/webhook/kwai` (imune a CORS e sem permitir que páginas externas enviem comandos administrativos).
+   - Ignora comentários de vídeos gravados (VOD) e perfis offline (`isLiving: false`), evitando falsos positivos.
+3. **Configuração de URL e Login Único**:
+   - O painel `http://127.0.0.1:8766/admin` exibe a seção **Coletor Local Kwai LIVE**, permitindo colar o link exato `https://www.kwai.com/...` da transmissão caso o redirecionamento automático de `@mentalista..` mude.
+   - Se o Kwai exigir login/captcha na primeira execução, basta abrir `ABRIR_NAVEGADOR_KWAI.cmd`: o coletor em segundo plano cede automaticamente o perfil (`headed_login.lock`) enquanto a janela visível estiver aberta e retoma a coleta assim que ela é fechada.
+
+## 3. Pendência operacional real antes da estreia
+
+- **Validação em sala real ao vivo**: os fluxos do adaptador, allowlist anti-SSRF, fila durável SQLite e coletor Playwright foram testados ponta a ponta em suíte automatizada (`services/live_bridge/test_kwai_collector.py`), mas **ainda é necessário validar com uma transmissão real aberta na conta `@mentalista..`**, especialmente para confirmar se os presentes enviados no layout web atual do Kwai Brasil trazem `coin_value` explícito no payload de rede (quando o preço não vem explícito, o sistema registra o presente com `coin_value = 0` sem inventar valores financeiros).

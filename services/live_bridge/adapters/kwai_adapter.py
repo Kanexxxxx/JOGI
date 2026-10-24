@@ -50,10 +50,11 @@ class KwaiAdapterConfig:
     Configurações do KwaiLiveAdapter.
 
     NOTA ARQUITETURAL:
-    Nenhum coletor de eventos do Kwai Brasil está conectado/autorizado neste projeto.
-    Por padrão, o adaptador é mantido DESATIVADO (`enabled=False`, status `DISABLED_NO_API`).
-    Quando ativado, ele expõe um endpoint HTTP Webhook loopback local estrito (127.0.0.1)
-    para ingestão passiva de eventos vindos de uma extensão de navegador de transmissão ou OCR local.
+    Não há API oficial de nuvem do Kwai Brasil autorizada neste projeto.
+    Por padrão standalone (`enabled=False`), o adaptador permanece em `DISABLED_NO_API`.
+    Na sessão Kwai do `LiveBridgeServer`, ele sobe em loopback estrito (`127.0.0.1:8786`)
+    com `require_collector_room=True`, recebendo batimentos e eventos do coletor local Playwright
+    (`tools/kwai_live_collector.cjs`) e reportando `connected=True` apenas com sala ativa confirmada.
     """
 
     enabled: bool = False

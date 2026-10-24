@@ -46,7 +46,7 @@
   },
   "web_vitals": {
     "cls": 0,
-    "lcp": null,
+    "lcp": 340,
     "inp": "not measured"
   },
   "packets_received": 18
