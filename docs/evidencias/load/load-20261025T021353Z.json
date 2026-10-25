@@ -1,0 +1,136 @@
+{
+  "scope": "two real bridge processes; authenticated WebSockets; synthetic durable consumer fixtures",
+  "godot_included": false,
+  "public_live": false,
+  "paid_api_calls": 0,
+  "identities_per_platform": 1000,
+  "result": "passed",
+  "platforms": {
+    "tiktok": {
+      "submitted_packets": 2600,
+      "unique_gifts_expected": 300,
+      "gift_coins_expected": 2250,
+      "receipts": {
+        "accepted": 2300,
+        "duplicate": 300
+      },
+      "durably_applied_unique": 300,
+      "durably_applied_coins": 2250,
+      "transport_gift_deliveries": 301,
+      "pending_gifts": 0,
+      "metrics": {
+        "received_total": 0,
+        "accepted_total": 0,
+        "duplicates_dropped": 0,
+        "invalid_rejected": 0,
+        "p2_shed_dropped": 0,
+        "dispatched_to_godot": 300,
+        "gift_acks_total": 300,
+        "gift_busy_rejected": 0,
+        "storage_errors": 0,
+        "platform_rejected": 0,
+        "p1_shed_dropped": 0,
+        "adapter_backpressure_pending": 0,
+        "unauthorized_rejected": 0
+      },
+      "free_events_delivered": {},
+      "queue_sizes_at_end": {
+        "p0_admin": 0,
+        "p1": 0,
+        "p2": 0
+      },
+      "ledger_integrity": "ok"
+    },
+    "kwai": {
+      "submitted_packets": 2600,
+      "unique_gifts_expected": 300,
+      "gift_coins_expected": 2250,
+      "receipts": {
+        "accepted": 2300,
+        "duplicate": 300
+      },
+      "durably_applied_unique": 300,
+      "durably_applied_coins": 2250,
+      "transport_gift_deliveries": 341,
+      "pending_gifts": 0,
+      "metrics": {
+        "received_total": 2600,
+        "accepted_total": 2300,
+        "duplicates_dropped": 300,
+        "invalid_rejected": 0,
+        "p2_shed_dropped": 0,
+        "dispatched_to_godot": 2341,
+        "gift_acks_total": 300,
+        "gift_busy_rejected": 0,
+        "storage_errors": 0,
+        "platform_rejected": 0,
+        "p1_shed_dropped": 0,
+        "adapter_backpressure_pending": 0,
+        "unauthorized_rejected": 0
+      },
+      "free_events_delivered": {
+        "vote": 1000,
+        "like_batch": 1000
+      },
+      "queue_sizes_at_end": {
+        "p0_admin": 0,
+        "p1": 0,
+        "p2": 0
+      },
+      "ledger_integrity": "ok"
+    }
+  },
+  "source_hashes_at_start": {
+    "services\\live_bridge\\server.py": "a9ceb41e2bb4bff58a2d4884256a6619d701373b15391d004c83888c4adea0f2",
+    "services\\live_bridge\\protocol.py": "b9f843855925db1d0bcd24887a0f418e79ebd81685e366607cc2d8d37dbfc4bf",
+    "services\\live_bridge\\outbox.py": "153ce03354d3880990ab18f8206fc04a3a3347a9aef4245d51261a07c171d8a6",
+    "services\\live_bridge\\operational_shutdown.py": "5c78c88c8659c61c907d472426ad4e84642241c6dc5231683e6d16107a207f96",
+    "tools\\load_live_bridge.py": "7f47683682639cee0f1901502cc9d628b71c1f2aa7583d85d3fca356029d2560"
+  },
+  "recovery": {
+    "tiktok_process_restarted": true,
+    "pending_at_crash": 300,
+    "kwai_same_process": true,
+    "kwai_available_before_and_after": true,
+    "tiktok_volatile_free_events_at_crash": 1999,
+    "tiktok_metrics_before_restart": {
+      "received_total": 2600,
+      "accepted_total": 2300,
+      "duplicates_dropped": 300,
+      "invalid_rejected": 0,
+      "p2_shed_dropped": 0,
+      "dispatched_to_godot": 2,
+      "gift_acks_total": 0,
+      "gift_busy_rejected": 0,
+      "storage_errors": 0,
+      "platform_rejected": 0,
+      "p1_shed_dropped": 0,
+      "adapter_backpressure_pending": 0,
+      "unauthorized_rejected": 0
+    },
+    "applied_before_lost_ack_replayed_without_double_counting": true
+  },
+  "checks": {
+    "paid_exactly_once_in_durable_fixture": true,
+    "restart_recovery_and_other_platform_survived": true,
+    "uninterrupted_platform_all_free_events_drained": true,
+    "sources_unchanged": true
+  },
+  "duration_seconds": 66.46810430000187,
+  "resource_summary": {
+    "tiktok": {
+      "peak_working_set_mib": 80.48828125,
+      "peak_cpu_host_capacity_percent": 1.1648324231753442
+    },
+    "kwai": {
+      "peak_working_set_mib": 88.45703125,
+      "peak_cpu_host_capacity_percent": 1.7229962591777364
+    }
+  },
+  "limits": [
+    "Consumer fixtures are not game execution or real platform homologation.",
+    "Free event queues may shed under burst; inspect metrics. Paid rows are asserted independently.",
+    "Free events already queued in RAM may be lost on bridge process crash; the report counts this separately.",
+    "A short isolated test does not certify 42 hours."
+  ]
+}

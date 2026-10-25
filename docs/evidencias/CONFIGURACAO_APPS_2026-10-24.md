@@ -40,3 +40,9 @@ O operador deve abrir o perfil no Studio e confirmar **`@xinka_`**. Se outra con
 6. Manter início público manual e condicionado às verificações externas de conformidade descritas no projeto.
 
 Nenhuma LIVE, instalação, geração paga ou alteração em arquivos centrais foi realizada por esta inspeção.
+
+## Complemento do agente principal
+
+OBS 33.0.0 foi aberto e observado sem gravação/transmissão ativa. Perfil/coleção existentes: Sem nome. Captura de jogo existente estava configurada para qualquer aplicativo em tela cheia, incompatível com a janela normal do JOGI. Não foi salva uma configuração aprovada de captura ou áudio.
+
+O operador informou que reconheceu o Godot na prévia de captura do Studio. Naquele momento as janelas eram do benchmark temporário; isso não confirma a instância definitiva TikTok. Foram fornecidos passos para fechar seleção temporária e escolher o primeiro ícone de celular/vertical. A ferramenta conseguiu trazer o Studio à frente, mas cliques nas regiões da caixa não produziram a alteração esperada. Ação manual foi solicitada, sem iniciar LIVE. Permanecem pendentes saída1080x1920, enquadramento, conta@xinka_, FPS/codificação e áudio sem eco.

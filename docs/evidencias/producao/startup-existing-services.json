@@ -1,0 +1,22 @@
+{
+  "inspected_at": "2026-10-24",
+  "public_live_started": false,
+  "ports": {
+    "8765": {
+      "health_available": false,
+      "error_type": "TimeoutError"
+    },
+    "8766": {
+      "platform": "kwai",
+      "account": "mentalista..",
+      "status": "ok",
+      "platform_events_status": "kwai_requires_collector",
+      "platform_events_connected": false,
+      "pending_gifts": 0
+    },
+    "8786": {
+      "health_available": false,
+      "error_type": "URLError"
+    }
+  }
+}

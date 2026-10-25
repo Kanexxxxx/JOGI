@@ -1,0 +1,134 @@
+{
+  "tiktok": {
+    "first": {
+      "sample": 15,
+      "round": 11,
+      "state": "RACING",
+      "paused": false,
+      "remaining": 586.350000000012,
+      "elapsed": 13.6500000000003,
+      "fps": 60.0,
+      "fresh": true,
+      "collector": "room_unavailable",
+      "tiktok_collector": {
+        "unique_id": "xinka_",
+        "reconnect_attempts": 6,
+        "tiktok_library_available": true,
+        "last_http_status": null,
+        "last_error_kind": "UserNotFoundError",
+        "next_retry_at": 1792894466.1435523,
+        "profile_existence": "not_determined_by_live_endpoint"
+      },
+      "runners": [
+        {
+          "candidate_id": 1,
+          "progress_m": 163.903030395508,
+          "current_speed": 12.5266284172994
+        },
+        {
+          "candidate_id": 2,
+          "progress_m": 163.768920898438,
+          "current_speed": 12.4664432987563
+        }
+      ]
+    },
+    "last": {
+      "sample": 180,
+      "round": 11,
+      "state": "RACING",
+      "paused": false,
+      "remaining": 421.150000000163,
+      "elapsed": 178.850000000034,
+      "fps": 60.0,
+      "fresh": true,
+      "collector": "room_unavailable",
+      "tiktok_collector": {
+        "unique_id": "xinka_",
+        "reconnect_attempts": 6,
+        "tiktok_library_available": true,
+        "last_http_status": null,
+        "last_error_kind": "UserNotFoundError",
+        "next_retry_at": 1792894466.1435523,
+        "profile_existence": "not_determined_by_live_endpoint"
+      },
+      "runners": [
+        {
+          "candidate_id": 1,
+          "progress_m": 2146.32495117188,
+          "current_speed": 11.27194184768
+        },
+        {
+          "candidate_id": 2,
+          "progress_m": 2146.07690429688,
+          "current_speed": 12.5158251310759
+        }
+      ]
+    },
+    "measured_seconds": 165,
+    "distance_gains": [
+      1982.421920776372,
+      1982.307983398442
+    ],
+    "timer_delta": 165.19999999984896,
+    "fps_min": 60.0,
+    "all_telemetry_fresh": true
+  },
+  "kwai": {
+    "first": {
+      "sample": 0,
+      "round": 12,
+      "state": "RACING",
+      "paused": false,
+      "remaining": 209.866666666943,
+      "elapsed": 390.133333333307,
+      "fps": 60.0,
+      "fresh": true,
+      "collector": "waiting_room",
+      "tiktok_collector": null,
+      "runners": [
+        {
+          "candidate_id": 1,
+          "progress_m": 4681.884765625,
+          "current_speed": 12.083482325416
+        },
+        {
+          "candidate_id": 2,
+          "progress_m": 4681.71630859375,
+          "current_speed": 11.6641265759786
+        }
+      ]
+    },
+    "last": {
+      "sample": 180,
+      "round": 12,
+      "state": "RACING",
+      "paused": false,
+      "remaining": 29.6166666668833,
+      "elapsed": 570.383333333143,
+      "fps": 60.0,
+      "fresh": true,
+      "collector": "webhook_listening",
+      "tiktok_collector": null,
+      "runners": [
+        {
+          "candidate_id": 1,
+          "progress_m": 6844.888671875,
+          "current_speed": 13.0045402900311
+        },
+        {
+          "candidate_id": 2,
+          "progress_m": 6844.80126953125,
+          "current_speed": 12.8557387853707
+        }
+      ]
+    },
+    "measured_seconds": 180,
+    "distance_gains": [
+      2163.00390625,
+      2163.0849609375
+    ],
+    "timer_delta": 180.25000000005969,
+    "fps_min": 60.0,
+    "all_telemetry_fresh": true
+  }
+}

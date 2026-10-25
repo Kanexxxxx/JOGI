@@ -48,7 +48,7 @@ var _final_stretch_announced: bool = false
 func _ready() -> void:
 	Engine.max_fps = 60
 	var window_platform: String = OS.get_environment("LIVE_PLATFORM").to_lower()
-	DisplayServer.window_set_title("Corrida Presidencial - " + (window_platform.capitalize() if window_platform in ["tiktok", "kwai"] else "Previa local"))
+	get_window().title = "Corrida Presidencial - " + (window_platform.capitalize() if window_platform in ["tiktok", "kwai"] else "Previa local")
 	super._ready()
 	var asset_preview: bool = not is_production_mode() and "--asset-preview" in OS.get_cmdline_user_args()
 	audience = AudienceDirector.new()

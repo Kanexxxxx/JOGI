@@ -344,6 +344,8 @@ function isHeadedLoginActive(lockPath) {
 }
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+function boundedOperation(promise,ms){let timer;return Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Object.assign(new Error('Consulta do navegador excedeu o prazo'),{code:'BROWSER_TIMEOUT'})),ms);})]).finally(()=>clearTimeout(timer));}
+function browserIsUsable(context,page){return Boolean(context && page && !page.isClosed());}
 
 async function runLoginBrowser(args, chromium, executablePath, lockPath) {
   // Login owns only the browser: never instantiate or pump the paid-event DB.
@@ -395,6 +397,11 @@ async function main() {
   let page = null;
   let activeTargetUrl = '';
   let lastGotoAt = 0;
+  let lastNavigationError = false;
+  let browserOpening = false;
+  let browserRetryAt = 0;
+  let browserNeedsRecovery = false;
+  let handoffBusy = false;
   const delivery = new DurableGiftDelivery(path.join(path.dirname(args.profileDir), 'collector_gifts.sqlite3'), {
     account: args.account, send: event => postGiftWebhook(webhookUrl, event),
   });
@@ -441,16 +448,30 @@ async function main() {
 
   const closeContext = async () => {
     if (context) {
-      try { await context.close(); } catch (_) { return false; }
+      try { await boundedOperation(context.close(),10000); } catch (_) { return false; }
       context = null;
       page = null;
       lastGotoAt = 0;
     }
+    browserNeedsRecovery=false;
     return true;
   };
 
+  const handoffTimer = setInterval(async()=>{
+    if(handoffBusy || browserOpening || !isHeadedLoginActive(headedLockPath))return;
+    handoffBusy=true;
+    try{const request=profileHandoff.read(headedLockPath);if(await closeContext())profileHandoff.acknowledge(headedLockPath,request);}
+    catch(error){console.warn('[kwai] Liberação do perfil requer atenção:',error.name);}
+    finally{handoffBusy=false;}
+  },500);
+
   const ensureBrowserOpen = async () => {
-    if (context && page) return true;
+    if(isHeadedLoginActive(headedLockPath))return false;
+    if(Date.now()<browserRetryAt)return false;
+    if (!browserNeedsRecovery && browserIsUsable(context,page)) return true;
+    if(context){const closed=await closeContext();if(!closed){browserNeedsRecovery=true;browserRetryAt=Date.now()+30000;return false;}}
+    browserOpening=true;
+    try {
     const maxAttempts = args.headed ? 8 : 2;
     for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
       try {
@@ -459,6 +480,10 @@ async function main() {
           executablePath,
           viewport: { width: 1280, height: 800 },
           args: ['--disable-blink-features=AutomationControlled', '--mute-audio'],
+        });
+        const openedContext=context;
+        openedContext.once('close',()=>{
+          if(context===openedContext){context=null;page=null;lastGotoAt=0;}
         });
         break;
       } catch (err) {
@@ -610,9 +635,11 @@ async function main() {
     });
 
     return true;
+    } finally { browserOpening=false; }
   };
 
   const inspectPageStatus = async () => {
+    if(lastNavigationError)return {status:'error',detail:'Falha de rede ao consultar a página Kwai; sala ainda não verificada.',liveUrl:activeTargetUrl||defaultUrl};
     const deliveryState = delivery.stats();
     if (deliveryState.requires_attention || deliveryState.retrying) {
       return { status: 'error', detail: `Entrega de presentes requer atenção: ${deliveryState.pending} pendentes; ${deliveryState.attention || deliveryState.last_error}.`,
@@ -626,7 +653,7 @@ async function main() {
       };
     }
     try {
-      const probe = await page.evaluate(() => {
+      const probe = await boundedOperation(page.evaluate(() => {
         const explicitActive = document.querySelector('[data-jogi-live-active="true"]') !== null;
         const loginWall =
           document.querySelector('[class*="login-modal"], [class*="captcha"], [id*="captcha"]') !== null;
@@ -640,7 +667,7 @@ async function main() {
           isLiveRoute,
           href: window.location.href,
         };
-      });
+      }),5000);
       const feedRecent = Date.now() - lastFeedLiveAt < 30000;
       if (probe.explicitActive || feedRecent || (probe.isLiveRoute && probe.activeVideo)) {
         return {
@@ -662,9 +689,14 @@ async function main() {
         liveUrl: probe.href || activeTargetUrl,
       };
     } catch (err) {
+      if(err.code==='BROWSER_TIMEOUT'){
+        browserNeedsRecovery=true;
+        await closeContext();
+        browserRetryAt=Date.now()+30000;
+      }
       return {
-        status: 'waiting_room',
-        detail: `Verificando página Kwai (${String(err.message || err).slice(0, 72)})`,
+        status: 'error',
+        detail: `Falha ao verificar página Kwai (${String(err.message || err).slice(0, 72)})`,
         liveUrl: activeTargetUrl,
       };
     }
@@ -706,8 +738,8 @@ async function main() {
       if (!browserReady) {
         await postWebhook(webhookUrl, {
           type: 'collector_status',
-          status: 'waiting_room',
-          detail: 'Perfil do navegador Kwai temporariamente ocupado; tentando novamente...',
+          status: browserNeedsRecovery?'error':'waiting_room',
+          detail: browserNeedsRecovery?'Chromium aguardando recuperacao segura; nova tentativa apos intervalo.':'Perfil do navegador Kwai temporariamente ocupado; tentando novamente...',
           live_url: activeTargetUrl || defaultUrl,
           events_forwarded: eventsForwarded + delivery.forwarded,
         }).catch(() => {});
@@ -729,12 +761,19 @@ async function main() {
         activeTargetUrl = desiredUrl;
         lastGotoAt = Date.now();
         try {
-          await page.goto(activeTargetUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
-        } catch (_) {
+          const navigation = await page.goto(activeTargetUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
+          lastNavigationError = Boolean(navigation && navigation.status() >= 400);
+        } catch (navigationError) {
+          lastNavigationError = true;
+          if(navigationError.name==='TimeoutError'){
+            browserNeedsRecovery=true;
+            await closeContext();
+            browserRetryAt=Date.now()+30000;
+          }
           await postWebhook(webhookUrl, {
             type: 'collector_status',
-            status: 'waiting_room',
-            detail: `Aguardando conexão com ${activeTargetUrl}`,
+            status: 'error',
+            detail: `Falha de conexão com ${activeTargetUrl}`,
             live_url: activeTargetUrl,
             events_forwarded: eventsForwarded + delivery.forwarded,
           }).catch(() => {});
@@ -759,6 +798,7 @@ async function main() {
     }
   } finally {
     clearInterval(deliveryPump);
+    clearInterval(handoffTimer);
     await closeContext();
     await delivery.close();
     profileHandoff.release(profileOwnerPath,profileOwner);
@@ -771,4 +811,4 @@ if (require.main === module) main().catch(err => {
   process.exit(1);
 });
 
-module.exports = { normalizeFeedPayload, isAllowedNavigationUrl, postGiftWebhook, runLoginBrowser };
+module.exports = { normalizeFeedPayload, isAllowedNavigationUrl, postGiftWebhook, runLoginBrowser, browserIsUsable, boundedOperation };

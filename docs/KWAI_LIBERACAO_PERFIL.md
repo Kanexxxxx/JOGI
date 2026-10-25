@@ -1,11 +1,9 @@
 # Liberação segura do perfil Kwai
 
-Correção preparada, não aplicada ao coletor ativo PID3376. Supervisor responsável PID54424. Não houve encerramento de processo Kwai.
+Aplicação real concluída em 24/10/2026, 23h26 BRT. Consulte [a auditoria final](AUDITORIA_INTEGRACOES_FINAL_2026-10-24.md).
 
-O modo login agora não abre a fila SQLite nem envia eventos. Cria solicitação exclusiva com nonce, aguarda confirmação do coletor atualizado após fechar seu próprio contexto Chromium, abre o perfil existente para login manual e remove somente a própria solicitação ao fechar. A fila permanece com o coletor. Sem confirmação, falha sem abrir o perfil, sem remover SingletonLock/arquivos Chromium, sem matar processos. Coletor antigo sem confirmação é recusado explicitamente.
+Execute ABRIR_NAVEGADOR_KWAI.cmd para login manual no navegador dedicado. O coletor fecha seu próprio Chromium e confirma a liberação; a janela de login utiliza o perfil existente. Após o login, feche somente essa janela no X: o coletor retoma automaticamente. Nunca abra o mesmo perfil por atalhos Chrome genéricos nem remova arquivos SingletonLock. Sem confirmação de liberação, o login falha de forma segura.
 
-Aplicação futura exige autorização para reiniciar somente o coletor Node, preservando backend Kwai, Godot, perfil/cookies e fila. Antes: backup consistente e conferência de pendências; depois: validar troca de propriedade do perfil no Windows. Essa integração real ainda não foi executada. Não usar o atalho de login enquanto o coletor antigo estiver ativo esperando que já possua o novo protocolo.
+O modo login não abre a fila SQLite nem envia presentes. A fila permanece com o coletor. A propriedade usa PID e nonce, com rejeição de confirmações antigas. Cookies, credenciais e banco permanecem locais. Verificados dois ciclos em Chromium real isolado e liberação real em produção; não foram iniciadas LIVEs.
 
-14 testes Node locais aprovados: exclusão de solicitações, nonce, timeout, preservação de cookies/fila, fluxo login com navegador falso sem rede e oito regressões de presentes/ACK. Revisão independente não concluída por limite de uso do subagente; não declarar aprovação independente.
-
-TikTok: reinício autorizado concluído; antigo backend42696 substituído pelo35692 através do supervisor54424. Godot23936 e Kwai34944/coletor3376 mantidos; credenciais iguais verificadas por hash sem exibir valores. Backup SQLite íntegro em LOCALAPPDATA/JOGI/backups/tiktok-restart-20261024-221358; zero presentes pendentes. Estado novo room_unavailable com próximo retry de300s confirma lógica carregada, sem perfil declarado inexistente. Nenhuma LIVE pública iniciada.
+O coletor final desta manutenção foi 41480, supervisionado por 54424; sempre redescobrir identidades antes de operações futuras. Backups completos e verificados estão em LOCALAPPDATA/JOGI/backups, fora do repositório.

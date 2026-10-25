@@ -1,0 +1,86 @@
+{
+  "scope": "two real bridge processes; authenticated WebSockets; synthetic durable consumer fixtures",
+  "godot_included": false,
+  "public_live": false,
+  "paid_api_calls": 0,
+  "identities_per_platform": 1000,
+  "result": "failed_harness_cleanup",
+  "harness_error": "Windows file handle in the test reader was not explicitly closed; event assertions passed but process exit failed. Corrected and rerun separately.",
+  "platforms": {
+    "tiktok": {
+      "submitted_packets": 2600,
+      "unique_gifts_expected": 300,
+      "gift_coins_expected": 2250,
+      "receipts": {
+        "accepted": 2300,
+        "duplicate": 300
+      },
+      "durably_applied_unique": 300,
+      "durably_applied_coins": 2250,
+      "transport_gift_deliveries": 301,
+      "pending_gifts": 0,
+      "metrics": {
+        "received_total": 0,
+        "accepted_total": 0,
+        "duplicates_dropped": 0,
+        "invalid_rejected": 0,
+        "p2_shed_dropped": 0,
+        "dispatched_to_godot": 300,
+        "gift_acks_total": 300,
+        "gift_busy_rejected": 0,
+        "storage_errors": 0,
+        "platform_rejected": 0,
+        "p1_shed_dropped": 0,
+        "adapter_backpressure_pending": 0,
+        "unauthorized_rejected": 0
+      },
+      "ledger_integrity": "ok"
+    },
+    "kwai": {
+      "submitted_packets": 2600,
+      "unique_gifts_expected": 300,
+      "gift_coins_expected": 2250,
+      "receipts": {
+        "accepted": 2300,
+        "duplicate": 300
+      },
+      "durably_applied_unique": 300,
+      "durably_applied_coins": 2250,
+      "transport_gift_deliveries": 300,
+      "pending_gifts": 0,
+      "metrics": {
+        "received_total": 2600,
+        "accepted_total": 2300,
+        "duplicates_dropped": 300,
+        "invalid_rejected": 0,
+        "p2_shed_dropped": 0,
+        "dispatched_to_godot": 516,
+        "gift_acks_total": 300,
+        "gift_busy_rejected": 0,
+        "storage_errors": 0,
+        "platform_rejected": 0,
+        "p1_shed_dropped": 0,
+        "adapter_backpressure_pending": 0,
+        "unauthorized_rejected": 0
+      },
+      "ledger_integrity": "ok"
+    }
+  },
+  "recovery": {
+    "tiktok_process_restarted": true,
+    "pending_at_crash": 300,
+    "kwai_same_process": true,
+    "kwai_available_before_and_after": true,
+    "applied_before_lost_ack_replayed_without_double_counting": true
+  },
+  "checks": {
+    "paid_exactly_once_in_durable_fixture": true,
+    "restart_recovery_and_other_platform_survived": true
+  },
+  "duration_seconds": 17.62740610000037,
+  "limits": [
+    "Consumer fixtures are not game execution or real platform homologation.",
+    "Free event queues may shed under burst; inspect metrics. Paid rows are asserted independently.",
+    "A short isolated test does not certify 42 hours."
+  ]
+}

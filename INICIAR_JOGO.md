@@ -1,5 +1,7 @@
 # Abrir o jogo
 
+Se houver erro, abra **DIAGNOSTICAR_JOGO.cmd** e preserve a mensagem; ele não altera sessões.
+
 1. Para ver os bonecos, pista e animação sem contas conectadas, abra **ABRIR_PREVIA_JOGO.cmd**. A tela identifica o teste local; não gera público nem presentes fictícios.
 2. Para a sessão TikTok, abra **ABRIR_TIKTOK.cmd**. Jogo e painel ficam separados da sessão Kwai. Painel: <http://127.0.0.1:8765/admin>.
 3. Para a sessão Kwai, abra **ABRIR_KWAI.cmd**. Painel: <http://127.0.0.1:8766/admin>. **O coletor de comentários/presentes do Kwai ainda precisa ser conectado.** Acesso ao Kwai Studio e permissão para receber presentes não comprovam essa conexão.
@@ -26,3 +28,5 @@ TikTok oficial: **@xinka_**. Kwai mantém **@mentalista..**. Os dados da conta a
 As sessões usam pastas independentes, checkpoint e diário de presentes. O supervisor reinicia somente o processo que falhou, com limite para falhas repetidas. Isso reduz perdas, mas não substitui um ensaio completo de 32 horas, ainda pendente.
 
 Godot instalado esperado: `C:\Users\Kanex\Downloads\Godot_v4.7.2-stable_win64.exe\Godot_v4.7.2-stable_win64.exe`. Nenhum atalho instala programas ou altera contas.
+
+Na execução local com o binário Godot, os títulos podem incluir **(DEBUG)**. Diferencie sempre **Tiktok** e **Kwai**; capture o conteúdo do jogo sem a borda/título da janela. Não selecione janelas temporárias **JOGI QA LOCAL** de benchmark.

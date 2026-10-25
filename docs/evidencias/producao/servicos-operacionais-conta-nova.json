@@ -1,0 +1,44 @@
+{
+  "verified_at": "2026-10-24T21:06:02.841682",
+  "public_live_started": false,
+  "paid_api_calls": 0,
+  "services": [
+    {
+      "platform": "tiktok",
+      "account": "xinka_",
+      "godot_connected": true,
+      "telemetry_fresh": true,
+      "runtime_mode": "production",
+      "platform_events_status": "account_not_found",
+      "platform_events_connected": false,
+      "pending_gifts": 0,
+      "port": 8765,
+      "admin_authenticated_http": 200,
+      "persistence": {
+        "error": "",
+        "ready": true
+      }
+    },
+    {
+      "platform": "kwai",
+      "account": "mentalista..",
+      "godot_connected": true,
+      "telemetry_fresh": true,
+      "runtime_mode": "production",
+      "platform_events_status": "waiting_room",
+      "platform_events_connected": false,
+      "pending_gifts": 0,
+      "port": 8766,
+      "admin_authenticated_http": 200,
+      "persistence": {
+        "error": "",
+        "ready": true
+      }
+    }
+  ],
+  "audio": {
+    "operator_confirmed_output": "Windows default monitor/speakers",
+    "operator_will_use_microphone": false,
+    "cross_platform_audio_isolation_verified": false
+  }
+}

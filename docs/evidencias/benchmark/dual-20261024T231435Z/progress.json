@@ -1,0 +1,64 @@
+{
+  "elapsed": 90.04902359999687,
+  "sample": {
+    "elapsed": 90.049,
+    "games": {
+      "tiktok": {
+        "pid": 42204,
+        "available": true,
+        "cpu_seconds": 61.0,
+        "working_set_bytes": 826122240,
+        "private_bytes": 3446616064,
+        "peak_working_set_bytes": 1061453824,
+        "cpu_percent_one_core_scale": 62.49,
+        "cpu_percent_host_capacity": 3.91
+      },
+      "kwai": {
+        "pid": 45988,
+        "available": true,
+        "cpu_seconds": 63.203125,
+        "working_set_bytes": 781410304,
+        "private_bytes": 3468005376,
+        "peak_working_set_bytes": 1068498944,
+        "cpu_percent_one_core_scale": 67.57,
+        "cpu_percent_host_capacity": 4.22
+      }
+    },
+    "gpu": {
+      "available": true,
+      "name": "NVIDIA GeForce RTX 4060",
+      "utilization_percent_total": 53,
+      "memory_used_mib_total": 6300,
+      "memory_total_mib": 8188,
+      "temperature_c": 57.83
+    },
+    "bridges": {
+      "tiktok": {
+        "connected_godot": 1,
+        "pending_gifts": 0,
+        "gift_acks": 211,
+        "p0_queue": 0,
+        "p1_queue": 0,
+        "p2_queue": 0,
+        "p1_shed": 0,
+        "p2_shed": 0,
+        "sqlite_spool_bytes": 4263441,
+        "round": 1,
+        "state": "RACING"
+      },
+      "kwai": {
+        "connected_godot": 1,
+        "pending_gifts": 0,
+        "gift_acks": 211,
+        "p0_queue": 0,
+        "p1_queue": 0,
+        "p2_queue": 0,
+        "p1_shed": 0,
+        "p2_shed": 0,
+        "sqlite_spool_bytes": 4255201,
+        "round": 1,
+        "state": "RACING"
+      }
+    }
+  }
+}

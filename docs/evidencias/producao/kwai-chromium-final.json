@@ -1,0 +1,11 @@
+{
+  "renderer_hang_recovered": true,
+  "result": "PASS",
+  "cycles": 2,
+  "real_chromium": true,
+  "same_collector_pid": true,
+  "chromium_crash_recovered": true,
+  "http503_distinguished_from_offline": true,
+  "public_live": false,
+  "external_requests": false
+}

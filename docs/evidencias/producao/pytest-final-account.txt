@@ -1,0 +1,101 @@
+..................................................................F............................. [ 82%]
+....................                                                     [100%]
+================================== FAILURES ===================================
+________ OutboxTests.test_committed_gift_survives_abrupt_process_exit _________
+
+self = <test_live_reliability.OutboxTests testMethod=test_committed_gift_survives_abrupt_process_exit>
+
+    def test_committed_gift_survives_abrupt_process_exit(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "crash.sqlite3"
+            code = (
+                "import os,sys; from pathlib import Path; from outbox import GiftOutbox; "
+                "from protocol import build_gift_envelope; "
+                "store=GiftOutbox(Path(sys.argv[1]),platform='tiktok'); "
+                "event=build_gift_envelope(user_id='u',display_name='U',candidate_slot=1,event_id='evt_crash_safe'); "
+                "assert store.accept(event)=='accepted'; os._exit(29)"
+            )
+>           result = subprocess.run([sys.executable, "-c", code, str(path)],
+                cwd=Path(__file__).resolve().parent, capture_output=True, text=True, timeout=10,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+
+services\live_bridge\test_live_reliability.py:98:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+..\..\..\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\subprocess.py:557: in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\subprocess.py:1221: in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Popen: returncode: 1 args: ['C:\\Users\\Kanex\\OneDrive\\Desktop\\JOGI\\ser...>
+input = None, endtime = 41715.4638661, orig_timeout = 10
+
+    def _communicate(self, input, endtime, orig_timeout):
+        # Start reader threads feeding into a list hanging off of this
+        # object, unless they've already been started.
+        if self.stdout and not hasattr(self, "_stdout_buff"):
+            self._stdout_buff = []
+            self.stdout_thread = \
+                    threading.Thread(target=self._readerthread,
+                                     args=(self.stdout, self._stdout_buff))
+            self.stdout_thread.daemon = True
+            self.stdout_thread.start()
+        if self.stderr and not hasattr(self, "_stderr_buff"):
+            self._stderr_buff = []
+            self.stderr_thread = \
+                    threading.Thread(target=self._readerthread,
+                                     args=(self.stderr, self._stderr_buff))
+            self.stderr_thread.daemon = True
+            self.stderr_thread.start()
+
+        # Start writer thread to send input to stdin, unless already
+        # started.  The thread writes input and closes stdin when done,
+        # or continues in the background on timeout.
+        if self.stdin and not hasattr(self, "_stdin_thread"):
+            self._stdin_thread = \
+                    threading.Thread(target=self._writerthread,
+                                     args=(input,))
+            self._stdin_thread.daemon = True
+            self._stdin_thread.start()
+
+        # Wait for the writer thread, or time out.  If we time out, the
+        # thread remains writing and the fd left open in case the user
+        # calls communicate again.
+        if hasattr(self, "_stdin_thread"):
+            self._stdin_thread.join(self._remaining_time(endtime))
+            if self._stdin_thread.is_alive():
+                raise TimeoutExpired(self.args, orig_timeout)
+
+        # Wait for the reader threads, or time out.  If we time out, the
+        # threads remain reading and the fds left open in case the user
+        # calls communicate again.
+        if self.stdout is not None:
+            self.stdout_thread.join(self._remaining_time(endtime))
+            if self.stdout_thread.is_alive():
+>               raise TimeoutExpired(self.args, orig_timeout)
+E               subprocess.TimeoutExpired: Command '['C:\\Users\\Kanex\\OneDrive\\Desktop\\JOGI\\services\\live_bridge\\.venv\\Scripts\\python.exe', '-c', "import os,sys; from pathlib import Path; from outbox import GiftOutbox; from protocol import build_gift_envelope; store=GiftOutbox(Path(sys.argv[1]),platform='tiktok'); event=build_gift_envelope(user_id='u',display_name='U',candidate_slot=1,event_id='evt_crash_safe'); assert store.accept(event)=='accepted'; os._exit(29)", 'C:\\Users\\Kanex\\AppData\\Local\\Temp\\tmp7gxyhina\\crash.sqlite3']' timed out after 10 seconds
+
+..\..\..\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\subprocess.py:1664: TimeoutExpired
+============================== warnings summary ===============================
+services\live_bridge\.venv\Lib\site-packages\websockets\legacy\__init__.py:6
+  C:\Users\Kanex\OneDrive\Desktop\JOGI\services\live_bridge\.venv\Lib\site-packages\websockets\legacy\__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions
+    warnings.warn(  # deprecated in 14.0 - 2024-11-09
+
+services\live_bridge\.venv\Lib\site-packages\TikTokLive\client\ws\ws_connect.py:6
+  C:\Users\Kanex\OneDrive\Desktop\JOGI\services\live_bridge\.venv\Lib\site-packages\TikTokLive\client\ws\ws_connect.py:6: DeprecationWarning: websockets.exceptions.InvalidStatusCode is deprecated
+    from websockets.exceptions import InvalidStatusCode  # type: ignore[attr-defined]
+
+services\live_bridge\.venv\Lib\site-packages\_pytest\cacheprovider.py:469
+  C:\Users\Kanex\OneDrive\Desktop\JOGI\services\live_bridge\.venv\Lib\site-packages\_pytest\cacheprovider.py:469: PytestCacheWarning: could not create cache path C:\Users\Kanex\OneDrive\Desktop\JOGI\services\live_bridge\.pytest_cache\v\cache\nodeids: [WinError 183] N�o � poss�vel criar um arquivo j� existente: 'C:\\Users\\Kanex\\OneDrive\\Desktop\\JOGI\\services\\live_bridge\\.pytest_cache\\v\\cache'
+    config.cache.set("cache/nodeids", sorted(self.cached_nodeids))
+
+services\live_bridge\.venv\Lib\site-packages\_pytest\cacheprovider.py:423
+  C:\Users\Kanex\OneDrive\Desktop\JOGI\services\live_bridge\.venv\Lib\site-packages\_pytest\cacheprovider.py:423: PytestCacheWarning: could not create cache path C:\Users\Kanex\OneDrive\Desktop\JOGI\services\live_bridge\.pytest_cache\v\cache\lastfailed: [WinError 183] N�o � poss�vel criar um arquivo j� existente: 'C:\\Users\\Kanex\\OneDrive\\Desktop\\JOGI\\services\\live_bridge\\.pytest_cache\\v\\cache'
+    config.cache.set("cache/lastfailed", self.lastfailed)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED services\live_bridge\test_live_reliability.py::OutboxTests::test_committed_gift_survives_abrupt_process_exit
+1 failed, 115 passed, 4 warnings, 48 subtests passed in 134.76s (0:02:14)

@@ -1,0 +1,21 @@
+locator.waitFor: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('#command-feedback').filter({ hasText: 'executado e confirmado' }) to be visible[22m
+
+    at command (C:\Users\Kanex\OneDrive\Desktop\JOGI\tools\qa_admin_panel.cjs:32:484)
+    at async C:\Users\Kanex\OneDrive\Desktop\JOGI\tools\qa_admin_panel.cjs:63:452
+
+tiktok backend:
+
+Godot:
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ADMIN_QA_RUNTIME_READY
+
+
+kwai backend:
+
+Godot:
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ADMIN_QA_RUNTIME_READY

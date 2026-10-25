@@ -48,6 +48,9 @@ def build_plan(
     offline: bool = False,
     runtime_mode: str | None = None,
 ) -> dict:
+    named_executable = ROOT / ".tools" / "capture" / ("JOGI-TikTok.exe" if platform == "tiktok" else "JOGI-Kwai.exe")
+    if godot == DEFAULT_GODOT and named_executable.is_file():
+        godot = named_executable
     port = PORTS[platform]
     mode = runtime_mode or ("development" if offline else os.environ.get("JOGI_MODE", "production"))
     if mode not in ("production", "development"):

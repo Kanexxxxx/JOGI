@@ -16,6 +16,8 @@ Contas de referência: TikTok **@xinka_**; Kwai **@mentalista..**, com dois pont
 6. Deixe o PC na tomada. O supervisor solicita que o Windows permaneça acordado enquanto está em execução; confira também **Configurações → Sistema → Energia**, sobretudo se o terminal for fechado. Não suspenda nem reinicie o PC durante a sessão.
 7. Feche jogos pesados e downloads dispensáveis. Preserve o formato vertical 9:16 do jogo. O monitor não precisa estar em pé; o enquadramento da captura é ajustado no software de transmissão. Faça teste local de imagem e áudio antes de qualquer operação autorizada.
 
+Antes de abrir o jogo, você também pode executar **DIAGNOSTICAR_JOGO.cmd**: ele informa caminhos, contas, portas e health sem iniciar/encerrar processos nem alterar dados. Porta ocupada exige identificar a sessão atual.
+
 ## B — Abrir pela primeira vez
 
 **Prévia local** mostra os recursos sem conectar uma live. **Produção local** abre backend, jogo e coletores; ainda não transmite vídeo. **Transmissão pública** é uma ação externa, manual, sujeita às autorizações e à conformidade.
@@ -180,3 +182,5 @@ Não altere o horário para contornar um encerramento já persistido. Alterar am
 Os testes documentados exercitaram duas instâncias locais, painel autenticado, comandos confirmados pelo Godot, isolamento, persistência e carga sintética. O ensaio GPU simultâneo de 620 segundos atingiu aproximadamente 60 FPS em 1080×1920 sem OBS/codificação. Há também carga de backend e ensaio GPU com mil identidades sintéticas por plataforma. Consulte [TESTES_FINAIS.md](TESTES_FINAIS.md) e `docs/evidencias/` para os relatórios e seus limites.
 
 Isso **não certifica 42 horas**, acesso da nova conta TikTok, captura/áudio final nos aplicativos, conexão real Kwai, recebimento real de presentes ou autorização pública. O procedimento completo deve ser marcado no [CHECKLIST_PRE_LIVE.md](CHECKLIST_PRE_LIVE.md), registrando essas pendências. A preparação dos aplicativos só fica aprovada quando houver inspeção e gravação local correspondentes.
+
+Na execução local com o binário Godot, os títulos podem incluir **(DEBUG)**. Diferencie sempre **Tiktok** e **Kwai**; capture o conteúdo do jogo sem a borda/título da janela. Não selecione janelas temporárias **JOGI QA LOCAL** de benchmark.

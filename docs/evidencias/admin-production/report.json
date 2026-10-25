@@ -1,0 +1,73 @@
+{
+  "result": "FUNCTIONAL_PASS",
+  "visual_review": "PENDING_HUMAN_OR_AGENT_IMAGE_INSPECTION",
+  "scope": "two isolated authenticated ephemeral bridges + two real headless StadiumRace instances; no real platform live or paid APIs",
+  "public_live_started": false,
+  "paid_api_calls": 0,
+  "real_godot": true,
+  "interactions": [
+    "no engine: commands disabled; production simulator hidden",
+    "production simulation rejected403 without fake metrics",
+    "tiktok:start_race:applied_by_real_Godot",
+    "kwai:start_race:applied_by_real_Godot",
+    "tiktok:pause_race:applied_by_real_Godot",
+    "platform commands isolated",
+    "tiktok:resume_race:applied_by_real_Godot",
+    "invalid goal blocked without issuing a command",
+    "tiktok:set_live_goals:applied_by_real_Godot",
+    "three goals applied and edits/platform isolation preserved",
+    "tiktok:set_audio_settings:applied_by_real_Godot",
+    "synthetic development vote/likes/follow/share/gift=42x3=126 real pipeline+durableACK",
+    "observed gift action override persisted in bridge",
+    "tiktok:boost:applied_by_real_Godot",
+    "tiktok:shield:applied_by_real_Godot",
+    "tiktok:attack:applied_by_real_Godot",
+    "destructive dedup confirmation, Escape and focus restored",
+    "tiktok:restart_race:applied_by_real_Godot",
+    "tiktok:skip_lobby:applied_by_real_Godot",
+    "tiktok:pause_race:applied_by_real_Godot",
+    "HTTP commands/state fallback after admin WebSocket closes",
+    "game disconnect/reconnect without disturbing other platform",
+    "reload preserves configured goals and isolated cookie session",
+    "unauthenticated new browser session blocked",
+    "two administrative cookies coexist on same loopback host",
+    "tiktok:end_experience:applied_by_real_Godot",
+    "manual terminal shutdown persisted and isolated; restart/start disabled",
+    "offline manual end persisted without false execution success; engine closes on reconnect"
+  ],
+  "visuals": [
+    {
+      "width": 375,
+      "height": 1000,
+      "screenshot": "admin-production-375.png",
+      "overview_screenshot": "admin-overview-375.png",
+      "horizontal_overflow": false,
+      "mode": "production",
+      "source": "real Godot telemetry; no synthetic events"
+    },
+    {
+      "width": 768,
+      "height": 1000,
+      "screenshot": "admin-production-768.png",
+      "overview_screenshot": "admin-overview-768.png",
+      "horizontal_overflow": false,
+      "mode": "production",
+      "source": "real Godot telemetry; no synthetic events"
+    },
+    {
+      "width": 1440,
+      "height": 1000,
+      "screenshot": "admin-production-1440.png",
+      "overview_screenshot": "admin-overview-1440.png",
+      "horizontal_overflow": false,
+      "mode": "production",
+      "source": "real Godot telemetry; no synthetic events"
+    }
+  ],
+  "console_errors": [],
+  "limits": [
+    "No real TikTok/Kwai room events",
+    "Browser screenshots only; no OBS encoding or full WCAG audit",
+    "Synthetic development identities are fixtures, never production counters"
+  ]
+}

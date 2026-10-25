@@ -6,8 +6,8 @@ function read(file) {try{return JSON.parse(fs.readFileSync(file,'utf8'));}catch{
 function same(a,b) {return Boolean(a&&b&&a.pid===b.pid&&a.nonce===b.nonce);}
 function claim(file) {
  const current=read(file);
- if(current&&alive(current.pid))throw new Error('Outro login Kwai jÃ¡ controla a solicitaÃ§Ã£o. Nenhum processo encerrado.');
- if(fs.existsSync(file)) {if(!current)throw new Error('SolicitaÃ§Ã£o Kwai invÃ¡lida: requer revisÃ£o manual.');fs.unlinkSync(file);}
+ if(current&&alive(current.pid))throw new Error('Outro login Kwai já controla a solicitação. Nenhum processo encerrado.');
+ if(fs.existsSync(file)) {if(!current)throw new Error('Solicitação Kwai inválida: requer revisão manual.');fs.unlinkSync(file);}
  const owner={pid:process.pid,nonce:crypto.randomUUID(),started_at:Date.now()};
  fs.writeFileSync(file,JSON.stringify(owner),{flag:'wx'});return owner;
 }
@@ -21,12 +21,12 @@ function acknowledge(file,request) {
 async function waitForRelease(file,request,{timeoutMs=30000,pollMs=200,ownerFile=file+'.owner',sleep=ms=>new Promise(r=>setTimeout(r,ms))}={}) {
  const deadline=Date.now()+timeoutMs;
  while(Date.now()<deadline) {
-  if(!same(read(file),request))throw new Error('SolicitaÃ§Ã£o de login alterada. Nenhum perfil serÃ¡ aberto.');
+  if(!same(read(file),request))throw new Error('Solicitação de login alterada. Nenhum perfil será aberto.');
   if(same(read(file+'.released'),request))return;
   const collector=read(ownerFile);
   if(!collector||!alive(collector.pid))throw new Error('Coletor atualizado não confirmou propriedade/liberação do perfil. Não force o login; solicite atualização autorizada do coletor.');
   await sleep(pollMs);
  }
- throw new Error('Coletor nÃ£o confirmou a liberaÃ§Ã£o do perfil em 30s. Nenhum processo foi encerrado; solicite atualizaÃ§Ã£o segura do coletor.');
+ throw new Error('Coletor nao confirmou a liberacao em 30s. Nenhum processo foi encerrado; atualize o coletor com autorizacao.');
 }
 module.exports={read,claim,release,acknowledge,waitForRelease,same,alive};

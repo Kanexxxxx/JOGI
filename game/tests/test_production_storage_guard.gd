@@ -26,6 +26,7 @@ func _run() -> void:
 	file.close()
 	var race: StadiumRace = (load("res://scenes/main/stadium_race.tscn") as PackedScene).instantiate() as StadiumRace
 	root.add_child(race)
+	_check(root.title == "Corrida Presidencial - Previa local", "Persistent Window title identifies local capture")
 	_check(race.persistence != null and not race.persistence.is_ready and race.race_paused, "Corrupt checkpoint must pause production")
 	for command: String in ["start_race", "resume_race", "restart_race", "boost", "shield", "attack"]:
 		var result: Dictionary = race._execute_admin_command(command, {"candidate_slot": 1})

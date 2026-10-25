@@ -1,5 +1,32 @@
 # CONTINUIDADE.md — Estado Atual do Projeto e Guia de Retomada
 
+## Atualização operacional — 24/10/2026 após 21h
+
+Substituição autorizada pelo operador dos dois serviços antigos: processos identificados37364/28176 foram encerrados somente após backup SQLite online com integrity_check=ok, zero presentes pendentes e sem Godot/sala conectados. Backup privado em LOCALAPPDATA/JOGI/backups/before-account-switch-20261024-210047. Sessões Godot legadas foram preservadas em sessions/legacy-preserved/<data>/; não importadas para a nova conta. Supervisor de prévia temporária foi encerrado pelo próprio terminal.
+
+Supervisor operacional iniciado com --both --mode production. **8765 agora é xinka_ e8766 mentalista..; ambos Godot conectado, telemetria recente, persistência ready sem erro, autenticação local HTTP200 verificada.** Coletores ainda sem sala real comprovada: TikTok recebeu429/UserNotFoundError e reconecta; Kwai waiting_room. Isso substitui a antiga informação de conta nostalgiia.br ocupando8765. Evidência sanitizada: docs/evidencias/producao/servicos-operacionais-conta-nova.json.
+
+Executáveis locais distinguidos e SHA256 iguais ao Godot original: .tools/capture/JOGI-TikTok.exe e JOGI-Kwai.exe; build_plan usa cada um quando disponível. Os arquivos grandes são locais/ignorados, original preservado. Novos processos com esses nomes foram observados.
+
+Operador confirmou áudio pela saída padrão monitor/caixinha, sem microfone. Ainda exige isolamento de áudio por aplicativo para não misturar as duas corridas. OBS sendo preparado; portal studio.kwai.com/live/list autenticado exibe IDKanex, sem comprovação do @mentalista.., lista vazia e botãoCriar tráfego. Não foi criada/transmitida LIVE.
+
+## Estado vigente — estabilização 24/10/2026 (prevalece sobre registros anteriores)
+
+Conta TikTok **@xinka_**; Kwai **@mentalista..**. Código de produção/segurança e guias publicados no checkpoint **6cbb4ec** (substitui conta antiga). Modelos/vozes aprovados preservados; nenhuma geração/API paga nesta etapa.
+
+Backend: 116 testes e 48 subtestes passaram na execução serial; Godot: 32 scripts strict; Node: 8 testes; painel FUNCTIONAL_PASS com dois Godot reais isolados. Dois jogos GPU 90 s sob 1000 identidades por canal: 59,918/59,923FPS, todos os 200 presentes únicos por canal confirmados sem duplicação. Existe ensaio anterior de 620 s aprovado; nada certifica 42 horas ou OBS encoding. Evidências e limitações em docs/TESTES_FINAIS.md.
+
+Produção bloqueia simulação, confirma comandos somente após motor, separa capacidades produtor/motor/admin, isola estado por plataforma/modo/conta e mantém encerramento terminal em **26/10/2026 07h Brasília**. Dados legados com presentes/diário não são apagados nem migrados automaticamente. Lock do launcher impede concorrência sobre credenciais.
+
+Atalhos: ABRIR_PREVIA_JOGO.cmd (development), ABRIR_TIKTOK.cmd, ABRIR_KWAI.cmd, ABRIR_DUAS_LIVES.cmd (production), DIAGNOSTICAR_JOGO.cmd (somente leitura). Guias: docs/GUIA_COMPLETO_OPERACAO_LIVES.md e docs/CHECKLIST_PRE_LIVE.md. Revisão independente estática documentada em docs/REVISAO_PRODUCAO_2026-10-24.md.
+
+**Bloqueios preservados:** processos antigos ocupam 8765/8766, TikTok antigo ainda identifica nostalgiia.br, Kwai requires_collector e 8786 livre. Não foram mortos. Para retomada operacional, identificar terminais donos, guardar dados/filas e encerrar controladamente antes de abrir novos serviços. As prévias temporárias de captura usam outras portas/dados e não substituem esse procedimento.
+
+**Captura/contas:** TikTok LIVE Studio 1.38 aberto, usuário colocou visualização vertical; confirmar @xinka_, selecionar janela Tiktok definitiva e validar 1080x1920/enquadramento/áudio. Títulos Windows corrigidos via Window.title e comprovados separadamente, com sufixo (DEBUG) do binário. OBS 33 instalado/aberto, configuração/gravação local não homologada. Kwai Studio nativo não localizado; rota de envio/conta precisa verificação manual. Não afirmar sala real conectada por webhook.
+
+**Estreia pública não autorizada:** impedimento eleitoral/políticas exige avaliação específica; fontes e análise em docs/CONFORMIDADE_ELEITORAL_2026-10-24.md. Sem transmissão pública nesta tarefa. Próximo passo é completar captura/áudio com operador e documentar evidência real, sem clicar Iniciar LIVE.
+
+
 **Última atualização**: 2026-10-24 — checkpoints contínuos de segurança, painel 3 metas e redesign do HUD 9:16 (ver [docs/AGENT_HANDOFF.md](docs/AGENT_HANDOFF.md)).
 
 ## Estado vigente
@@ -130,3 +157,8 @@ Em outro terminal:
 ```powershell
 C:\Users\Kanex\.local\bin\uv.exe run --project C:\Users\Kanex\OneDrive\Desktop\JOGI\services\live_bridge python simulator.py --mode normal --count 50
 ```
+
+
+## Auditoria final de integrações — 24/10, 23h26 BRT
+
+Consulte docs/AUDITORIA_INTEGRACOES_FINAL_2026-10-24.md. Kwai: coletor41480 atualizado e heartbeat retomado; backends e jogos preservados. TikTok continua aguardando descoberta/limites externos. Teste real Chromium com renderer travado aprovado, sem LIVE externa. Telemetria das duas corridas evoluiu por três minutos a60FPS. Não homologados eventos reais nem operação42h sem supervisão; não iniciar LIVE sem autorização/conformidade.

@@ -1,0 +1,28 @@
+JOGI — diagnostico local (nenhuma LIVE iniciada)
+Python real: C:\Users\Kanex\OneDrive\Desktop\JOGI\services\live_bridge\.venv\Scripts\python.exe
+
+ TIKTOK @xinka_ | encerramento: 2026-10-26T07:00:00-03:00
+python: OK C:\Users\Kanex\OneDrive\Desktop\JOGI\services\live_bridge\.venv\Scripts\python.exe
+godot: OK C:\Users\Kanex\Downloads\Godot_v4.7.2-stable_win64.exe\Godot_v4.7.2-stable_win64.exe
+node: OK C:\Program Files\nodejs\node.EXE
+bridge_script: OK C:\Users\Kanex\OneDrive\Desktop\JOGI\services\live_bridge\server.py
+kwai_collector_script: OK C:\Users\Kanex\OneDrive\Desktop\JOGI\tools\kwai_live_collector.cjs
+Painel: http://127.0.0.1:8765/admin
+Estado privado: C:\Users\Kanex\AppData\Local\JOGI\live_bridge\tiktok\production\accounts\fe7fa0c98188fdd1
+Porta 8765 OCUPADA — nao abra outra sessao antes de identificar a atual
+Estado observado: {"platform": "tiktok", "account": "nostalgiia.br", "platform_events_status": "waiting_room", "platform_events_connected": false, "pending_gifts": 0}
+
+ KWAI @mentalista.. | encerramento: 2026-10-26T07:00:00-03:00
+python: OK C:\Users\Kanex\OneDrive\Desktop\JOGI\services\live_bridge\.venv\Scripts\python.exe
+godot: OK C:\Users\Kanex\Downloads\Godot_v4.7.2-stable_win64.exe\Godot_v4.7.2-stable_win64.exe
+node: OK C:\Program Files\nodejs\node.EXE
+bridge_script: OK C:\Users\Kanex\OneDrive\Desktop\JOGI\services\live_bridge\server.py
+kwai_collector_script: OK C:\Users\Kanex\OneDrive\Desktop\JOGI\tools\kwai_live_collector.cjs
+Painel: http://127.0.0.1:8766/admin
+Estado privado: C:\Users\Kanex\AppData\Local\JOGI\live_bridge\kwai\production\accounts\1b3c46347e4dd12e
+Porta 8766 OCUPADA — nao abra outra sessao antes de identificar a atual
+Estado observado: {"platform": "kwai", "account": "mentalista..", "platform_events_status": "kwai_requires_collector", "platform_events_connected": false, "pending_gifts": 0}
+
+Webhook Kwai 8786: livre; receptor nao confirmado
+
+Porta aberta nao comprova Godot ou sala conectada. Consulte docs/GUIA_COMPLETO_OPERACAO_LIVES.md.

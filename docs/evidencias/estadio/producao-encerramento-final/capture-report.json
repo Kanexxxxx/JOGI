@@ -1,0 +1,446 @@
+{
+  "captures": [
+    {
+      "error": 0,
+      "file": "day-empty-1080x1920.png",
+      "fixture_label": "isolated synthetic visual scenario",
+      "image_resize_called": false,
+      "logical_canvas": [
+        1080,
+        1920
+      ],
+      "method": "new GPU render at native SubViewport size, explicit CanvasLayer scale, physical-to-logical badge projection",
+      "png_size": [
+        1080,
+        1920
+      ],
+      "runtime_mode": "production",
+      "scenario": "day-empty",
+      "simulated_audience": false,
+      "viewport_size": [
+        1080,
+        1920
+      ]
+    },
+    {
+      "error": 0,
+      "file": "day-empty-720x1280.png",
+      "fixture_label": "isolated synthetic visual scenario",
+      "image_resize_called": false,
+      "logical_canvas": [
+        1080,
+        1920
+      ],
+      "method": "new GPU render at native SubViewport size, explicit CanvasLayer scale, physical-to-logical badge projection",
+      "png_size": [
+        720,
+        1280
+      ],
+      "runtime_mode": "production",
+      "scenario": "day-empty",
+      "simulated_audience": false,
+      "viewport_size": [
+        720,
+        1280
+      ]
+    },
+    {
+      "error": 0,
+      "file": "day-empty-540x960.png",
+      "fixture_label": "isolated synthetic visual scenario",
+      "image_resize_called": false,
+      "logical_canvas": [
+        1080,
+        1920
+      ],
+      "method": "new GPU render at native SubViewport size, explicit CanvasLayer scale, physical-to-logical badge projection",
+      "png_size": [
+        540,
+        960
+      ],
+      "runtime_mode": "production",
+      "scenario": "day-empty",
+      "simulated_audience": false,
+      "viewport_size": [
+        540,
+        960
+      ]
+    },
+    {
+      "error": 0,
+      "file": "day-empty-360x640.png",
+      "fixture_label": "isolated synthetic visual scenario",
+      "image_resize_called": false,
+      "logical_canvas": [
+        1080,
+        1920
+      ],
+      "method": "new GPU render at native SubViewport size, explicit CanvasLayer scale, physical-to-logical badge projection",
+      "png_size": [
+        360,
+        640
+      ],
+      "runtime_mode": "production",
+      "scenario": "day-empty",
+      "simulated_audience": false,
+      "viewport_size": [
+        360,
+        640
+      ]
+    },
+    {
+      "error": 0,
+      "file": "day-overtake-1080x1920.png",
+      "fixture_label": "isolated synthetic visual scenario",
+      "image_resize_called": false,
+      "logical_canvas": [
+        1080,
+        1920
+      ],
+      "method": "new GPU render at native SubViewport size, explicit CanvasLayer scale, physical-to-logical badge projection",
+      "png_size": [
+        1080,
+        1920
+      ],
+      "runtime_mode": "production",
+      "scenario": "day-overtake",
+      "simulated_audience": false,
+      "viewport_size": [
+        1080,
+        1920
+      ]
+    },
+    {
+      "error": 0,
+      "file": "day-overtake-720x1280.png",
+      "fixture_label": "isolated synthetic visual scenario",
+      "image_resize_called": false,
+      "logical_canvas": [
+        1080,
+        1920
+      ],
+      "method": "new GPU render at native SubViewport size, explicit CanvasLayer scale, physical-to-logical badge projection",
+      "png_size": [
+        720,
+        1280
+      ],
+      "runtime_mode": "production",
+      "scenario": "day-overtake",
+      "simulated_audience": false,
+      "viewport_size": [
+        720,
+        1280
+      ]
+    },
+    {
+      "error": 0,
+      "file": "day-overtake-540x960.png",
+      "fixture_label": "isolated synthetic visual scenario",
+      "image_resize_called": false,
+      "logical_canvas": [
+        1080,
+        1920
+      ],
+      "method": "new GPU render at native SubViewport size, explicit CanvasLayer scale, physical-to-logical badge projection",
+      "png_size": [
+        540,
+        960
+      ],
+      "runtime_mode": "production",
+      "scenario": "day-overtake",
+      "simulated_audience": false,
+      "viewport_size": [
+        540,
+        960
+      ]
+    },
+    {
+      "error": 0,
+      "file": "day-overtake-360x640.png",
+      "fixture_label": "isolated synthetic visual scenario",
+      "image_resize_called": false,
+      "logical_canvas": [
+        1080,
+        1920
+      ],
+      "method": "new GPU render at native SubViewport size, explicit CanvasLayer scale, physical-to-logical badge projection",
+      "png_size": [
+        360,
+        640
+      ],
+      "runtime_mode": "production",
+      "scenario": "day-overtake",
+      "simulated_audience": false,
+      "viewport_size": [
+        360,
+        640
+      ]
+    },
+    {
+      "error": 0,
+      "file": "night-ranking-1080x1920.png",
+      "fixture_label": "isolated synthetic visual scenario",
+      "image_resize_called": false,
+      "logical_canvas": [
+        1080,
+        1920
+      ],
+      "method": "new GPU render at native SubViewport size, explicit CanvasLayer scale, physical-to-logical badge projection",
+      "png_size": [
+        1080,
+        1920
+      ],
+      "runtime_mode": "production",
+      "scenario": "night-ranking",
+      "simulated_audience": false,
+      "viewport_size": [
+        1080,
+        1920
+      ]
+    },
+    {
+      "error": 0,
+      "file": "night-ranking-720x1280.png",
+      "fixture_label": "isolated synthetic visual scenario",
+      "image_resize_called": false,
+      "logical_canvas": [
+        1080,
+        1920
+      ],
+      "method": "new GPU render at native SubViewport size, explicit CanvasLayer scale, physical-to-logical badge projection",
+      "png_size": [
+        720,
+        1280
+      ],
+      "runtime_mode": "production",
+      "scenario": "night-ranking",
+      "simulated_audience": false,
+      "viewport_size": [
+        720,
+        1280
+      ]
+    },
+    {
+      "error": 0,
+      "file": "night-ranking-540x960.png",
+      "fixture_label": "isolated synthetic visual scenario",
+      "image_resize_called": false,
+      "logical_canvas": [
+        1080,
+        1920
+      ],
+      "method": "new GPU render at native SubViewport size, explicit CanvasLayer scale, physical-to-logical badge projection",
+      "png_size": [
+        540,
+        960
+      ],
+      "runtime_mode": "production",
+      "scenario": "night-ranking",
+      "simulated_audience": false,
+      "viewport_size": [
+        540,
+        960
+      ]
+    },
+    {
+      "error": 0,
+      "file": "night-ranking-360x640.png",
+      "fixture_label": "isolated synthetic visual scenario",
+      "image_resize_called": false,
+      "logical_canvas": [
+        1080,
+        1920
+      ],
+      "method": "new GPU render at native SubViewport size, explicit CanvasLayer scale, physical-to-logical badge projection",
+      "png_size": [
+        360,
+        640
+      ],
+      "runtime_mode": "production",
+      "scenario": "night-ranking",
+      "simulated_audience": false,
+      "viewport_size": [
+        360,
+        640
+      ]
+    },
+    {
+      "error": 0,
+      "file": "podium-1080x1920.png",
+      "fixture_label": "isolated synthetic visual scenario",
+      "image_resize_called": false,
+      "logical_canvas": [
+        1080,
+        1920
+      ],
+      "method": "new GPU render at native SubViewport size, explicit CanvasLayer scale, physical-to-logical badge projection",
+      "png_size": [
+        1080,
+        1920
+      ],
+      "runtime_mode": "production",
+      "scenario": "podium",
+      "simulated_audience": false,
+      "viewport_size": [
+        1080,
+        1920
+      ]
+    },
+    {
+      "error": 0,
+      "file": "podium-720x1280.png",
+      "fixture_label": "isolated synthetic visual scenario",
+      "image_resize_called": false,
+      "logical_canvas": [
+        1080,
+        1920
+      ],
+      "method": "new GPU render at native SubViewport size, explicit CanvasLayer scale, physical-to-logical badge projection",
+      "png_size": [
+        720,
+        1280
+      ],
+      "runtime_mode": "production",
+      "scenario": "podium",
+      "simulated_audience": false,
+      "viewport_size": [
+        720,
+        1280
+      ]
+    },
+    {
+      "error": 0,
+      "file": "podium-540x960.png",
+      "fixture_label": "isolated synthetic visual scenario",
+      "image_resize_called": false,
+      "logical_canvas": [
+        1080,
+        1920
+      ],
+      "method": "new GPU render at native SubViewport size, explicit CanvasLayer scale, physical-to-logical badge projection",
+      "png_size": [
+        540,
+        960
+      ],
+      "runtime_mode": "production",
+      "scenario": "podium",
+      "simulated_audience": false,
+      "viewport_size": [
+        540,
+        960
+      ]
+    },
+    {
+      "error": 0,
+      "file": "podium-360x640.png",
+      "fixture_label": "isolated synthetic visual scenario",
+      "image_resize_called": false,
+      "logical_canvas": [
+        1080,
+        1920
+      ],
+      "method": "new GPU render at native SubViewport size, explicit CanvasLayer scale, physical-to-logical badge projection",
+      "png_size": [
+        360,
+        640
+      ],
+      "runtime_mode": "production",
+      "scenario": "podium",
+      "simulated_audience": false,
+      "viewport_size": [
+        360,
+        640
+      ]
+    },
+    {
+      "error": 0,
+      "file": "ended-1080x1920.png",
+      "fixture_label": "isolated synthetic visual scenario",
+      "image_resize_called": false,
+      "logical_canvas": [
+        1080,
+        1920
+      ],
+      "method": "new GPU render at native SubViewport size, explicit CanvasLayer scale, physical-to-logical badge projection",
+      "png_size": [
+        1080,
+        1920
+      ],
+      "runtime_mode": "production",
+      "scenario": "ended",
+      "simulated_audience": false,
+      "viewport_size": [
+        1080,
+        1920
+      ]
+    },
+    {
+      "error": 0,
+      "file": "ended-720x1280.png",
+      "fixture_label": "isolated synthetic visual scenario",
+      "image_resize_called": false,
+      "logical_canvas": [
+        1080,
+        1920
+      ],
+      "method": "new GPU render at native SubViewport size, explicit CanvasLayer scale, physical-to-logical badge projection",
+      "png_size": [
+        720,
+        1280
+      ],
+      "runtime_mode": "production",
+      "scenario": "ended",
+      "simulated_audience": false,
+      "viewport_size": [
+        720,
+        1280
+      ]
+    },
+    {
+      "error": 0,
+      "file": "ended-540x960.png",
+      "fixture_label": "isolated synthetic visual scenario",
+      "image_resize_called": false,
+      "logical_canvas": [
+        1080,
+        1920
+      ],
+      "method": "new GPU render at native SubViewport size, explicit CanvasLayer scale, physical-to-logical badge projection",
+      "png_size": [
+        540,
+        960
+      ],
+      "runtime_mode": "production",
+      "scenario": "ended",
+      "simulated_audience": false,
+      "viewport_size": [
+        540,
+        960
+      ]
+    },
+    {
+      "error": 0,
+      "file": "ended-360x640.png",
+      "fixture_label": "isolated synthetic visual scenario",
+      "image_resize_called": false,
+      "logical_canvas": [
+        1080,
+        1920
+      ],
+      "method": "new GPU render at native SubViewport size, explicit CanvasLayer scale, physical-to-logical badge projection",
+      "png_size": [
+        360,
+        640
+      ],
+      "runtime_mode": "production",
+      "scenario": "ended",
+      "simulated_audience": false,
+      "viewport_size": [
+        360,
+        640
+      ]
+    }
+  ],
+  "paid_api_calls": 0,
+  "public_live": false
+}
