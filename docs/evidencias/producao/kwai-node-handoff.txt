@@ -1,0 +1,32 @@
+✔ explicit unit price wins over a total coin_value in the same gift (3.8218ms)
+✔ explicit zero unit price is preserved; missing value does not infer a tier price (4.9341ms)
+✔ restart retains explicit unit price including zero (82.7539ms)
+✔ 401, 503 and timeout retain exact paid IDs until a durable ACK (44.0324ms)
+✔ restart recovers paid data without storing avatar URLs or credentials (56.3103ms)
+✔ HTTP success alone, incorrect ID and unconfirmed payload never acknowledge (2.1046ms)
+✔ capacity is explicit, previous gifts remain pending, concurrent flush sends once (1.9036ms)
+✔ actual loopback HTTP transport retries 401/503 and validates the webhook ACK (155.9731ms)
+✔ discovery only follows a unique real live anchor (3.058ms)
+✔ normalization preserves source clock without inventing a user ID (1.0088ms)
+✔ diagnostics distinguish observed comments, votes and nonvotes without retaining private text (0.8082ms)
+✔ parser reports rejected event candidates separately from absent data (1.3388ms)
+✔ DOM repeated valid messages from different elements keep unique IDs while rescanning deduplicates the same elements (4.7944ms)
+✔ HTTP success is distinct from backend ingestion and intentional nonvote filtering (179.6233ms)
+✔ only one live owner can request login; another request is preserved (9.4599ms)
+✔ waits for explicit release from active collector before granting profile (12.7135ms)
+[kwai] Login solicitado. Aguardando liberação segura do perfil...
+[kwai] Faça login manualmente e feche esta janela ao concluir. A fila de presentes continua no coletor.
+✔ stale acknowledgement cannot release a different login request (29.4715ms)
+✔ handoff does not modify cookies or the durable gift queue (11.431ms)
+✔ login opens only the browser and never opens or pumps paid queue (17.094ms)
+✔ old collector without owner acknowledgement never opens profile (5.0738ms)
+✔ closed Chromium page is not considered a usable collector browser (0.2946ms)
+✔ hung browser evaluation is bounded without stopping other components (9.9952ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 766.6908

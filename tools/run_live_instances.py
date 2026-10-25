@@ -26,7 +26,7 @@ if str(BRIDGE_DIR) not in sys.path:
     sys.path.insert(0, str(BRIDGE_DIR))
 from operational_shutdown import normalize_end_at
 from server import normalize_secret_token
-PUBLIC_ACCOUNTS = {"tiktok": "xinka_", "kwai": "mentalista.."}
+PUBLIC_ACCOUNTS = {"tiktok": "nostalgiia.br", "kwai": "mentalista.."}
 PORTS = {"tiktok": 8765, "kwai": 8766}
 KWAI_WEBHOOK_PORT = 8786
 DEFAULT_GODOT = Path(r"C:\Users\Kanex\Downloads\Godot_v4.7.2-stable_win64.exe\Godot_v4.7.2-stable_win64.exe")
@@ -155,6 +155,11 @@ def prepare_operator_credentials(plan: dict, environment: dict[str, str], *, por
     if directory.is_relative_to(ROOT.resolve()) or target.resolve().is_relative_to(ROOT.resolve()):
         raise RuntimeError("A credencial administrativa deve ficar fora da pasta versionada do projeto.")
     directory.mkdir(parents=True, exist_ok=True)
+    if target.exists():
+        existing = normalize_secret_token(target.read_text(encoding="utf-8"))
+        if not existing:
+            raise RuntimeError("Credencial local existente inválida; preservada para revisão, sem substituição automática.")
+        return existing, None
     token = secrets.token_urlsafe(32)
     temporary = directory / ("operator-token." + secrets.token_hex(8) + ".tmp")
     try:
@@ -174,13 +179,10 @@ def prepare_operator_credentials(plan: dict, environment: dict[str, str], *, por
 
 
 def cleanup_operator_credentials(path: Path, token: str) -> None:
-    """Do not remove a credential file changed by another launcher/operator."""
-    try:
-        if path.read_text(encoding="utf-8").strip() == token:
-            path.unlink()
-    except (OSError, UnicodeError):
-        # A crash or busy file may leave a stale token; next free launch replaces it.
-        pass
+    """Keep the account-local capability through clean shutdown and cold boot."""
+    # Ephemeral producer/engine credentials still rotate on each launch.
+    # The admin token must remain valid in the operator's existing browser.
+    return
 
 
 def launch(plans: list[dict], *, bridge_only: bool = False) -> int:

@@ -18,6 +18,18 @@ def gift(event_id, value=42, source='tiktok'):
 
 
 class GiftSchemaTests(unittest.TestCase):
+    def test_showcase_prices_are_not_claimed_confirmed_for_another_account(self):
+        import sqlite3
+        from gift_catalog import GiftCatalog
+        with sqlite3.connect(':memory:') as db:
+            catalog=GiftCatalog(db)
+            verified=catalog.showcase('xinka_')
+            switched=catalog.showcase('nostalgiia.br')
+            self.assertEqual(len(verified),4)
+            self.assertEqual(len(switched),4)
+            self.assertTrue(all(entry['verified'] for entry in verified))
+            self.assertFalse(any(entry['verified'] or entry['availability_confirmed'] for entry in switched))
+
     def test_optional_metadata_and_total_consistency(self):
         event = gift('evt_catalog_schema')
         self.assertEqual(event['payload']['gift_id'],'rose-99')

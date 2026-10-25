@@ -21,10 +21,10 @@ import run_live_instances
 def test_account_scoped_paths_and_lifetime_launcher_lock(tmp_path, monkeypatch):
     monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
     plan = run_live_instances.build_plan("tiktok", runtime_mode="production")
-    key = hashlib.sha256(b"xinka_").hexdigest()[:16]
-    assert plan["account"] == "xinka_"
+    key = hashlib.sha256(b"nostalgiia.br").hexdigest()[:16]
+    assert plan["account"] == "nostalgiia.br"
     assert Path(plan["state_dir"]) == tmp_path / "JOGI" / "live_bridge" / "tiktok" / "production" / "accounts" / key
-    assert plan["godot_environment"]["LIVE_ACCOUNT"] == "xinka_"
+    assert plan["godot_environment"]["LIVE_ACCOUNT"] == "nostalgiia.br"
     lock = run_live_instances.LauncherLock(Path(plan["state_dir"]))
     try:
         credential = Path(plan["state_dir"]) / "operator-token.key"
@@ -83,7 +83,7 @@ class FakeProcess:
 
 
 class SupervisorTests(unittest.TestCase):
-    def test_operator_bootstrap_is_local_atomic_rotated_and_owner_cleaned(self):
+    def test_operator_bootstrap_is_local_atomic_and_survives_cold_boot(self):
         with temporary_directory_retry() as folder:
             plan = {'runtime_mode':'production', 'state_dir':str(Path(folder) / 'private')}
             token, key_file = run_live_instances.prepare_operator_credentials(plan,
@@ -93,11 +93,12 @@ class SupervisorTests(unittest.TestCase):
             self.assertTrue(key_file.read_text().strip() == token)
             self.assertFalse(list(key_file.parent.glob('*.tmp')))
             rotated, same_file = run_live_instances.prepare_operator_credentials(plan, {}, port_free=True)
-            self.assertTrue(rotated != token and same_file == key_file)
+            self.assertEqual(rotated, token)
+            self.assertIsNone(same_file)
             run_live_instances.cleanup_operator_credentials(key_file, token)
             self.assertTrue(key_file.is_file(), 'old launcher must not remove replacement token')
             run_live_instances.cleanup_operator_credentials(key_file, rotated)
-            self.assertFalse(key_file.exists())
+            self.assertTrue(key_file.is_file())
 
     def test_operator_bootstrap_preserves_manual_or_occupied_credentials(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -123,15 +124,14 @@ class SupervisorTests(unittest.TestCase):
                 'state_dir':str(run_live_instances.ROOT / 'must-not-write-credentials')}, {}, port_free=True)
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / 'operator-token.key'
-            path.write_text('previous-fixture')
             with patch.object(run_live_instances.os, 'replace', side_effect=OSError('fixture')):
                 with self.assertRaisesRegex(RuntimeError, 'credencial'):
                     run_live_instances.prepare_operator_credentials({'runtime_mode':'production',
                         'state_dir':folder}, {}, port_free=True)
-            self.assertEqual(path.read_text(), 'previous-fixture')
+            self.assertFalse(path.exists())
             self.assertFalse(list(Path(folder).glob('*.tmp')))
 
-    def test_production_launcher_bootstraps_admin_without_logging_secret_and_cleans_owned_file(self):
+    def test_production_launcher_bootstraps_admin_without_logging_secret_and_preserves_key(self):
         with tempfile.TemporaryDirectory() as folder:
             plan = run_live_instances.build_plan('tiktok', runtime_mode='production')
             plan['state_dir'] = str(Path(folder) / 'production')
@@ -163,7 +163,7 @@ class SupervisorTests(unittest.TestCase):
             rendered = '\n'.join(str(arg) for call in printed.call_args_list for arg in call.args)
             self.assertFalse(secret in rendered)
             self.assertTrue(str(key_file) in rendered)
-            self.assertFalse(key_file.exists())
+            self.assertTrue(key_file.is_file())
 
     def test_occupied_port_without_health_does_not_replace_operator_key_or_spawn(self):
         with tempfile.TemporaryDirectory() as folder:

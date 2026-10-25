@@ -36,11 +36,11 @@ test('explicit zero unit price is preserved; missing value does not infer a tier
 test('restart retains explicit unit price including zero', async () => {
   await withDatabase(async filename => {
     const first = new DurableGiftDelivery(filename, {send:async()=>({acknowledged:false})});
-    first.accept({...gift('unit-persist'),unit_coin_value:0,coin_value:0});
+    first.accept({...gift('unit-persist'),unit_coin_value:0,coin_value:0,timestamp_ms:1792890000123,timestamp_precision:'milliseconds'});
     await first.close();
     let received;
     const second = new DurableGiftDelivery(filename,{send:async event=>{received=event;return ack(event);}});
-    try { await second.flushDue(); assert.equal(received.unit_coin_value,0); }
+    try { await second.flushDue(); assert.equal(received.unit_coin_value,0);assert.equal(received.timestamp_ms,1792890000123);assert.equal(received.timestamp_precision,'milliseconds'); }
     finally { await second.close(); }
   });
 });

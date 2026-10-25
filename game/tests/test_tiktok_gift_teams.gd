@@ -2,7 +2,10 @@ extends SceneTree
 var race: StadiumRace
 var passed: bool = true
 var seq: int = 0
+var tested_platform: String = "tiktok"
 func _initialize() -> void:
+ if OS.get_environment("JOGI_TEST_PLATFORM") == "kwai":
+  tested_platform = "kwai"
  call_deferred("run_test")
 func check(value: bool, detail: String) -> void:
  if not value:
@@ -12,7 +15,7 @@ func gift(team: int, tier: int, value: int = -1) -> Dictionary:
  seq+=1
  var names: Array[String] = ["Rosa", "Mini dino", "Trompete de Festa", "Calêndula"]
  var actions: Array[String] = ["gift_t1_turbo", "gift_t2_shield_or_obstacle", "gift_t3_attack", "gift_t4_super_rally"]
- return {"schema_version":"1.0","source":"tiktok","event_type":"gift","event_id":"gift_teams_fixture_%08d"%seq,"user":{"user_id":"fixture_%d"%team,"display_name":"Pessoa teste"},"payload":{"candidate_slot":team,"gift_tier":"T%d"%tier,"action_id":actions[tier-1],"unit_coin_value":([1,10,149,1000][tier-1] if value<0 else value),"coin_value":([1,10,149,1000][tier-1] if value<0 else value),"repeat_count":1,"gift_id":"fixture_%d"%tier,"gift_name":names[tier-1]}}
+ return {"schema_version":"1.0","source":tested_platform,"event_type":"gift","event_id":"gift_teams_fixture_%08d"%seq,"user":{"user_id":"fixture_%d"%team,"display_name":"Pessoa teste"},"payload":{"candidate_slot":team,"gift_tier":"T%d"%tier,"action_id":actions[tier-1],"unit_coin_value":([1,10,149,1000][tier-1] if value<0 else value),"coin_value":([1,10,149,1000][tier-1] if value<0 else value),"repeat_count":1,"gift_id":"fixture_%d"%tier,"gift_name":names[tier-1]}}
 func capture(label: String) -> void:
  var directory: String = OS.get_environment("JOGI_GIFT_CAPTURE_DIR")
  if directory.is_empty() or DisplayServer.get_name()=="headless":
@@ -34,7 +37,7 @@ func run_test() -> void:
  root.add_child(race)
  race.set_process(false)
  race.set_physics_process(false)
- race.event_bus.session_platform="tiktok"
+ race.event_bus.session_platform=tested_platform
  race.start_race_immediately()
  for runner: CandidateRunner in race.runners:
   runner.set_physics_process(false)

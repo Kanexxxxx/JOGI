@@ -588,6 +588,7 @@ class TikTokLiveAdapter(BaseLiveAdapter):
             self._worker_task = None
 
         self._status = "stopped"
+        self._teams.db.close()
         logger.info("TikTokLiveAdapter encerrado.")
 
     def get_stats(self) -> dict[str, Any]:

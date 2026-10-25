@@ -28,7 +28,7 @@ function parseArgs(argv) {
     once: false,
     allowLocalTestUrl: false,
     heartbeatMs: 6000,
-    refreshMs: 25000,
+    refreshMs: 120000,
   };
   for (let i = 2; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -146,9 +146,130 @@ function isLiveApiUrl(rawUrl) {
   return /\/live\/|liveStream|webcast|live\/feed/i.test(String(rawUrl || ''));
 }
 
+function chooseLiveLink(links, baseUrl) {
+  // Only follow an anchor the platform actually exposed; never invent room IDs.
+  const base = new URL(baseUrl);
+  if (!base.pathname.startsWith('/@')) return null;
+  const choices = new Set();
+  for (const item of links) {
+    try {
+      const url = new URL(item.href, base);
+      if (!isAllowedNavigationUrl(url.href) || !/^\/live\/(?!list(?:\/|$)|share(?:\/|$))[^/]+/.test(url.pathname)) continue;
+      if (item.owner !== base.pathname.slice(2)) continue;
+      choices.add(url.href);
+    } catch (_) {}
+  }
+  return choices.size === 1 ? [...choices][0] : null;
+}
+
+// Counters retain no chat text, names, user IDs, cookies or payload bodies.
+class CollectorDiagnostics {
+  constructor() {
+    this.values = {schema_version:1,raw_observed:0,comments_observed:0,votes_valid:0,comments_non_vote:0,
+      likes_observed:0,follows_observed:0,shares_observed:0,gifts_identified:0,parser_rejections:0,
+      duplicates:0,webhook_accepted:0,webhook_rejected:0,webhook_filtered:0,webhook_errors:0,auth_rejections:0,json_responses:0,
+      websocket_frames:0,unsupported_binary_frames:0,unstable_dom_events:0,json_parse_errors:0,last_event_at:null,last_error:null};
+    this.page = {room_detected:'unknown',feed_connected:false,page_kind:'unknown',video_count:0,chat_nodes:0,app_links:0,
+      websocket_connections:0,final_origin:'',final_path:''};
+  }
+  observe(event) {
+    this.values.raw_observed++;
+    this.values.last_event_at=Date.now();
+    if(event.type==='comment') {
+      this.values.comments_observed++;
+      if(/^(?:13|22|#1|#2)$/.test(String(event.comment||'').trim()))this.values.votes_valid++;
+      else this.values.comments_non_vote++;
+    }
+    const key={like:'likes_observed',follow:'follows_observed',share:'shares_observed',gift:'gifts_identified'}[event.type];
+    if(key)this.values[key]++;
+  }
+  snapshot(delivery) {return {...this.values,...this.page,gifts_backend_confirmed:delivery.forwarded||0,gifts_pending:delivery.pending||0};}
+}
+
+function installDomObserver() {
+      const seenDom = new Set();
+      const domIds = new WeakMap();
+      let domSequence=0;
+      const documentSession=Date.now().toString(36)+Math.random().toString(36).slice(2);
+      function rememberDom(key) {
+        if (seenDom.has(key)) return false;
+        if (seenDom.size >= 5000) seenDom.clear();
+        seenDom.add(key);
+        return true;
+      }
+      function isLiveDomRoom() {
+        if (document.querySelector('[data-jogi-live-active="true"]') !== null) return true;
+        if (!/\/live\/|liveStream/i.test(window.location.href)) return false;
+        const videos = Array.from(document.querySelectorAll('video'));
+        return videos.some(v => v.readyState >= 2 && !v.ended && v.videoWidth > 0);
+      }
+      function scanNode(root) {
+        if (!root || !root.querySelectorAll) return;
+        const explicitNodes = root.querySelectorAll('[data-jogi-kwai-event]');
+        for (const el of explicitNodes) {
+          const rawJson = el.getAttribute('data-jogi-kwai-event');
+          if (!rawJson || !rememberDom(rawJson)) continue;
+          try {
+            const parsed = JSON.parse(rawJson);
+            if (parsed && typeof parsed === 'object' && typeof window.__jogiKwaiEmit === 'function') {
+              window.__jogiKwaiEmit({ ...parsed, __jogiExplicit: true });
+            }
+          } catch (_) {}
+        }
+        if (!isLiveDomRoom()) return;
+        const chatNodes = root.querySelectorAll('[class*="chat-item"], [class*="barrage-item"]');
+        let idx = 0;
+        for (const el of chatNodes) {
+          idx += 1;
+          const text = (el.textContent || '').replace(/\s+/g, ' ').trim();
+          if (!text || text.length > 240) continue;
+          const nativeId=el.dataset?.id||el.dataset?.messageId||el.getAttribute?.('data-feed-id');
+          let elementId=nativeId;
+          if(!elementId){elementId=domIds.get(el);if(!elementId){elementId=`dom_${documentSession}_${++domSequence}`;domIds.set(el,elementId);}}
+          const key = elementId;
+          if (!rememberDom(key)) continue;
+          const userEl = el.querySelector('[class*="name"], [class*="user"], [class*="author"]');
+          const contentEl = el.querySelector('[class*="content"], [class*="text"], [class*="msg"]');
+          const displayName = (userEl ? userEl.textContent : 'Espectador Kwai').replace(/[:：]\s*$/, '').trim();
+          const comment = (contentEl ? contentEl.textContent : text).trim();
+          if (typeof window.__jogiKwaiEmit === 'function') {
+            window.__jogiKwaiEmit({
+              type: 'comment',
+              id: elementId,
+              __jogiUnstableDomId:!nativeId,
+              // A nickname is presentation, never a stable platform identity.
+              user_id: el.dataset?.userId || el.dataset?.principalId || userEl?.getAttribute?.('data-user-id') || 'anon_kwai',
+              display_name: displayName || 'Espectador Kwai',
+              comment,
+            });
+          }
+        }
+      }
+      const startObserver = () => {
+        scanNode(document);
+        const obs = new MutationObserver(mutations => {
+          for (const m of mutations) {
+            for (const added of m.addedNodes) {
+              if (added && added.nodeType === 1) scanNode(added);
+            }
+          }
+          scanNode(document);
+        });
+        if (document.documentElement) {
+          obs.observe(document.documentElement, { childList: true, subtree: true });
+        }
+      };
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', startObserver, { once: true });
+      } else {
+        startObserver();
+      }
+}
+
 function normalizeFeedPayload(body, options = {}) {
   const out = [];
   let liveHint = false;
+  let candidates=0;
   if (!body || typeof body !== 'object') return { events: out, liveHint };
 
   const root = body.data && typeof body.data === 'object' ? body.data : body;
@@ -162,6 +283,7 @@ function normalizeFeedPayload(body, options = {}) {
   }
 
   const pushEvent = (raw, fallbackType) => {
+    candidates++;
     if (!raw || typeof raw !== 'object') return;
     const type = String(raw.type || raw.event_type || fallbackType || '').toLowerCase();
     if (!type) return;
@@ -173,12 +295,18 @@ function normalizeFeedPayload(body, options = {}) {
     const rawAvatar = raw.avatar_url || raw.headUrl || userObj.headUrl || userObj.avatar || userObj.avatar_url;
     const avatarUrl = typeof rawAvatar === 'string' && rawAvatar.startsWith('https://') ? rawAvatar.slice(0, 1024) : undefined;
     const rawId = raw.event_id || raw.id || raw.feedId || raw.comboKey || '';
+    const stamp = Number(raw.timestamp_ms ?? raw.timestamp ?? raw.time ?? 0);
+    const timestamp = Number.isFinite(stamp) && stamp > 0 ? {
+      timestamp_ms: stamp < 100000000000 ? Math.trunc(stamp * 1000) : Math.trunc(stamp),
+      timestamp_precision: stamp < 100000000000 ? 'seconds' : 'milliseconds',
+    } : {};
 
     if (type === 'comment' || type === 'chat' || type === 'vote') {
       const comment = String(raw.comment || raw.content || raw.text || '').trim();
       if (!comment) return;
       out.push({
         type: 'comment',
+        ...timestamp,
         event_id: rawId ? String(rawId).slice(0, 120) : makeEventId('cmt', [userId, comment, String(raw.timestamp_ms || raw.time || '')]),
         user_id: userId,
         display_name: displayName,
@@ -197,6 +325,7 @@ function normalizeFeedPayload(body, options = {}) {
       const giftImage = raw.gift_image_url || raw.giftUrl || raw.picUrl || undefined;
       out.push({
         type: 'gift',
+        ...timestamp,
         event_id: rawId
           ? String(rawId).slice(0, 120)
           : makeEventId('gift', [userId, giftId, String(repeatCount), String(raw.comboCount || raw.timestamp_ms || '')]),
@@ -214,6 +343,7 @@ function normalizeFeedPayload(body, options = {}) {
       const likeCount = Math.max(1, Math.min(50000, Math.trunc(Number(raw.like_count ?? raw.count ?? 1) || 1)));
       out.push({
         type: 'like',
+        ...timestamp,
         event_id: rawId ? String(rawId).slice(0, 120) : makeEventId('like', [userId, String(likeCount), String(raw.timestamp_ms || '')]),
         user_id: userId,
         display_name: displayName,
@@ -223,6 +353,7 @@ function normalizeFeedPayload(body, options = {}) {
     } else if (type === 'share' || type === 'forward') {
       out.push({
         type: 'share',
+        ...timestamp,
         event_id: rawId ? String(rawId).slice(0, 120) : makeEventId('share', [userId, String(raw.timestamp_ms || '')]),
         user_id: userId,
         display_name: displayName,
@@ -231,6 +362,7 @@ function normalizeFeedPayload(body, options = {}) {
     } else if (type === 'follow' || type === 'new_follower') {
       out.push({
         type: 'follow',
+        ...timestamp,
         event_id: rawId ? String(rawId).slice(0, 120) : makeEventId('follow', [userId, String(raw.timestamp_ms || '')]),
         user_id: userId,
         display_name: displayName,
@@ -272,7 +404,7 @@ function normalizeFeedPayload(body, options = {}) {
     }
   }
 
-  return { events: out, liveHint };
+  return { events: out, liveHint, rejected: candidates-out.length };
 }
 
 function localAuthHeaders(extra = {}) {
@@ -284,14 +416,22 @@ function localAuthHeaders(extra = {}) {
   return headers;
 }
 
-async function postWebhook(webhookUrl, payload) {
+async function postWebhook(webhookUrl, payload, onResponse = null) {
   const res = await fetch(webhookUrl, {
     method: 'POST',
     headers: localAuthHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(payload),
     signal: AbortSignal.timeout(4000),
   });
+  if(onResponse)onResponse(res.status);
   return res.ok;
+}
+
+async function postEventWebhook(webhookUrl,payload) {
+  const response=await fetch(webhookUrl,{method:'POST',headers:localAuthHeaders({'Content-Type':'application/json'}),body:JSON.stringify(payload),signal:AbortSignal.timeout(4000)});
+  if(!response.ok)return {transport_ok:false,status:response.status,ingested:false};
+  const result=await response.json();
+  return {transport_ok:true,status:response.status,ingested:result.ingested===true};
 }
 
 async function postGiftWebhook(webhookUrl, payload) {
@@ -378,7 +518,7 @@ async function main() {
   const defaultUrl = args.liveUrl || `https://www.kwai.com/@${args.account}`;
 
   if (!isAllowedNavigationUrl(defaultUrl, args.allowLocalTestUrl)) {
-    throw new Error(`URL inicial nao permitida para o coletor Kwai: ${defaultUrl}`);
+    throw new Error('URL inicial nao permitida para o coletor Kwai.');
   }
 
   const { chromium } = loadPlaywright();
@@ -390,6 +530,7 @@ async function main() {
   const profileOwner = profileHandoff.claim(profileOwnerPath);
 
   const seenIds = new BoundedSet(10000);
+  const diagnostics = new CollectorDiagnostics();
   let eventsForwarded = 0;
   let lastFeedLiveAt = 0;
   let stopping = false;
@@ -409,10 +550,13 @@ async function main() {
     delivery.flushDue().catch(() => { delivery.attention = 'storage_error'; });
   }, 250);
 
+  const diagnosticSnapshot = () => {const result=diagnostics.snapshot(delivery.stats());result.feed_connected=Boolean(page&&!lastNavigationError&&Date.now()-lastFeedLiveAt<30000);if(!page||lastNavigationError)result.room_detected='unknown';return result;};
   const forwardEvent = async rawEvent => {
     if (!rawEvent || typeof rawEvent !== 'object') return;
+    diagnostics.observe(rawEvent);
     const id = String(rawEvent.event_id || '');
-    if (!id || seenIds.has(id)) return;
+    if (!id) {diagnostics.values.parser_rejections++;return;}
+    if (seenIds.has(id)) {diagnostics.values.duplicates++;return;}
     if (rawEvent.type === 'gift' || rawEvent.type === 'present') {
       try {
         delivery.accept(rawEvent); // FULL-sync SQLite before any network attempt.
@@ -423,9 +567,14 @@ async function main() {
       return;
     }
     try {
-      const ok = await postWebhook(webhookUrl, rawEvent);
-      if (ok) { seenIds.add(id); eventsForwarded += 1; }
-    } catch (_) {}
+      const result=await postEventWebhook(webhookUrl,rawEvent);
+      if(result.status===401||result.status===403)diagnostics.values.auth_rejections++;
+      if(result.transport_ok){
+        seenIds.add(id);
+        if(result.ingested){eventsForwarded++;diagnostics.values.webhook_accepted++;}
+        else diagnostics.values.webhook_filtered++;
+      } else {diagnostics.values.webhook_rejected++;diagnostics.values.last_error='webhook_rejected';}
+    } catch (_) {diagnostics.values.webhook_errors++;diagnostics.values.last_error="webhook_transport";}
   };
 
   const cleanupLock = () => {
@@ -479,7 +628,7 @@ async function main() {
           headless: !args.headed,
           executablePath,
           viewport: { width: 1280, height: 800 },
-          args: ['--disable-blink-features=AutomationControlled', '--mute-audio'],
+          args: ['--mute-audio'],
         });
         const openedContext=context;
         openedContext.once('close',()=>{
@@ -513,89 +662,19 @@ async function main() {
     await context.exposeBinding('__jogiKwaiEmit', async (_source, item) => {
       if (!item || typeof item !== 'object') return;
       const isExplicit = item.__jogiExplicit === true;
-      const { events } = normalizeFeedPayload(
+      const { events, rejected } = normalizeFeedPayload(
         { events: [item] },
         { trustedLiveSource: true, allowHintFromGeneric: false }
       );
-      if (isExplicit) {
-        lastFeedLiveAt = Date.now();
-      }
+      diagnostics.values.parser_rejections+=rejected||0;
+      if (events.length) lastFeedLiveAt = Date.now();
       for (const ev of events) {
+        if(item.__jogiUnstableDomId){diagnostics.observe(ev);diagnostics.values.unstable_dom_events++;diagnostics.values.last_error='unstable_dom_identity';continue;}
         await forwardEvent(ev);
       }
     });
 
-    await context.addInitScript(() => {
-      const seenDom = new Set();
-      function rememberDom(key) {
-        if (seenDom.has(key)) return false;
-        if (seenDom.size >= 5000) seenDom.clear();
-        seenDom.add(key);
-        return true;
-      }
-      function isLiveDomRoom() {
-        if (document.querySelector('[data-jogi-live-active="true"]') !== null) return true;
-        if (!/\/live\/|liveStream/i.test(window.location.href)) return false;
-        const videos = Array.from(document.querySelectorAll('video'));
-        return videos.some(v => v.readyState >= 2 && !v.ended && v.videoWidth > 0);
-      }
-      function scanNode(root) {
-        if (!root || !root.querySelectorAll) return;
-        const explicitNodes = root.querySelectorAll('[data-jogi-kwai-event]');
-        for (const el of explicitNodes) {
-          const rawJson = el.getAttribute('data-jogi-kwai-event');
-          if (!rawJson || !rememberDom(rawJson)) continue;
-          try {
-            const parsed = JSON.parse(rawJson);
-            if (parsed && typeof parsed === 'object' && typeof window.__jogiKwaiEmit === 'function') {
-              window.__jogiKwaiEmit({ ...parsed, __jogiExplicit: true });
-            }
-          } catch (_) {}
-        }
-        if (!isLiveDomRoom()) return;
-        const chatNodes = root.querySelectorAll('[class*="chat-item"], [class*="barrage-item"]');
-        let idx = 0;
-        for (const el of chatNodes) {
-          idx += 1;
-          const text = (el.textContent || '').replace(/\s+/g, ' ').trim();
-          if (!text || text.length > 240) continue;
-          const key = `${el.dataset?.id || ''}|${text}`;
-          if (!rememberDom(key)) continue;
-          const userEl = el.querySelector('[class*="name"], [class*="user"], [class*="author"]');
-          const contentEl = el.querySelector('[class*="content"], [class*="text"], [class*="msg"]');
-          const displayName = (userEl ? userEl.textContent : 'Espectador Kwai').replace(/[:：]\s*$/, '').trim();
-          const comment = (contentEl ? contentEl.textContent : text).trim();
-          if (typeof window.__jogiKwaiEmit === 'function') {
-            window.__jogiKwaiEmit({
-              type: 'comment',
-              id: el.dataset?.id || undefined,
-              user_id: displayName.toLowerCase().replace(/[^a-z0-9_.-]+/g, '_').slice(0, 48) || `dom_${idx}`,
-              display_name: displayName || 'Espectador Kwai',
-              comment,
-            });
-          }
-        }
-      }
-      const startObserver = () => {
-        scanNode(document);
-        const obs = new MutationObserver(mutations => {
-          for (const m of mutations) {
-            for (const added of m.addedNodes) {
-              if (added && added.nodeType === 1) scanNode(added);
-            }
-          }
-          scanNode(document);
-        });
-        if (document.documentElement) {
-          obs.observe(document.documentElement, { childList: true, subtree: true });
-        }
-      };
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', startObserver, { once: true });
-      } else {
-        startObserver();
-      }
-    });
+    await context.addInitScript(installDomObserver);
 
     page = context.pages()[0] || (await context.newPage());
 
@@ -603,34 +682,40 @@ async function main() {
       try {
         const ct = (response.headers()['content-type'] || '').toLowerCase();
         if (!ct.includes('json')) return;
+        diagnostics.values.json_responses++;
         const body = await response.json();
         const trustedLiveApi = isLiveApiUrl(response.url());
-        const { events, liveHint } = normalizeFeedPayload(body, {
+        const { events, liveHint, rejected } = normalizeFeedPayload(body, {
           trustedLiveSource: trustedLiveApi,
           allowHintFromGeneric: trustedLiveApi,
         });
-        if (liveHint) lastFeedLiveAt = Date.now();
+        diagnostics.values.parser_rejections+=rejected||0;
+        if (events.length) lastFeedLiveAt = Date.now();
         for (const ev of events) {
           await forwardEvent(ev);
         }
-      } catch (_) {}
+      } catch (_) {diagnostics.values.json_parse_errors++;}
     });
 
     page.on('websocket', ws => {
+      diagnostics.page.websocket_connections++;
       ws.on('framereceived', async frame => {
         try {
-          if (typeof frame.payload !== 'string' || !frame.payload.startsWith('{')) return;
+          diagnostics.values.websocket_frames++;
+          if (typeof frame.payload !== 'string') {diagnostics.values.unsupported_binary_frames++;return;}
+          if (!frame.payload.trimStart().startsWith('{'))return;
           const body = JSON.parse(frame.payload);
           const trustedWs = isLiveApiUrl(ws.url());
-          const { events, liveHint } = normalizeFeedPayload(body, {
+          const { events, liveHint, rejected } = normalizeFeedPayload(body, {
             trustedLiveSource: trustedWs,
             allowHintFromGeneric: trustedWs,
           });
-          if (liveHint) lastFeedLiveAt = Date.now();
+          diagnostics.values.parser_rejections+=rejected||0;
+          if (events.length) lastFeedLiveAt = Date.now();
           for (const ev of events) {
             await forwardEvent(ev);
           }
-        } catch (_) {}
+        } catch (_) {diagnostics.values.json_parse_errors++;}
       });
     });
 
@@ -666,10 +751,17 @@ async function main() {
           activeVideo,
           isLiveRoute,
           href: window.location.href,
+          videoCount:videos.length,
+          chatNodes:document.querySelectorAll('[class*="chat-item"], [class*="barrage-item"]').length,
+          appLinks:document.querySelectorAll('a[href^="kwai:"],a[href^="kwailive:"]').length,
         };
       }),5000);
       const feedRecent = Date.now() - lastFeedLiveAt < 30000;
-      if (probe.explicitActive || feedRecent || (probe.isLiveRoute && probe.activeVideo)) {
+      const finalUrl=new URL(probe.href);
+      diagnostics.page={...diagnostics.page,room_detected:feedRecent||probe.explicitActive?'yes':'unknown',
+        feed_connected:feedRecent,page_kind:finalUrl.hostname==='m-live.kwai.com'&&finalUrl.pathname==='/live/share'?'mobile_share_landing':probe.isLiveRoute?'public_live_route':finalUrl.pathname.startsWith('/@')?'profile':'other',
+        final_origin:finalUrl.origin,final_path:finalUrl.pathname,video_count:probe.videoCount,chat_nodes:probe.chatNodes,app_links:probe.appLinks};
+      if (feedRecent) {
         return {
           status: 'connected',
           detail: `Sala Kwai LIVE ativa (${eventsForwarded + delivery.forwarded} eventos confirmados)`,
@@ -685,7 +777,7 @@ async function main() {
       }
       return {
         status: 'waiting_room',
-        detail: `Aguardando LIVE ativa em ${activeTargetUrl}`,
+        detail: diagnostics.page.page_kind==='mobile_share_landing'?'Página móvel de compartilhamento aberta; nenhum feed de eventos identificado. Sala/chat não comprovados.':'Nenhum feed de eventos identificado; aguardando sala acessível.',
         liveUrl: probe.href || activeTargetUrl,
       };
     } catch (err) {
@@ -712,7 +804,7 @@ async function main() {
         await closeContext();
         await postWebhook(webhookUrl, { type: 'collector_status', status: 'error',
           detail: `Coleta suspensa: ${delivery.stats().pending} presentes preservados; ${delivery.attention}. Verifique a fila e reinicie o coletor.`,
-          live_url: activeTargetUrl || defaultUrl, events_forwarded: eventsForwarded + delivery.forwarded,
+          live_url: activeTargetUrl || defaultUrl, events_forwarded: eventsForwarded + delivery.forwarded, diagnostics: diagnosticSnapshot(),
         }).catch(() => {});
         if (args.once) break;
         await sleep(args.heartbeatMs);
@@ -728,6 +820,7 @@ async function main() {
           detail: 'Navegador visível Kwai aberto para login; feche-o ao concluir para retomar a coleta automática.',
           live_url: activeTargetUrl || defaultUrl,
           events_forwarded: eventsForwarded + delivery.forwarded,
+        diagnostics: diagnosticSnapshot(),
         }).catch(() => {});
         if (args.once) break;
         await sleep(1200);
@@ -742,6 +835,7 @@ async function main() {
           detail: browserNeedsRecovery?'Chromium aguardando recuperacao segura; nova tentativa apos intervalo.':'Perfil do navegador Kwai temporariamente ocupado; tentando novamente...',
           live_url: activeTargetUrl || defaultUrl,
           events_forwarded: eventsForwarded + delivery.forwarded,
+        diagnostics: diagnosticSnapshot(),
         }).catch(() => {});
         if (args.once) break;
         await sleep(args.heartbeatMs);
@@ -763,6 +857,17 @@ async function main() {
         try {
           const navigation = await page.goto(activeTargetUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
           lastNavigationError = Boolean(navigation && navigation.status() >= 400);
+          if (!lastNavigationError) {
+            const anchors = await boundedOperation(page.evaluate(() => Array.from(document.querySelectorAll('a[href]')).map(a => ({
+              href: a.href, owner: a.getAttribute('data-user-handle') || a.closest('[data-author-handle]')?.getAttribute('data-author-handle') || '',
+              liveBadge: a.getAttribute('data-live') === 'true' || a.querySelector('[class*="live-badge"], [data-live="true"]') !== null,
+            }))), 5000);
+            const liveLink = chooseLiveLink(anchors, page.url());
+            if (liveLink) {
+              const roomNavigation = await page.goto(liveLink, {waitUntil:'domcontentloaded',timeout:15000});
+              lastNavigationError = Boolean(roomNavigation && roomNavigation.status() >= 400);
+            }
+          }
         } catch (navigationError) {
           lastNavigationError = true;
           if(navigationError.name==='TimeoutError'){
@@ -773,9 +878,10 @@ async function main() {
           await postWebhook(webhookUrl, {
             type: 'collector_status',
             status: 'error',
-            detail: `Falha de conexão com ${activeTargetUrl}`,
+            detail: 'Falha de conexão com a página Kwai configurada; consulta não concluída.',
             live_url: activeTargetUrl,
             events_forwarded: eventsForwarded + delivery.forwarded,
+        diagnostics: diagnosticSnapshot(),
           }).catch(() => {});
         }
       }
@@ -791,6 +897,7 @@ async function main() {
         detail: state.detail,
         live_url: state.liveUrl,
         events_forwarded: eventsForwarded + delivery.forwarded,
+        diagnostics: diagnosticSnapshot(),
       }).catch(() => {});
 
       if (args.once) break;
@@ -811,4 +918,4 @@ if (require.main === module) main().catch(err => {
   process.exit(1);
 });
 
-module.exports = { normalizeFeedPayload, isAllowedNavigationUrl, postGiftWebhook, runLoginBrowser, browserIsUsable, boundedOperation };
+module.exports = { chooseLiveLink, postEventWebhook, installDomObserver, CollectorDiagnostics, normalizeFeedPayload, isAllowedNavigationUrl, postGiftWebhook, runLoginBrowser, browserIsUsable, boundedOperation };

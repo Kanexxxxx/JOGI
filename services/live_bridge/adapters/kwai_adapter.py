@@ -15,6 +15,7 @@ from collections import OrderedDict
 
 from .base import BaseLiveAdapter
 from .normalization import ViewerContext, bounded_int
+from .tiktok_teams import TikTokTeams as TeamHistoryStore, stable_user_id, event_time_ms
 from gift_images import extract_gift_image
 from avatar_images import extract_avatar_url
 
@@ -78,6 +79,8 @@ class KwaiAdapterConfig:
     collector_ttl_sec: float = 25.0
     require_collector_room: bool = False
     webhook_token: str = ""
+    account: str = ""
+    team_store_path: str | None = None
 
 
 @dataclass
@@ -102,10 +105,18 @@ class KwaiLiveAdapter(BaseLiveAdapter):
     _durable_gift_sink: Callable[[dict[str, Any]], Awaitable[str]] | None = field(default=None, init=False, repr=False)
     _gift_delivery_results: OrderedDict[str, str] = field(default_factory=OrderedDict, init=False, repr=False)
 
+    _collector_diagnostics: dict[str, Any] = field(default_factory=dict, init=False, repr=False)
+    _ingestion: dict[str, Any] = field(default_factory=lambda: {
+        "observed_by_type": {}, "valid_votes": 0, "ignored_non_vote_comments": 0,
+        "duplicates_dropped": 0, "last_raw_event_at": None, "last_raw_event_type": None,
+    }, init=False, repr=False)
+
     def set_durable_gift_sink(self, sink: Callable[[dict[str, Any]], Awaitable[str]]) -> None:
         self._durable_gift_sink = sink
 
     def __post_init__(self) -> None:
+        # Reuse the tested history implementation, with an exclusively Kwai DB.
+        self._teams = TeamHistoryStore(self.config.team_store_path, account=self.config.account)
         if not self.config.enabled:
             self._status = "DISABLED_NO_API"
             logger.info(
@@ -159,6 +170,22 @@ class KwaiLiveAdapter(BaseLiveAdapter):
         url_raw = str(raw_data.get("live_url") or "")
         self._collector_live_url = "".join(ch for ch in url_raw if ord(ch) >= 33 and ord(ch) != 127).strip()[:240]
         self._collector_events_forwarded = max(0, bounded_int(raw_data.get("events_forwarded"), 0, 1_000_000_000))
+        diagnostic = raw_data.get("diagnostics")
+        if isinstance(diagnostic, dict):
+            safe: dict[str, Any] = {}
+            for name in ("raw_observed", "comments_observed", "votes_valid", "comments_non_vote",
+                         "likes_observed", "follows_observed", "shares_observed", "gifts_identified",
+                         "parser_rejections", "duplicates", "webhook_accepted", "webhook_rejected",
+                         "webhook_errors", "webhook_filtered", "json_responses", "websocket_frames", "unsupported_binary_frames",
+                         "json_parse_errors", "auth_rejections", "gifts_backend_confirmed", "gifts_pending",
+                         "video_count", "chat_nodes", "websocket_connections", "app_links", "unstable_dom_events"):
+                safe[name] = bounded_int(diagnostic.get(name), 0, 1_000_000_000)
+            safe["room_detected"] = diagnostic.get("room_detected") if diagnostic.get("room_detected") in ("yes", "no", "unknown") else "unknown"
+            safe["feed_connected"] = diagnostic.get("feed_connected") is True
+            for name in ("page_kind", "last_error", "final_origin", "final_path"):
+                value = str(diagnostic.get(name) or "").split("?", 1)[0].split("#", 1)[0]
+                safe[name] = "".join(c for c in value if 32 <= ord(c) < 127)[:160]
+            self._collector_diagnostics = safe
         self._collector_seen_at = time.monotonic()
 
     async def ingest_raw_event(self, raw_data: dict[str, Any]) -> dict[str, Any] | None:
@@ -175,8 +202,15 @@ class KwaiLiveAdapter(BaseLiveAdapter):
             self._record_collector_heartbeat(raw_data)
             return None
 
+        known = {"comment", "chat", "vote", "like", "like_batch", "heart", "gift", "present", "share", "forward", "follow", "new_follower"}
+        category = event_type if event_type in known else "unsupported"
+        counts = self._ingestion["observed_by_type"]
+        counts[category] = counts.get(category, 0) + 1
+        self._ingestion["last_raw_event_at"] = time.time()
+        self._ingestion["last_raw_event_type"] = category
         user_info = raw_data.get("user") if isinstance(raw_data.get("user"), dict) else {}
-        user_id = str(raw_data.get("user_id") or user_info.get("id") or user_info.get("user_id") or "anon_kwai")[:128]
+        stable_id = stable_user_id(raw_data)
+        user_id = stable_id or "anon_kwai"
         display_name = str(
             raw_data.get("display_name")
             or raw_data.get("username")
@@ -190,17 +224,22 @@ class KwaiLiveAdapter(BaseLiveAdapter):
         paid_durable = event_type in ("gift", "present") and self._durable_gift_sink is not None
         identity = self._viewers.identity(raw_data, "kwai", event_type, remember=not paid_durable)
         if identity is None:
+            self._ingestion["duplicates_dropped"] += 1
             return None
-        slot = self._viewers.team(user_id, self.config.default_candidate_slot)
+        at_ms = event_time_ms(raw_data)
+        slot = self._teams.team(stable_id, at_ms, coarse=raw_data.get("timestamp_precision") == "seconds")
 
         envelope: dict[str, Any] | None = None
 
         if event_type in ("comment", "chat", "vote"):
             comment_text = str(raw_data.get("content") or raw_data.get("comment") or raw_data.get("text") or "")
             slot = parse_vote_slot_from_comment(comment_text)
+            if slot is None:
+                self._ingestion["ignored_non_vote_comments"] += 1
             if slot is not None and 1 <= slot <= 2:
-                if user_id != "anon_kwai":
-                    self._viewers.choose(user_id, slot)
+                self._ingestion["valid_votes"] += 1
+                if stable_id:
+                    self._teams.choose(stable_id, slot, at_ms, identity["event_id"] or f"kwai:{user_id}:{at_ms}:{identity['sequence']}")
                 envelope = build_vote_envelope(
                     user_id=user_id,
                     display_name=display_name,
@@ -284,12 +323,18 @@ class KwaiLiveAdapter(BaseLiveAdapter):
         if envelope is not None:
             self._last_webhook_event_at = time.monotonic()
             if paid_durable:
+                saved = next((item for item in self._teams.pending_gifts() if item["event_id"] == envelope["event_id"]), None)
+                if saved is not None:
+                    envelope = saved  # Retry cannot move a paid event to a new team.
+                else:
+                    self._teams.stage_gifts([envelope], {})
                 try:
                     result = await asyncio.wait_for(self._durable_gift_sink(envelope), timeout=3.0)
                 except (asyncio.TimeoutError, RuntimeError, OSError) as exc:
                     raise KwaiDeliveryUnavailable("Presente ainda não aceito pela outbox; tente o mesmo ID.") from exc
                 if result not in ("accepted", "duplicate"):
                     raise KwaiDeliveryUnavailable("Presente sem confirmação durável; tente o mesmo ID.")
+                self._teams.acknowledge_gift(envelope["event_id"])
                 self._gift_delivery_results[envelope["event_id"]] = result
                 self._gift_delivery_results.move_to_end(envelope["event_id"])
                 while len(self._gift_delivery_results) > 10000:
@@ -526,6 +571,7 @@ class KwaiLiveAdapter(BaseLiveAdapter):
             await self._server.wait_closed()
             self._server = None
         self._status = "stopped"
+        self._teams.db.close()
         logger.info("KwaiLiveAdapter encerrado.")
 
     def get_stats(self) -> dict[str, Any]:
@@ -550,6 +596,8 @@ class KwaiLiveAdapter(BaseLiveAdapter):
                 "collector_live_url": self._collector_live_url,
                 "collector_age_seconds": collector_age,
                 "collector_events_forwarded": self._collector_events_forwarded,
+                "diagnostics": self._collector_diagnostics,
+                "ingestion": {**self._ingestion, "collector_connected": self.is_connected()},
                 "disclaimer": "Receptor loopback 127.0.0.1 + coletor local Playwright Kwai LIVE (sem API nuvem oficial).",
             }
         ).to_dict()

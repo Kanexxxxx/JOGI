@@ -205,6 +205,7 @@ class LiveBridgeServer:
             finally:
                 check_db.close()
         self.tiktok_team_store_path = str(outbox_path.parent / "tiktok_teams.sqlite3") if outbox_path else None
+        self.kwai_team_store_path = str(outbox_path.parent / "kwai_teams.sqlite3") if outbox_path else None
         self.outbox = GiftOutbox(outbox_path, platform=platform, capacity=gift_capacity, account=self.account)
         try:
             # Empty-account local fixtures keep their historical compatibility.
@@ -412,6 +413,8 @@ class LiveBridgeServer:
                     "collector_live_url": str(adapter_extra.get("collector_live_url", "")),
                     "collector_age_seconds": adapter_extra.get("collector_age_seconds"),
                     "collector_events_forwarded": int(adapter_extra.get("collector_events_forwarded", 0)),
+                    "diagnostics": adapter_extra.get("diagnostics", {}),
+                    "ingestion": adapter_extra.get("ingestion", {}),
                 }
             }
         if self._live_adapter is not None:
@@ -454,6 +457,8 @@ class LiveBridgeServer:
                     port=self.kwai_webhook_port,
                     require_collector_room=True,
                     webhook_token=self.producer_token or self.local_token,
+                    account=self.account,
+                    team_store_path=self.kwai_team_store_path,
                 )
             )
             self._live_adapter.on_event(self._receive_adapter_event)

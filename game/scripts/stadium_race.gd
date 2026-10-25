@@ -84,7 +84,11 @@ func _ready() -> void:
 				var showcase: Array[Dictionary] = []
 				for entry: Variant in catalog.get("entries", []):
 					if entry is Dictionary:
-						showcase.append(entry as Dictionary)
+						var item: Dictionary = (entry as Dictionary).duplicate(true)
+						if is_production_mode() and String(catalog.get("account", "")) != OS.get_environment("LIVE_ACCOUNT"):
+							item["verified"] = false
+							item["availability_confirmed"] = false
+						showcase.append(item)
 				stadium_hud.set_gift_showcase(showcase)
 	_setup_finish_line()
 	for runner: CandidateRunner in runners:
@@ -684,6 +688,10 @@ func get_telemetry_snapshot() -> Dictionary:
 	(snapshot["audio"] as Dictionary).merge(audio_settings, true)
 	snapshot["next_round_in"] = get_next_round_in()
 	snapshot["performance"] = {
+		"render_width": get_viewport().get_texture().get_width(),
+		"render_height": get_viewport().get_texture().get_height(),
+		"window_width": get_window().size.x,
+		"window_height": get_window().size.y,
 		"fps": roundf(Performance.get_monitor(Performance.TIME_FPS) * 10.0) / 10.0,
 		"frame_ms": roundf(Performance.get_monitor(Performance.TIME_PROCESS) * 100000.0) / 100.0,
 		"physics_ms": roundf(Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 100000.0) / 100.0,
@@ -693,7 +701,7 @@ func get_telemetry_snapshot() -> Dictionary:
 		"orphan_nodes": int(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT)),
 	}
 	snapshot["interaction_cards"] = stadium_hud.get_interaction_diagnostics() if stadium_hud != null else {}
-	(snapshot["interaction_cards"] as Dictionary)["revision"] = "gifts-teams-20261025-v1"
+	(snapshot["interaction_cards"] as Dictionary)["revision"] = "dual-recovery-20261025-v2"
 	snapshot["checkpoint_recovered"] = persistence.recovered if persistence != null else false
 	snapshot["gift_visuals"] = gift_visuals.get_cache_stats() if gift_visuals != null else {}
 	snapshot["avatar_visuals"] = avatar_visuals.get_cache_stats() if avatar_visuals != null else {}

@@ -1,0 +1,26 @@
+{
+  "result": "PASS",
+  "scope": "isolated webhook/backend/real headless Godot; no Kwai network",
+  "gifts": 9,
+  "acks": 9,
+  "duplicate_reapplied": false,
+  "frozen_slots": [
+    1,
+    1,
+    1,
+    1,
+    2,
+    2,
+    2,
+    2,
+    0
+  ],
+  "cards": {
+    "overflow_visual_only": 0,
+    "queued": 9,
+    "revision": "dual-recovery-20261025-v2",
+    "ttl_seconds": 6.4,
+    "visible": 2
+  },
+  "external_events_verified": false
+}

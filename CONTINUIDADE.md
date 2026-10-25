@@ -162,3 +162,6 @@ C:\Users\Kanex\.local\bin\uv.exe run --project C:\Users\Kanex\OneDrive\Desktop\J
 ## Auditoria final de integrações — 24/10, 23h26 BRT
 
 Consulte docs/AUDITORIA_INTEGRACOES_FINAL_2026-10-24.md. Kwai: coletor41480 atualizado e heartbeat retomado; backends e jogos preservados. TikTok continua aguardando descoberta/limites externos. Teste real Chromium com renderer travado aprovado, sem LIVE externa. Telemetria das duas corridas evoluiu por três minutos a60FPS. Não homologados eventos reais nem operação42h sem supervisão; não iniciar LIVE sem autorização/conformidade.
+
+## Retomada de 25/10/2026 — duas contas
+TikTok voltou para @nostalgiia.br; @xinka_ preservada. Nova sessão Kwai autorizada; sessão encerrada arquivada integralmente. Dois jogos e painéis autenticados, telemetria recente a60FPS. Consulte docs/RETOMADA_DUAS_CONTAS_2026-10-25.md para correções, evidências e limites externos. ABRIR_PAINEIS.cmd autentica somente painéis locais, sem iniciar LIVE.

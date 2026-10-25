@@ -42,8 +42,6 @@ class GiftCatalog:
             return envelope
         tier, action = ACTIONS[row[0]]
         clean = {**payload, 'action_id':action}
-        if envelope['source'] != 'tiktok':
-            clean['gift_tier'] = tier
         # Overrides change only the mechanic; price, delta and total remain actual.
         # A former attack must never carry an attack target into a shield/boost.
         if row[0] != 'attack':
@@ -79,8 +77,11 @@ class GiftCatalog:
         path=Path(__file__).resolve().parents[2]/"game/assets/catalogs/tiktok_gift_showcase.json"
         try:
             value=json.loads(path.read_text(encoding="utf-8"))
-            if value.get("platform") != "tiktok" or value.get("account") != account:
+            if value.get("platform") != "tiktok":
                 return []
-            return value.get("entries", [])[:4]
+            entries=value.get("entries", [])[:4]
+            if value.get("account") != account:
+                return [{**entry,'verified':False,'availability_confirmed':False,'reference_account':value.get('account')} for entry in entries]
+            return entries
         except (OSError,ValueError,TypeError):
             return []

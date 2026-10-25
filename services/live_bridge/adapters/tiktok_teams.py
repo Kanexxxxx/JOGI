@@ -14,7 +14,7 @@ def stable_user_id(event: Any) -> str | None:
     if value is None or isinstance(value, bool):
         return None
     clean = str(value).strip()
-    if not clean or clean in ("0", "None", "anon_tiktok") or len(clean) > 128 or any(ord(c) < 33 for c in clean):
+    if not clean or clean in ("0", "None", "anon_tiktok", "anon_kwai") or len(clean) > 128 or any(ord(c) < 33 for c in clean):
         return None
     return clean
 
@@ -45,7 +45,7 @@ class TikTokTeams:
         stored=self.db.execute("SELECT account FROM owner LIMIT 1").fetchone()
         if stored and stored[0] != account:
             self.db.close()
-            raise ValueError("Team store belongs to a different TikTok account")
+            raise ValueError("Team store belongs to a different account")
         if not stored:
             self.db.execute("INSERT INTO owner VALUES(?)", (account,))
         self.db.execute("CREATE TABLE IF NOT EXISTS teams(user_id TEXT NOT NULL, at_ms INTEGER NOT NULL, packet TEXT NOT NULL UNIQUE, slot INTEGER NOT NULL CHECK(slot IN(1,2)))")

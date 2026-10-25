@@ -1,0 +1,22 @@
+✔ explicit unit price wins over a total coin_value in the same gift (4.5431ms)
+✔ explicit zero unit price is preserved; missing value does not infer a tier price (9.4214ms)
+✔ restart retains explicit unit price including zero (428.4737ms)
+✔ 401, 503 and timeout retain exact paid IDs until a durable ACK (395.6365ms)
+✔ restart recovers paid data without storing avatar URLs or credentials (570.539ms)
+✔ HTTP success alone, incorrect ID and unconfirmed payload never acknowledge (1.0973ms)
+✔ capacity is explicit, previous gifts remain pending, concurrent flush sends once (6.9777ms)
+✔ actual loopback HTTP transport retries 401/503 and validates the webhook ACK (72.6016ms)
+✔ discovery only follows a unique real live anchor (4.8203ms)
+✔ normalization preserves source clock without inventing a user ID (0.5023ms)
+✔ diagnostics distinguish observed comments, votes and nonvotes without retaining private text (1.1071ms)
+✔ parser reports rejected event candidates separately from absent data (0.1624ms)
+✔ DOM repeated valid messages from different elements keep unique IDs while rescanning deduplicates the same elements (1.3127ms)
+✔ HTTP success is distinct from backend ingestion and intentional nonvote filtering (163.3611ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1627.4163

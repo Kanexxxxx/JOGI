@@ -504,7 +504,7 @@ func ingest_envelope(envelope: Dictionary) -> bool:
 	var previous_payload: Dictionary = current_event_payload
 	current_event_type = event_type
 	current_event_payload = payload
-	var confirmed_gift: bool = event_type == "gift" and source == "tiktok"
+	var confirmed_gift: bool = event_type == "gift" and source in ["tiktok", "kwai"]
 	if confirmed_gift:
 		gift_effect_status = "neutral" if candidate_slot == 0 else ("unknown_value" if float(payload.get("coin_value", 0.0)) <= 0.0 else "blocked")
 	else:
@@ -583,12 +583,12 @@ func _dispatch_typed_signals(
 				return # Preço desconhecido: agradecer sem inventar efeito pago.
 			var tier: int = _resolve_gift_tier_number(payload)
 			var action_id: String = String(payload.get("action_id", ""))
-			if session_platform == "tiktok" or current_event_payload.get("_tiktok_mapping", false):
+			if session_platform in ["tiktok", "kwai"] or current_event_payload.get("_tiktok_mapping", false):
 				var mapped: Dictionary = {"gift_t1_turbo": 1, "gift_t2_shield_or_obstacle": 2, "gift_t2_shield": 2, "gift_t3_attack": 3, "gift_t4_super_rally": 4}
 				tier = int(mapped.get(action_id, tier))
 			var gift_name: String = sanitize_display_name(String(payload.get("gift_name", "Presente T%d" % tier)))
 			if tier == 3 or action_id == "gift_t3_attack" or action_id == "admin_attack":
-				var target_slot: int = 3 - candidate_slot if session_platform == "tiktok" else clampi(int(payload.get("target_slot", 3 - candidate_slot)), 1, 2)
+				var target_slot: int = 3 - candidate_slot if session_platform in ["tiktok", "kwai"] else clampi(int(payload.get("target_slot", 3 - candidate_slot)), 1, 2)
 				var obs_type: String = String(payload.get("obstacle_type", "pilha_documentos"))
 				candidate_attack_requested.emit(target_slot, obs_type, voter_name)
 				var boost_amt: float = clampf(float(payload.get("boost_amount", 1.5)), 0.0, 24.0)
@@ -600,7 +600,7 @@ func _dispatch_typed_signals(
 				var default_dur: float = 3.5 + float(tier) * 0.8
 				var boost_amt: float = clampf(float(payload.get("boost_amount", default_boost)), 0.0, 24.0)
 				var boost_dur: float = clampf(float(payload.get("boost_duration", payload.get("duration", default_dur))), 0.5, 12.0)
-				if not (session_platform == "tiktok" and tier == 2):
+				if not (session_platform in ["tiktok", "kwai"] and tier == 2):
 					candidate_boost_requested.emit(candidate_slot, boost_amt, boost_dur, voter_name, gift_name)
 				if tier in [2, 4] or action_id in ["gift_t2_shield", "gift_t4_super_rally", "admin_shield"] or bool(payload.get("grant_shield", false)):
 					var shield_dur: float = clampf(float(payload.get("shield_duration", maxf(boost_dur, 5.0))), 1.0, 15.0)
