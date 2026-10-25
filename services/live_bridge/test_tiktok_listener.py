@@ -18,6 +18,14 @@ class FakeClient:
         self.done = asyncio.Event()
         self.start_options = None
         self.closed_http = False
+        self.room_id = 7700000000000000001
+        client = self
+
+        class _Web:
+            async def close(self):
+                client.closed_http = True
+
+        self.web = _Web()
         FakeClient.created.append(self)
 
     def on(self, kind):
@@ -33,7 +41,8 @@ class FakeClient:
         return asyncio.create_task(self.done.wait())
 
     async def disconnect(self, close_client=False):
-        self.closed_http = close_client
+        # TikTokLive 7.x close_client=True leaks a never-awaited coroutine.
+        assert close_client is False, "adapter must close the HTTP session explicitly"
         self.is_connected = False
         self.done.set()
 
@@ -139,6 +148,81 @@ class TikTokListenerTests(unittest.IsolatedAsyncioTestCase):
             finally:
                 await server.stop()
 
+
+    async def test_websocket_drop_reconnects_to_confirmed_room_without_rediscovery(self):
+        FakeClient.created = []
+        with patch.object(module, 'TikTokLiveClient', FakeClient), patch.object(module, 'TIKTOK_AVAILABLE', True), \
+                patch.object(module.random, 'uniform', return_value=0):
+            adapter = TikTokLiveAdapter(config=TikTokAdapterConfig(unique_id='xinka_', base_backoff_sec=0.01, max_backoff_sec=0.02))
+            await adapter.start()
+            await until(adapter.is_connected)
+            FakeClient.created[0].done.set()  # server-side websocket close
+            await until(lambda: len(FakeClient.created) >= 2 and FakeClient.created[1].start_options is not None)
+            self.assertTrue(FakeClient.created[0].closed_http)
+            self.assertEqual(FakeClient.created[1].start_options,
+                             {'fetch_room_info': False, 'fetch_gift_info': True, 'room_id': 7700000000000000001})
+            await until(adapter.is_connected)
+            await adapter.stop()
+
+    async def test_live_end_never_reuses_room_and_waits_offline_poll(self):
+        FakeClient.created = []
+        with patch.object(module, 'TikTokLiveClient', FakeClient), patch.object(module, 'TIKTOK_AVAILABLE', True), \
+                patch.object(module.random, 'uniform', return_value=0):
+            adapter = TikTokLiveAdapter(config=TikTokAdapterConfig(unique_id='xinka_', offline_poll_sec=0.05))
+            await adapter.start()
+            await until(adapter.is_connected)
+            adapter._live_ended = True
+            adapter._known_room_id = None
+            FakeClient.created[0].done.set()
+            await until(lambda: adapter.get_stats()['status'] == 'waiting_room')
+            await until(lambda: len(FakeClient.created) >= 2 and FakeClient.created[1].start_options is not None)
+            self.assertNotIn('room_id', FakeClient.created[1].start_options)
+            await adapter.stop()
+
+    async def test_rate_limited_cooldown_is_respected_before_any_client(self):
+        import time as _time
+        FakeClient.created = []
+        with patch.object(module, 'TikTokLiveClient', FakeClient), patch.object(module, 'TIKTOK_AVAILABLE', True):
+            adapter = TikTokLiveAdapter(config=TikTokAdapterConfig(unique_id='xinka_'))
+            adapter._next_retry_at = _time.time() + 60
+            adapter._known_room_id = 123
+            await adapter.start()
+            await asyncio.sleep(0.1)
+            self.assertEqual(FakeClient.created, [])
+            await adapter.stop()
+
+    async def test_comment_votes_13_22_and_team_bound_gifts(self):
+        import tempfile, os
+        with tempfile.TemporaryDirectory() as tmp:
+            adapter = TikTokLiveAdapter(config=TikTokAdapterConfig(unique_id='xinka_', team_store_path=os.path.join(tmp, 't.sqlite3')))
+            sent = []
+            adapter.on_event(lambda envelope: sent.append(envelope))
+            def comment(uid, text, msg):
+                return {'user': {'id': uid, 'nickname': 'F'+uid}, 'comment': text, 'msg_id': msg, 'timestamp_ms': 1_000 + msg}
+            def gift(uid, msg, coins, repeat=1, streaking=False, group=None):
+                return {'user': {'id': uid, 'nickname': 'F'+uid}, 'gift': {'id': 5655, 'name': 'Rosa', 'diamond_count': coins},
+                        'repeat_count': repeat, 'streaking': streaking, 'group_id': group, 'msg_id': msg, 'timestamp_ms': 1_000 + msg}
+            try:
+                self.assertEqual((await adapter.handle_comment_event(comment('111', '13', 1)))['payload']['candidate_slot'], 1)
+                self.assertEqual((await adapter.handle_comment_event(comment('222', '22', 2)))['payload']['candidate_slot'], 2)
+                self.assertIsNone(await adapter.handle_comment_event(comment('222', '22', 2)))  # same packet replay
+                await adapter.handle_gift_event(gift('111', 10, 1))
+                await adapter.handle_gift_event(gift('222', 11, 10))
+                await adapter.handle_gift_event(gift('333', 12, 149))  # no team chosen
+                self.assertEqual((await adapter.handle_comment_event(comment('111', '22', 13)))['payload']['candidate_slot'], 2)
+                await adapter.handle_gift_event(gift('111', 14, 1000))
+                # combo 1 -> 3 -> 5 emits deltas only, final packet duplicate-safe
+                await adapter.handle_gift_event(gift('222', 20, 1, repeat=1, streaking=True, group=77))
+                await adapter.handle_gift_event(gift('222', 21, 1, repeat=3, streaking=True, group=77))
+                await adapter.handle_gift_event(gift('222', 22, 1, repeat=5, streaking=False, group=77))
+                await adapter.handle_gift_event(gift('222', 22, 1, repeat=5, streaking=False, group=77))
+                gifts = [e for e in sent if e['event_type'] == 'gift']
+                slots = [e['payload'].get('candidate_slot') for e in gifts]
+                self.assertEqual(slots[:4], [1, 2, None, 2])
+                self.assertEqual(sum(e['payload']['repeat_count'] for e in gifts[4:]), 5)
+                self.assertEqual(adapter.get_stats()['metadata']['paid_pending'], 0)
+            finally:
+                await adapter.stop()
 
 if __name__ == '__main__':
     unittest.main()

@@ -56,10 +56,15 @@ try:
         ShareEvent,
     )
 
+    try:
+        from TikTokLive.events import LiveEndEvent  # type: ignore[import-untyped]
+    except ImportError:
+        LiveEndEvent = None
     TIKTOK_AVAILABLE: bool = True
 except ImportError:
     TIKTOK_AVAILABLE = False
     TikTokLiveClient = None
+    LiveEndEvent = None
     CommentEvent = None
     FollowEvent = None
     ConnectEvent = None
@@ -70,6 +75,10 @@ except ImportError:
 
 
 logger = logging.getLogger("live_bridge.adapters.tiktok")
+
+
+class _LiveEnded(ConnectionError):
+    """Websocket ended after the platform reported the LIVE as ended/suspended."""
 
 
 @dataclass
@@ -84,6 +93,10 @@ class TikTokAdapterConfig:
     offline_poll_sec: float = 120.0
     ambiguous_poll_sec: float = 300.0
     rate_limit_cooldown_sec: float = 900.0
+    # After a websocket drop, reconnect to the confirmed room_id (still checked
+    # with check_alive) instead of re-scraping room discovery, the endpoint that
+    # TikTok rate-limits with HTTP 429.
+    room_reuse_sec: float = 6 * 3600.0
     team_store_path: str | None = None
     default_candidate_slot: int | None = None  # Neutral until viewer chooses 13/22.
 
@@ -121,6 +134,10 @@ class TikTokLiveAdapter(BaseLiveAdapter):
     _parser_errors: int = field(default=0, init=False, repr=False)
     _last_connected_at: float | None = field(default=None, init=False, repr=False)
     _last_http_endpoint: str | None = field(default=None, init=False, repr=False)
+    _known_room_id: int | None = field(default=None, init=False, repr=False)
+    _known_room_at: float = field(default=0.0, init=False, repr=False)
+    _live_ended: bool = field(default=False, init=False, repr=False)
+    _last_disconnect_reason: str | None = field(default=None, init=False, repr=False)
 
     def _observe(self, event_type: str) -> None:
         # Aggregate only: no chat text, user identity, cookie or raw payload retained.
@@ -182,7 +199,7 @@ class TikTokLiveAdapter(BaseLiveAdapter):
             return "rate_limited", max(self.config.rate_limit_cooldown_sec, retry_after)
         if status in (401, 403) or kind in ("AgeRestrictedError", "CaptchaError"):
             return "access_blocked", self.config.rate_limit_cooldown_sec
-        if kind == "UserOfflineError":
+        if kind in ("UserOfflineError", "_LiveEnded"):
             return "waiting_room", self.config.offline_poll_sec
         if kind in ("UserNotFoundError", "FailedParseRoomIdError", "FailedResolveUserId", "JSONDecodeError"):
             # The LIVE endpoint does not authoritatively establish profile existence.
@@ -442,10 +459,33 @@ class TikTokLiveAdapter(BaseLiveAdapter):
             self._last_connected_at = time.time()
             self._next_retry_at = None
             self._last_error_kind = None
+            self._live_ended = False
+            self._last_disconnect_reason = None
+            room_id = getattr(client, "room_id", None)
+            try:
+                if room_id:
+                    self._known_room_id = int(room_id)
+                    self._known_room_at = time.time()
+            except (TypeError, ValueError):
+                pass
+            # Clear any persisted cooldown only after a real room connection.
+            self._teams.save_collector_state({"status": "connected", "next_retry_at": None, "last_http_status": None})
+            logger.info("Conectado a sala TikTok LIVE de @%s (room_id=%s).", self.config.unique_id, room_id)
 
         @client.on(DisconnectEvent if DisconnectEvent is not None else "disconnect")
         async def _on_disconnect(event: Any) -> None:
             self._status = "reconnecting"
+            self._last_disconnect_reason = self._last_disconnect_reason or "websocket_closed"
+            logger.warning("WebSocket TikTok encerrado (@%s).", self.config.unique_id)
+
+        if LiveEndEvent is not None:
+            @client.on(LiveEndEvent)
+            async def _on_live_end(event: Any) -> None:
+                # Platform ended/suspended the room: never reuse that room_id.
+                self._live_ended = True
+                self._known_room_id = None
+                self._last_disconnect_reason = "live_ended"
+                logger.warning("TikTok informou fim/suspensao da LIVE (@%s).", self.config.unique_id)
 
         @client.on(CommentEvent if CommentEvent is not None else "comment")
         async def _on_comment(event: Any) -> None:
@@ -482,6 +522,41 @@ class TikTokLiveAdapter(BaseLiveAdapter):
             except Exception as exc:
                 self._handler_error("follow", exc)
 
+    def _reusable_room_id(self) -> int | None:
+        if not self._known_room_id or self._live_ended:
+            return None
+        if time.time() - self._known_room_at > self.config.room_reuse_sec:
+            self._known_room_id = None
+            return None
+        return self._known_room_id
+
+    async def _close_client(self) -> None:
+        """Close websocket and HTTP session of the current SDK client.
+
+        TikTokLive 7.x ``disconnect(close_client=True)`` calls ``close()``, whose
+        ``_clean_tasks`` runs ``loop.run_until_complete(self.disconnect())`` inside
+        the already running loop: it raises and leaks the never-awaited
+        ``disconnect`` coroutine, leaving the HTTP session open. Close each layer
+        explicitly with ``await`` instead.
+        """
+        client = self._client
+        if client is None:
+            return
+        if hasattr(client, "disconnect"):
+            try:
+                await client.disconnect()
+            except Exception as exc:
+                logger.debug("Cliente TikTok ja desconectado: %s", type(exc).__name__)
+        web = getattr(client, "web", None)
+        close = getattr(web, "close", None)
+        if close is not None:
+            try:
+                result = close()
+                if inspect.isawaitable(result):
+                    await result
+            except Exception as exc:
+                logger.debug("Sessao HTTP TikTok ja encerrada: %s", type(exc).__name__)
+
     async def _connection_loop(self) -> None:
         """Loop de conexÃ£o e reconexÃ£o automÃ¡tica com backoff exponencial + full jitter."""
         while self._running:
@@ -506,13 +581,21 @@ class TikTokLiveAdapter(BaseLiveAdapter):
                 # SDK start returns its websocket lifetime task. Await both levels,
                 # otherwise a new client would be created repeatedly while one is live.
                 if hasattr(self._client, "start"):
-                    lifetime = await self._client.start(fetch_room_info=True, fetch_gift_info=True)
+                    reuse_room = self._reusable_room_id()
+                    start_options: dict[str, Any] = {"fetch_room_info": True, "fetch_gift_info": True}
+                    if reuse_room:
+                        # check_alive still validates the room before the websocket opens.
+                        start_options = {"fetch_room_info": False, "fetch_gift_info": True, "room_id": reuse_room}
+                        logger.info("Reconectando a sala confirmada room_id=%s sem nova descoberta.", reuse_room)
+                    lifetime = await self._client.start(**start_options)
                     if isinstance(lifetime, asyncio.Future):
                         await lifetime
                 else:
                     while self._running and getattr(self._client, "is_connected", True):
                         await asyncio.sleep(1.0)
                 if self._running:
+                    if self._live_ended:
+                        raise _LiveEnded("TikTok LIVE ended by platform")
                     raise ConnectionError("Public live connection ended")
 
             except asyncio.CancelledError:
@@ -520,13 +603,12 @@ class TikTokLiveAdapter(BaseLiveAdapter):
             except Exception as exc:
                 error_kind = type(exc).__name__
                 self._status, minimum_delay = self._classify_failure(exc)
+                if self._status in ("waiting_room", "room_unavailable"):
+                    # A room that is offline/unresolvable must be rediscovered later.
+                    self._known_room_id = None
                 if self._status != "waiting_room":
                     self.record_error(f"{error_kind}: {self._status}; existÃªncia do perfil nÃ£o determinada pelo endpoint LIVE.")
-                if self._client is not None and hasattr(self._client, "disconnect"):
-                    try:
-                        await self._client.disconnect(close_client=True)
-                    except Exception:
-                        logger.debug("Cliente TikTok jÃ¡ desconectado apÃ³s falha.")
+                await self._close_client()
                 if not self.config.auto_reconnect or not self._running:
                     logger.warning("ConexÃ£o com TikTok encerrada e reconexÃ£o desativada.")
                     break
@@ -573,11 +655,7 @@ class TikTokLiveAdapter(BaseLiveAdapter):
                 await self._paid_recovery_task
             except asyncio.CancelledError:
                 pass
-        if self._client is not None and hasattr(self._client, "disconnect"):
-            try:
-                await self._client.disconnect(close_client=True)
-            except Exception as exc:
-                logger.debug("ExceÃ§Ã£o ao desconectar client TikTok: %s", exc)
+        await self._close_client()
 
         if self._worker_task is not None and not self._worker_task.done():
             self._worker_task.cancel()
@@ -605,6 +683,8 @@ class TikTokLiveAdapter(BaseLiveAdapter):
                 "next_retry_at": self._next_retry_at,
                 "profile_existence": "not_determined_by_live_endpoint",
                 "last_http_endpoint": self._last_http_endpoint,
+                "last_disconnect_reason": self._last_disconnect_reason,
+                "room_reuse_available": self._reusable_room_id() is not None,
                 "ingestion": {
                     "room_detected": "yes" if self.is_connected() else ("no" if self._status == "waiting_room" else "unknown"),
                     "collector_connected": self.is_connected(),

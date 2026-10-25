@@ -1,0 +1,132 @@
+{
+  "account": "xinka_",
+  "backup": "C:\\Users\\Kanex\\AppData\\Local\\JOGI\\backups\\tiktok-interactive-desktop-20261025-132058",
+  "checkpoint_recovered": true,
+  "history_and_votes_preserved": true,
+  "public_live_started": false,
+  "synthetic_production_events": false,
+  "samples": [
+    {
+      "timestamp_ms": 1792945538213,
+      "telemetry_age_seconds": 0.06,
+      "round": 5,
+      "cycle": 2,
+      "paused": false,
+      "remaining": 550.683333333378,
+      "runners": [
+        {
+          "candidate_id": 1,
+          "progress_m": 591.947265625,
+          "current_speed": 12.993719174001
+        },
+        {
+          "candidate_id": 2,
+          "progress_m": 591.854919433594,
+          "current_speed": 12.9251410040355
+        }
+      ],
+      "fps": 60.0,
+      "pending_gifts": 0,
+      "collector": "rate_limited",
+      "next_retry_at": 1792945978.0487375
+    },
+    {
+      "timestamp_ms": 1792945558216,
+      "telemetry_age_seconds": 0.11,
+      "round": 5,
+      "cycle": 2,
+      "paused": false,
+      "remaining": 530.733333333396,
+      "runners": [
+        {
+          "candidate_id": 1,
+          "progress_m": 831.267700195313,
+          "current_speed": 12.3947682220968
+        },
+        {
+          "candidate_id": 2,
+          "progress_m": 831.322082519531,
+          "current_speed": 10.8216479314777
+        }
+      ],
+      "fps": 60.0,
+      "pending_gifts": 0,
+      "collector": "rate_limited",
+      "next_retry_at": 1792945978.0487375
+    },
+    {
+      "timestamp_ms": 1792945578218,
+      "telemetry_age_seconds": 0.05,
+      "round": 5,
+      "cycle": 2,
+      "paused": false,
+      "remaining": 510.666666666747,
+      "runners": [
+        {
+          "candidate_id": 1,
+          "progress_m": 1071.93933105469,
+          "current_speed": 12.6451196911836
+        },
+        {
+          "candidate_id": 2,
+          "progress_m": 1072.19799804688,
+          "current_speed": 12.3419159139906
+        }
+      ],
+      "fps": 60.0,
+      "pending_gifts": 0,
+      "collector": "rate_limited",
+      "next_retry_at": 1792945978.0487375
+    },
+    {
+      "timestamp_ms": 1792945598221,
+      "telemetry_age_seconds": 0.1,
+      "round": 5,
+      "cycle": 2,
+      "paused": false,
+      "remaining": 490.716666666766,
+      "runners": [
+        {
+          "candidate_id": 1,
+          "progress_m": 1311.34582519531,
+          "current_speed": 12.9980314696885
+        },
+        {
+          "candidate_id": 2,
+          "progress_m": 1311.52136230469,
+          "current_speed": 12.3406727254025
+        }
+      ],
+      "fps": 60.0,
+      "pending_gifts": 0,
+      "collector": "rate_limited",
+      "next_retry_at": 1792945978.0487375
+    },
+    {
+      "timestamp_ms": 1792945618223,
+      "telemetry_age_seconds": 0.04,
+      "round": 5,
+      "cycle": 2,
+      "paused": false,
+      "remaining": 470.650000000117,
+      "runners": [
+        {
+          "candidate_id": 1,
+          "progress_m": 1552.28698730469,
+          "current_speed": 12.6200195235698
+        },
+        {
+          "candidate_id": 2,
+          "progress_m": 1552.13122558594,
+          "current_speed": 11.8670147586822
+        }
+      ],
+      "fps": 60.0,
+      "pending_gifts": 0,
+      "collector": "rate_limited",
+      "next_retry_at": 1792945978.0487375
+    }
+  ],
+  "resume_ack": "applied",
+  "result": "PASS"
+}

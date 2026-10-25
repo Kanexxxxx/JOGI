@@ -18,6 +18,7 @@ import time
 from urllib.error import URLError
 from urllib.request import urlopen
 from live_supervisor import LiveSupervisor, ManagedChild, stay_awake
+from windows_visible_game import spawn_tiktok_game
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -26,7 +27,10 @@ if str(BRIDGE_DIR) not in sys.path:
     sys.path.insert(0, str(BRIDGE_DIR))
 from operational_shutdown import normalize_end_at
 from server import normalize_secret_token
-PUBLIC_ACCOUNTS = {"tiktok": "nostalgiia.br", "kwai": "mentalista.."}
+# TikTok: conta operacional correta @xinka_ (a sessao antiga @nostalgiia.br fica
+# preservada em seu proprio state_dir). JOGI_TIKTOK_ACCOUNT permite troca explicita.
+PUBLIC_ACCOUNTS = {"tiktok": os.environ.get("JOGI_TIKTOK_ACCOUNT", "xinka_").strip().lstrip("@") or "xinka_",
+                   "kwai": "mentalista.."}
 PORTS = {"tiktok": 8765, "kwai": 8766}
 KWAI_WEBHOOK_PORT = 8786
 DEFAULT_GODOT = Path(r"C:\Users\Kanex\Downloads\Godot_v4.7.2-stable_win64.exe\Godot_v4.7.2-stable_win64.exe")
@@ -260,11 +264,19 @@ def launch(plans: list[dict], *, bridge_only: bool = False) -> int:
                 game_env.pop("LIVE_BRIDGE_LOCAL_TOKEN", None)
                 game_env.pop("LIVE_BRIDGE_PRODUCER_TOKEN", None)
                 game_env.update(plan["godot_environment"])
+                game_args = [plan["godot"], "--path", plan["project"], plan["scene"]]
+                if plan["platform"] == "tiktok" and os.name == "nt":
+                    # A launcher can live on a private automation desktop while its
+                    # renderer must belong to the operator's interactive desktop.
+                    game_args = [plan["godot"], "--display-driver", "windows", "--windowed",
+                                 "--log-file", str(state_dir / "godot-tiktok.log"),
+                                 "--path", plan["project"], plan["scene"]]
+                game_spawn = spawn_tiktok_game if plan["platform"] == "tiktok" else subprocess.Popen
                 # The game is intentionally visible for OBS/TikTok Studio capture.
                 game = ManagedChild(
                     plan["platform"],
                     "game",
-                    lambda args=[plan["godot"], "--path", plan["project"], plan["scene"]], environment=game_env: subprocess.Popen(
+                    lambda args=game_args, environment=game_env, spawn=game_spawn: spawn(
                         args, cwd=ROOT, env=environment
                     ),
                     ready=lambda dependency=bridge, port=plan["port"], platform=plan["platform"]: (

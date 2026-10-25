@@ -1,0 +1,16 @@
+{
+  "isolated": true,
+  "synthetic_production_events": false,
+  "audio": "Dummy",
+  "exit": 0,
+  "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\nD3D12 12_0 - Forward+ - Using Device #0: NVIDIA - NVIDIA GeForce RTX 4060\r\n\r\nTEST_INTERACTION_CARDS_CHAIN_PASSED\r\n",
+  "stderr": "WARNING: 6 ObjectDB instances were leaked at exit (run with `--verbose` for details).\r\n   at: cleanup (core/object/object.cpp:2536)\r\n",
+  "images": [
+    "00-before.png",
+    "01-entering.png",
+    "02-readable-13-22.png",
+    "03-still-readable-5s.png",
+    "04-exiting.png",
+    "05-queued-vote.png"
+  ]
+}

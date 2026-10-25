@@ -1,0 +1,300 @@
+{
+  "result": "PASS",
+  "isolated": true,
+  "checks": [
+    {
+      "check": [
+        "project",
+        "scan"
+      ],
+      "exit": 0,
+      "gda": {
+        "project_tree_mutations": {
+          "cache_root": "res://.godot",
+          "created": [
+            {
+              "path": "res://.godot/imported/catalog-fantasy.jpeg-8308acbd1222db7c5d797d6dd616e784.ctex",
+              "classification": "cache_owned",
+              "size": 334068
+            },
+            {
+              "path": "res://.godot/imported/catalog-fantasy.jpeg-8308acbd1222db7c5d797d6dd616e784.md5",
+              "classification": "cache_owned",
+              "size": 91
+            },
+            {
+              "path": "res://.godot/imported/catalog-party.jpeg-e094d07bb6a1db45cf8767fc68e5499d.ctex",
+              "classification": "cache_owned",
+              "size": 318108
+            },
+            {
+              "path": "res://.godot/imported/catalog-party.jpeg-e094d07bb6a1db45cf8767fc68e5499d.md5",
+              "classification": "cache_owned",
+              "size": 91
+            },
+            {
+              "path": "res://.godot/imported/catalog-sea.jpeg-e4039f5194d385abcfc0712cead06f17.ctex",
+              "classification": "cache_owned",
+              "size": 352708
+            },
+            {
+              "path": "res://.godot/imported/catalog-sea.jpeg-e4039f5194d385abcfc0712cead06f17.md5",
+              "classification": "cache_owned",
+              "size": 91
+            },
+            {
+              "path": "res://assets/gifts/kwai/catalog-fantasy.jpeg.import",
+              "classification": "source_adjacent",
+              "size": 970
+            },
+            {
+              "path": "res://assets/gifts/kwai/catalog-party.jpeg.import",
+              "classification": "source_adjacent",
+              "size": 963
+            },
+            {
+              "path": "res://assets/gifts/kwai/catalog-sea.jpeg.import",
+              "classification": "source_adjacent",
+              "size": 958
+            },
+            {
+              "path": "res://tests/test_gift_showcase_large.gd.uid",
+              "classification": "source_adjacent",
+              "size": 20
+            },
+            {
+              "path": "res://tests/test_reset_cycle.gd.uid",
+              "classification": "source_adjacent",
+              "size": 19
+            }
+          ],
+          "modified": [],
+          "created_count": 11,
+          "created_cache_owned": 6,
+          "created_source_adjacent": 5,
+          "created_bytes": 1008087,
+          "modified_count": 0,
+          "modified_bytes": 0,
+          "skipped": 0
+        },
+        "classes": [
+          {
+            "name": "AudienceDirector",
+            "path": "res://scripts/audience_director.gd"
+          },
+          {
+            "name": "AvatarVisualCache",
+            "path": "res://scripts/avatar_visual_cache.gd"
+          },
+          {
+            "name": "BrasiliaWorld",
+            "path": "res://scripts/brasilia_world.gd"
+          },
+          {
+            "name": "BroadcastDirector",
+            "path": "res://scripts/broadcast_director.gd"
+          },
+          {
+            "name": "BroadcastHUD",
+            "path": "res://scripts/broadcast_hud.gd"
+          },
+          {
+            "name": "CandidateCapeMotion",
+            "path": "res://scripts/candidate_cape_motion.gd"
+          },
+          {
+            "name": "CandidatePresentation",
+            "path": "res://scripts/candidate_presentation.gd"
+          },
+          {
+            "name": "CandidateRunner",
+            "path": "res://scripts/candidate_runner.gd"
+          },
+          {
+            "name": "GiftVisualCache",
+            "path": "res://scripts/gift_visual_cache.gd"
+          },
+          {
+            "name": "HeroRunner",
+            "path": "res://scripts/hero_runner.gd"
+          },
+          {
+            "name": "LiveEventBusInstance",
+            "path": "res://scripts/live_event_bus.gd"
+          },
+          {
+            "name": "RaceAmbience",
+            "path": "res://scripts/race_ambience.gd"
+          },
+          {
+            "name": "RaceAudio",
+            "path": "res://scripts/race_audio.gd"
+          },
+          {
+            "name": "RaceCamera",
+            "path": "res://scripts/race_camera.gd"
+          },
+          {
+            "name": "RaceMain",
+            "path": "res://scripts/race_main.gd"
+          },
+          {
+            "name": "RaceMemeBoard",
+            "path": "res://scripts/race_meme_board.gd"
+          },
+          {
+            "name": "RacePersistence",
+            "path": "res://scripts/race_persistence.gd"
+          },
+          {
+            "name": "RaceSessionStore",
+            "path": "res://scripts/race_session_store.gd"
+          },
+          {
+            "name": "RaceSoundEffects",
+            "path": "res://scripts/race_sound_effects.gd"
+          },
+          {
+            "name": "StadiumEffects",
+            "path": "res://scripts/stadium_effects.gd"
+          },
+          {
+            "name": "StadiumHUD",
+            "path": "res://scripts/stadium_hud.gd"
+          },
+          {
+            "name": "StadiumRace",
+            "path": "res://scripts/stadium_race.gd"
+          },
+          {
+            "name": "StadiumRunner",
+            "path": "res://scripts/stadium_runner.gd"
+          },
+          {
+            "name": "StadiumWorld",
+            "path": "res://scripts/stadium_world.gd"
+          }
+        ],
+        "engine_errors": [],
+        "engine_errors_truncated": false
+      }
+    },
+    {
+      "check": [
+        "script",
+        "validate",
+        "res://scripts/stadium_race.gd"
+      ],
+      "exit": 0,
+      "gda": {
+        "valid": true,
+        "scripts": [
+          {
+            "path": "res://scripts/stadium_race.gd",
+            "valid": true,
+            "error_string": null,
+            "diagnostics": []
+          }
+        ],
+        "stale_class_entries": [],
+        "project_root": "C:\\Users\\Kanex\\OneDrive\\Desktop\\JOGI\\game"
+      }
+    },
+    {
+      "check": [
+        "scene",
+        "validate",
+        "res://scenes/main/stadium_race.tscn"
+      ],
+      "exit": 0,
+      "gda": {
+        "path": "res://scenes/main/stadium_race.tscn",
+        "valid": true,
+        "problems": [],
+        "stale_class_entries": [],
+        "project_root": "C:\\Users\\Kanex\\OneDrive\\Desktop\\JOGI\\game"
+      }
+    },
+    {
+      "check": [
+        "scene",
+        "preflight",
+        "res://scenes/main/stadium_race.tscn"
+      ],
+      "exit": 0,
+      "gda": {
+        "path": "res://scenes/main/stadium_race.tscn",
+        "started": true,
+        "status": "ready",
+        "diagnostics": [],
+        "project_root": "C:\\Users\\Kanex\\OneDrive\\Desktop\\JOGI\\game"
+      }
+    },
+    {
+      "check": [
+        "script",
+        "run",
+        "res://tests/test_checkpoint_clock_recovery.gd",
+        "--strict"
+      ],
+      "exit": 0,
+      "gda": {
+        "path": "res://tests/test_checkpoint_clock_recovery.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nTEST_CHECKPOINT_CLOCK_RECOVERY_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 114,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-tiktok-recovery-gda-x2c3554r",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-tiktok-recovery-gda-x2c3554r",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-tiktok-recovery-gda-x2c3554r\\logs\\godot.log"
+      }
+    },
+    {
+      "check": [
+        "script",
+        "run",
+        "res://tests/test_interaction_cards_chain.gd",
+        "--strict"
+      ],
+      "exit": 0,
+      "gda": {
+        "path": "res://tests/test_interaction_cards_chain.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nTEST_INTERACTION_CARDS_CHAIN_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 112,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-tiktok-recovery-gda-x2c3554r",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-tiktok-recovery-gda-x2c3554r",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-tiktok-recovery-gda-x2c3554r\\logs\\godot.log"
+      }
+    },
+    {
+      "check": [
+        "script",
+        "run",
+        "res://tests/test_tiktok_gift_teams.gd",
+        "--strict"
+      ],
+      "exit": 0,
+      "gda": {
+        "path": "res://tests/test_tiktok_gift_teams.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nTEST_TIKTOK_GIFT_TEAMS_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 106,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-tiktok-recovery-gda-x2c3554r",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-tiktok-recovery-gda-x2c3554r",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-tiktok-recovery-gda-x2c3554r\\logs\\godot.log"
+      }
+    }
+  ]
+}

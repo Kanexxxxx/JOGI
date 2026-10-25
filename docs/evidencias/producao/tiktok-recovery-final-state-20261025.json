@@ -1,0 +1,120 @@
+{
+  "account": "xinka_",
+  "backend": "ok",
+  "authenticated": true,
+  "godot_connected": true,
+  "godot_client_count": 1,
+  "telemetry_fresh": true,
+  "telemetry_age_seconds": 0.05,
+  "pending_gifts": 0,
+  "round": 6,
+  "cycle": 2,
+  "race_state": "RACING",
+  "remaining": 470.966666666784,
+  "votes": [
+    0,
+    7,
+    8
+  ],
+  "runners": [
+    {
+      "candidate_id": 1,
+      "progress_m": 1548.45739746094,
+      "current_speed": 11.0027987662287
+    },
+    {
+      "candidate_id": 2,
+      "progress_m": 1548.55419921875,
+      "current_speed": 13.0414064516441
+    }
+  ],
+  "performance": {
+    "draw_calls": 321,
+    "fps": 60.0,
+    "frame_ms": 5.01,
+    "nodes": 383,
+    "orphan_nodes": 0,
+    "physics_ms": 1.64,
+    "render_height": 1920,
+    "render_width": 1080,
+    "static_mem_mb": 109.64,
+    "window_height": 960,
+    "window_width": 540
+  },
+  "collector": {
+    "status": "rate_limited",
+    "last_http_status": 429,
+    "endpoint": "room_discovery",
+    "next_retry_at": 1792946879.3456013,
+    "connected": false,
+    "comments_observed": 0
+  },
+  "audio": {
+    "audio_sessions": [
+      {
+        "device_index": 0,
+        "pid": 0,
+        "audio_state": 0,
+        "volume": 1.0,
+        "muted": false,
+        "peak": 0.0
+      },
+      {
+        "device_index": 1,
+        "pid": 0,
+        "audio_state": 0,
+        "volume": 1.0,
+        "muted": false,
+        "peak": 0.0
+      },
+      {
+        "device_index": 2,
+        "pid": 37936,
+        "audio_state": 1,
+        "volume": 1.0,
+        "muted": false,
+        "peak": 0.0044
+      },
+      {
+        "device_index": 2,
+        "pid": 0,
+        "audio_state": 0,
+        "volume": 1.0,
+        "muted": false,
+        "peak": 0.0
+      },
+      {
+        "device_index": 2,
+        "pid": 40364,
+        "audio_state": 1,
+        "volume": 1.0,
+        "muted": false,
+        "peak": 0.0
+      },
+      {
+        "device_index": 2,
+        "pid": 38324,
+        "audio_state": 0,
+        "volume": 1.0,
+        "muted": false,
+        "peak": 0.0
+      },
+      {
+        "device_index": 2,
+        "pid": 59964,
+        "audio_state": 1,
+        "volume": 1.0,
+        "muted": false,
+        "peak": 0.0044
+      },
+      {
+        "device_index": 2,
+        "pid": 21812,
+        "audio_state": 0,
+        "volume": 1.0,
+        "muted": false,
+        "peak": 0.0
+      }
+    ]
+  }
+}
