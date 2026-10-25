@@ -22,6 +22,11 @@ const INTERACTION_FADE_SECONDS: float = 0.3
 const MAX_INTERACTION_QUEUE: int = 64
 const CHAT_TTL_SECONDS: float = 6.5
 
+var _showcase_entries: Array[Dictionary] = []
+var _showcase_textures: Dictionary = {}
+var _showcase_panels: Array[Panel] = []
+var _showcase_details: Array[Label] = []
+
 var timer_label: Label = null
 var round_label: Label = null
 var cycle_label: Label = null
@@ -344,23 +349,45 @@ void fragment() {
 	var sub_colors: Array[Color] = [Color("ffe57f"), Color("8be9ff"), Color("ff94b2"), Color("93e6ff")]
 	for index: int in range(mechanics.size()):
 		var card_x: float = 42.0 + float(index) * 252.0
-		var caption: Label = _label(mechanics[index], Rect2(card_x + 8.0, 1660.0, 224.0, 30.0), 23, WHITE, true)
+		var showcase_panel: Panel = Panel.new()
+		showcase_panel.name = "GiftShowcase%d" % index
+		showcase_panel.position = Vector2(card_x, 1607.0)
+		showcase_panel.size = Vector2(240.0, 112.0)
+		showcase_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var showcase_style: StyleBoxFlat = StyleBoxFlat.new()
+		showcase_style.bg_color = Color("061332", .97)
+		showcase_style.border_color = sub_colors[index]
+		showcase_style.set_border_width_all(2)
+		showcase_style.set_corner_radius_all(20)
+		showcase_panel.add_theme_stylebox_override("panel", showcase_style)
+		frame.add_child(showcase_panel)
+		_showcase_panels.append(showcase_panel)
+		var caption: Label = _label(mechanics[index], Rect2(card_x + 8.0, 1654.0, 224.0, 24.0), 23, WHITE, true)
 		caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_fit_line(caption, 15)
 		_gift_captions.append(caption)
-		var sub_lbl: Label = _label(subtitles[index], Rect2(card_x + 8.0, 1688.0, 224.0, 24.0), 15, sub_colors[index])
+		var sub_lbl: Label = _label(subtitles[index], Rect2(card_x + 8.0, 1677.0, 224.0, 20.0), 15, sub_colors[index])
 		sub_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_fit_line(sub_lbl, 11)
 		_gift_subtitles.append(sub_lbl)
 		var gift_image: TextureRect = TextureRect.new()
-		gift_image.position = Vector2(card_x + 96.0, 1612.0)
-		gift_image.size = Vector2(48.0, 48.0)
+		gift_image.position = Vector2(card_x + 98.0, 1610.0)
+		gift_image.size = Vector2(44.0, 44.0)
 		gift_image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		gift_image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		gift_image.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		gift_image.visible = false
 		frame.add_child(gift_image)
 		_gift_images.append(gift_image)
+		var metadata_label: Label = _label("CATÁLOGO NÃO CONFIRMADO", Rect2(card_x + 8.0, 1697.0, 224.0, 20.0), 14, sub_colors[index])
+		metadata_label.size = Vector2(224.0, 20.0)
+		metadata_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_fit_line(metadata_label, 11)
+		_showcase_details.append(metadata_label)
+	var team_instruction: Label = _label("COMENTE 13 OU 22 ANTES DE ENVIAR PRESENTES", Rect2(SAFE_LEFT, 1570.0, 484.0, 30.0), 17, WHITE, true)
+	team_instruction.name = "GiftTeamInstruction"
+	team_instruction.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_fit_line(team_instruction, 13)
 
 	_lula_badge = _make_runner_badge("13  LULA", RED, WHITE)
 	_flavio_badge = _make_runner_badge("22  FLÁVIO", GOLD, INK)
@@ -824,7 +851,23 @@ func show_participation(participant: Dictionary) -> void:
 		var g_name: String = _sanitize_single_line(str(participant.get("gift_name", "")))
 		if g_name.is_empty():
 			g_name = "Presente"
-		action = "enviou %s ×%s" % [g_name, _count_text(g_qty)]
+		action = "%s ×%s" % [g_name, _count_text(g_qty)]
+		var status: String = str(participant.get("effect_status", "unconfirmed"))
+		var abilities: Dictionary = {"gift_t1_turbo":"IMPULSO", "gift_t2_shield_or_obstacle":"ESCUDO", "gift_t2_shield":"ESCUDO", "gift_t3_attack":"ATAQUE", "gift_t4_super_rally":"SUPER TURBO"}
+		var action_id: String = str(participant.get("action_id", ""))
+		if status == "applied":
+			action += " · " + str(abilities.get(action_id, "EFEITO")) + " " + ("13" if team == 1 else "22")
+			if action_id == "gift_t3_attack":
+				action += " → " + ("22" if team == 1 else "13")
+			_highlight_showcase(action_id)
+		elif status == "reserved":
+			action += " · PRÓXIMA RODADA"
+		elif team == 0 or status == "neutral":
+			action += " · SEM EQUIPE: 13 OU 22"
+		elif status == "unknown_value":
+			action += " · VALOR NÃO INFORMADO"
+		else:
+			action += " · RECEBIDO, SEM EFEITO CONFIRMADO"
 	elif kind == "follow":
 		action = "começou a seguir"
 
@@ -859,7 +902,10 @@ func _push_interaction_card(participant: Dictionary, clean_name: String, kind: S
 				var g_name: String = _sanitize_single_line(str(participant.get("gift_name", "")))
 				if g_name.is_empty():
 					g_name = "Presente"
-				existing["action"] = "enviou %s ×%s" % [g_name, _count_text(total_qty)]
+				var previous_action: String = str(existing.get("action", ""))
+				var effect_at: int = previous_action.find(" · ")
+				var effect_note: String = previous_action.substr(effect_at) if effect_at >= 0 else ""
+				existing["action"] = "%s ×%s" % [g_name, _count_text(total_qty)] + effect_note
 				existing["display_name"] = clean_name
 				existing["expires"] = _elapsed + INTERACTION_TTL_SECONDS
 				if not avatar_path.is_empty():
@@ -1094,6 +1140,58 @@ func _refresh_chat() -> void:
 		line.add_theme_color_override("font_color", Color("ff9caf") if team == 1 else Color("9affe1"))
 
 
+func set_gift_showcase(entries: Array[Dictionary]) -> void:
+	_showcase_entries = entries.duplicate(true)
+	_apply_gift_showcase()
+
+
+func _apply_gift_showcase() -> void:
+	var actions: Array[String] = ["boost", "shield", "attack", "super_turbo"]
+	for entry: Dictionary in _showcase_entries:
+		var index: int = actions.find(str(entry.get("action", "")))
+		if index < 0 or index >= _gift_images.size():
+			continue
+		var name_text: String = _plain(str(entry.get("gift_name", "Presente")), 24)
+		var verified: bool = bool(entry.get("verified", false))
+		var coins: int = int(entry.get("unit_coin_value", 0)) if entry.get("unit_coin_value") != null else 0
+		_gift_subtitles[index].text = name_text
+		_fit_line(_gift_subtitles[index], 12)
+		_showcase_details[index].text = ("%s %s" % [_count_text(coins), "moeda" if coins == 1 else "moedas"]) if verified and coins > 0 else "VALOR NÃO CONFIRMADO"
+		var resource_path: String = str(entry.get("image_resource", ""))
+		if not resource_path.begins_with("res://assets/gifts/tiktok/"):
+			continue
+		var cache_key: String = resource_path + str(entry.get("image_region", []))
+		if _showcase_textures.has(cache_key):
+			_gift_images[index].texture = _showcase_textures[cache_key] as Texture2D
+			_gift_images[index].visible = true
+			_artwork.gift_image_active[index] = true
+			continue
+		var source: Image = Image.load_from_file(ProjectSettings.globalize_path(resource_path))
+		if source == null or source.is_empty():
+			continue
+		var texture: Texture2D = ImageTexture.create_from_image(source)
+		var region: Array = entry.get("image_region", []) as Array
+		if region.size() == 4:
+			var atlas: AtlasTexture = AtlasTexture.new()
+			atlas.atlas = texture
+			atlas.region = Rect2(float(region[0]), float(region[1]), float(region[2]), float(region[3]))
+			texture = atlas
+		_showcase_textures[cache_key] = texture
+		_gift_images[index].texture = texture
+		_gift_images[index].visible = true
+		_artwork.gift_image_active[index] = true
+
+
+func _highlight_showcase(action_id: String) -> void:
+	var index: int = ["gift_t1_turbo", "gift_t2_shield_or_obstacle", "gift_t3_attack", "gift_t4_super_rally"].find(action_id)
+	if index < 0 or index >= _showcase_panels.size():
+		return
+	var panel: Panel = _showcase_panels[index]
+	panel.modulate = Color(1.8, 1.8, 1.2)
+	var flash: Tween = create_tween()
+	flash.tween_property(panel, "modulate", Color.WHITE, 1.2)
+
+
 func set_gift_legend(entries: Array[Dictionary]) -> void:
 	if _experience_ended:
 		return
@@ -1118,6 +1216,7 @@ func set_gift_legend(entries: Array[Dictionary]) -> void:
 		if not title.is_empty():
 			_gift_captions[index].text = ellipsize_utf8(title, _headline_font, 23, _gift_captions[index].size.x - 4.0)
 			_fit_line(_gift_captions[index], 15)
+	_apply_gift_showcase()
 	if _artwork != null:
 		_artwork.queue_redraw()
 

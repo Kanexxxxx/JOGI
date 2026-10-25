@@ -204,6 +204,7 @@ class LiveBridgeServer:
                     raise ValueError("Outbox antiga sem conta contém presentes e requer revisão manual; dados preservados.")
             finally:
                 check_db.close()
+        self.tiktok_team_store_path = str(outbox_path.parent / "tiktok_teams.sqlite3") if outbox_path else None
         self.outbox = GiftOutbox(outbox_path, platform=platform, capacity=gift_capacity, account=self.account)
         try:
             # Empty-account local fixtures keep their historical compatibility.
@@ -464,7 +465,7 @@ class LiveBridgeServer:
         if self._live_adapter is not None:
             return
         from adapters.tiktok_adapter import TikTokAdapterConfig, TikTokLiveAdapter
-        self._live_adapter = TikTokLiveAdapter(config=TikTokAdapterConfig(unique_id=self.account))
+        self._live_adapter = TikTokLiveAdapter(config=TikTokAdapterConfig(unique_id=self.account, team_store_path=self.tiktok_team_store_path))
         if not self._live_adapter.is_available:
             self._live_adapter = None
             raise RuntimeError("SDK TikTokLive ausente. Execute uv sync --extra tiktok neste projeto.")
@@ -1116,6 +1117,7 @@ class LiveBridgeServer:
                 result = {
                     "status": "ok",
                     "platform": self.platform,
+                    "showcase": self.gift_catalog.showcase(self.account) if self.platform == "tiktok" else [],
                     **self.gift_catalog.listing(
                         int(query_params.get("limit", [200])[0]),
                         int(query_params.get("offset", [0])[0]),

@@ -162,6 +162,9 @@ func ingest_event(envelope: Dictionary) -> bool:
 		"amount": amount, "gift_quantity": gift_quantity, "joined": joined, "switched_team": switched,
 		"source": source
 	}
+	if kind == "gift":
+		card_payload["effect_status"] = String(payload.get("effect_status", "unconfirmed"))
+		card_payload["action_id"] = String(payload.get("action_id", ""))
 	if not avatar_icon_path.is_empty():
 		card_payload["avatar_icon_path"] = avatar_icon_path
 	if not safe_gift_id.is_empty():

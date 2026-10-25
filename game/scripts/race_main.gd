@@ -522,6 +522,8 @@ func trigger_candidate_shield(candidate_id: int, duration: float = 5.0, voter_na
 	if runner == null:
 		return
 	runner.apply_shield(duration)
+	if event_bus != null:
+		event_bus.record_gift_application("applied")
 	var msg: String = "🛡️ @%s ativou ESCUDO em #%d %s!" % [voter_name, runner.candidate_id, runner.candidate_name]
 	_set_live_banner(msg)
 	_show_toast(msg)
@@ -614,6 +616,8 @@ func spawn_political_obstacle(
 			captured_area.queue_free()
 	)
 
+	if event_bus != null:
+		event_bus.record_gift_application("applied")
 	return obs_area
 
 
@@ -1259,6 +1263,7 @@ func _on_bus_boost_requested(
 	var runner: CandidateRunner = get_runner_by_id(candidate_slot)
 	if runner != null:
 		runner.apply_boost(boost_amount, duration)
+		event_bus.record_gift_application("applied")
 		_set_live_banner("⚡ @%s: %s -> #%d %s!" % [voter_name, label, runner.candidate_id, runner.candidate_name])
 		_show_toast("⚡ TURBO em %s!" % runner.candidate_name)
 		_update_hud()
@@ -1425,6 +1430,8 @@ func should_reserve_paid_effect() -> bool:
 
 
 func _reserve_round_effect(team: int, kind: String, amount: float, duration: float = 0.0) -> void:
+	if event_bus != null:
+		event_bus.record_gift_application("reserved")
 	if team not in [1, 2]:
 		return
 	var key: String = str(team)

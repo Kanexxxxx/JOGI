@@ -1,0 +1,33 @@
+{
+  "account": "xinka_",
+  "godot_connected": true,
+  "telemetry_fresh": true,
+  "pending_gifts": 0,
+  "platform_events_status": "waiting_room",
+  "current_round": 19,
+  "state_name": "RACING",
+  "match_time_remaining": 5.66666666688322,
+  "checkpoint_recovered": true,
+  "interaction_cards": {
+    "overflow_visual_only": 0,
+    "queued": 0,
+    "revision": "gifts-teams-20261025-v1",
+    "ttl_seconds": 6.4,
+    "visible": 0
+  },
+  "persistence": {
+    "error": "",
+    "ready": true
+  },
+  "performance": {
+    "draw_calls": 321,
+    "fps": 60.0,
+    "frame_ms": 4.09,
+    "nodes": 383,
+    "orphan_nodes": 0,
+    "physics_ms": 1.82,
+    "static_mem_mb": 115.86
+  },
+  "team_persistence": true,
+  "paid_pending": 0
+}

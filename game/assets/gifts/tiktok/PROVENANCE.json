@@ -1,0 +1,16 @@
+{
+  "source": "user supplied screenshots of TikTok gift menu for Xinka, 2026-10-25 00:35/00:36 BRT",
+  "images_edited": false,
+  "rendering": "AtlasTexture regions of original images; no generated official imagery",
+  "files": {
+    "catalog-small.jpeg": "d53847cd1d8f6450c8f955551602cb20cec854b21781c3541807cb7db19725f3",
+    "catalog-mid.jpeg": "045c9b3684848051903a76b2add2799eb1cd104582a338ac88410565ecc8a3fb",
+    "catalog-large.jpeg": "111ed86967ff56bdd3cdf6ce4b403a5c159af8dc225212b75f6d6e1e4bf6871e"
+  },
+  "substitutions": {
+    "Donut": "Mini dino (10)",
+    "Coração de Mão": "Trompete de Festa (149)",
+    "Galáxia": "Calêndula (1000)"
+  },
+  "gift_ids": "not supplied by screenshots; intentionally null, runtime tier dispatch remains source of mechanics"
+}

@@ -1,0 +1,254 @@
+[
+  {
+    "godot_connected": true,
+    "telemetry_fresh": true,
+    "telemetry_age_seconds": 0.02,
+    "pending_gifts": 0,
+    "platform_events_status": "waiting_room",
+    "current_round": 20,
+    "state_name": "RACING",
+    "match_time_remaining": 485.200000000104,
+    "next_round_in": 0.0,
+    "persistence": {
+      "error": "",
+      "ready": true
+    },
+    "checkpoint_recovered": true,
+    "interaction_cards": {
+      "overflow_visual_only": 0,
+      "queued": 0,
+      "revision": "gifts-teams-20261025-v1",
+      "ttl_seconds": 6.4,
+      "visible": 0
+    },
+    "fps": 60.0,
+    "distances": [
+      1377.54626464844,
+      1377.61999511719
+    ]
+  },
+  {
+    "godot_connected": true,
+    "telemetry_fresh": true,
+    "telemetry_age_seconds": 0.01,
+    "pending_gifts": 0,
+    "platform_events_status": "waiting_room",
+    "current_round": 20,
+    "state_name": "RACING",
+    "match_time_remaining": 480.183333333442,
+    "next_round_in": 0.0,
+    "persistence": {
+      "error": "",
+      "ready": true
+    },
+    "checkpoint_recovered": true,
+    "interaction_cards": {
+      "overflow_visual_only": 0,
+      "queued": 0,
+      "revision": "gifts-teams-20261025-v1",
+      "ttl_seconds": 6.4,
+      "visible": 0
+    },
+    "fps": 60.0,
+    "distances": [
+      1437.79797363281,
+      1437.90808105469
+    ]
+  },
+  {
+    "godot_connected": true,
+    "telemetry_fresh": true,
+    "telemetry_age_seconds": 0.11,
+    "pending_gifts": 0,
+    "platform_events_status": "waiting_room",
+    "current_round": 20,
+    "state_name": "RACING",
+    "match_time_remaining": 475.283333333447,
+    "next_round_in": 0.0,
+    "persistence": {
+      "error": "",
+      "ready": true
+    },
+    "checkpoint_recovered": true,
+    "interaction_cards": {
+      "overflow_visual_only": 0,
+      "queued": 0,
+      "revision": "gifts-teams-20261025-v1",
+      "ttl_seconds": 6.4,
+      "visible": 0
+    },
+    "fps": 60.0,
+    "distances": [
+      1496.646484375,
+      1496.7080078125
+    ]
+  },
+  {
+    "godot_connected": true,
+    "telemetry_fresh": true,
+    "telemetry_age_seconds": 0.11,
+    "pending_gifts": 0,
+    "platform_events_status": "waiting_room",
+    "current_round": 20,
+    "state_name": "RACING",
+    "match_time_remaining": 470.266666666785,
+    "next_round_in": 0.0,
+    "persistence": {
+      "error": "",
+      "ready": true
+    },
+    "checkpoint_recovered": true,
+    "interaction_cards": {
+      "overflow_visual_only": 0,
+      "queued": 0,
+      "revision": "gifts-teams-20261025-v1",
+      "ttl_seconds": 6.4,
+      "visible": 0
+    },
+    "fps": 60.0,
+    "distances": [
+      1556.68688964844,
+      1556.861328125
+    ]
+  },
+  {
+    "godot_connected": true,
+    "telemetry_fresh": true,
+    "telemetry_age_seconds": 0.1,
+    "pending_gifts": 0,
+    "platform_events_status": "waiting_room",
+    "current_round": 20,
+    "state_name": "RACING",
+    "match_time_remaining": 465.250000000123,
+    "next_round_in": 0.0,
+    "persistence": {
+      "error": "",
+      "ready": true
+    },
+    "checkpoint_recovered": true,
+    "interaction_cards": {
+      "overflow_visual_only": 0,
+      "queued": 0,
+      "revision": "gifts-teams-20261025-v1",
+      "ttl_seconds": 6.4,
+      "visible": 0
+    },
+    "fps": 60.0,
+    "distances": [
+      1617.12866210938,
+      1617.35363769531
+    ]
+  },
+  {
+    "godot_connected": true,
+    "telemetry_fresh": true,
+    "telemetry_age_seconds": 0.08,
+    "pending_gifts": 0,
+    "platform_events_status": "waiting_room",
+    "current_round": 20,
+    "state_name": "RACING",
+    "match_time_remaining": 460.23333333346,
+    "next_round_in": 0.0,
+    "persistence": {
+      "error": "",
+      "ready": true
+    },
+    "checkpoint_recovered": true,
+    "interaction_cards": {
+      "overflow_visual_only": 0,
+      "queued": 0,
+      "revision": "gifts-teams-20261025-v1",
+      "ttl_seconds": 6.4,
+      "visible": 0
+    },
+    "fps": 60.0,
+    "distances": [
+      1677.02294921875,
+      1677.42431640625
+    ]
+  },
+  {
+    "godot_connected": true,
+    "telemetry_fresh": true,
+    "telemetry_age_seconds": 0.07,
+    "pending_gifts": 0,
+    "platform_events_status": "waiting_room",
+    "current_round": 20,
+    "state_name": "RACING",
+    "match_time_remaining": 455.216666666798,
+    "next_round_in": 0.0,
+    "persistence": {
+      "error": "",
+      "ready": true
+    },
+    "checkpoint_recovered": true,
+    "interaction_cards": {
+      "overflow_visual_only": 0,
+      "queued": 0,
+      "revision": "gifts-teams-20261025-v1",
+      "ttl_seconds": 6.4,
+      "visible": 0
+    },
+    "fps": 60.0,
+    "distances": [
+      1737.5537109375,
+      1737.45043945313
+    ]
+  },
+  {
+    "godot_connected": true,
+    "telemetry_fresh": true,
+    "telemetry_age_seconds": 0.06,
+    "pending_gifts": 0,
+    "platform_events_status": "waiting_room",
+    "current_round": 20,
+    "state_name": "RACING",
+    "match_time_remaining": 450.200000000136,
+    "next_round_in": 0.0,
+    "persistence": {
+      "error": "",
+      "ready": true
+    },
+    "checkpoint_recovered": true,
+    "interaction_cards": {
+      "overflow_visual_only": 0,
+      "queued": 0,
+      "revision": "gifts-teams-20261025-v1",
+      "ttl_seconds": 6.4,
+      "visible": 0
+    },
+    "fps": 60.0,
+    "distances": [
+      1797.44494628906,
+      1797.74328613281
+    ]
+  },
+  {
+    "godot_connected": true,
+    "telemetry_fresh": true,
+    "telemetry_age_seconds": 0.04,
+    "pending_gifts": 0,
+    "platform_events_status": "waiting_room",
+    "current_round": 20,
+    "state_name": "RACING",
+    "match_time_remaining": 445.183333333474,
+    "next_round_in": 0.0,
+    "persistence": {
+      "error": "",
+      "ready": true
+    },
+    "checkpoint_recovered": true,
+    "interaction_cards": {
+      "overflow_visual_only": 0,
+      "queued": 0,
+      "revision": "gifts-teams-20261025-v1",
+      "ttl_seconds": 6.4,
+      "visible": 0
+    },
+    "fps": 60.0,
+    "distances": [
+      1857.88806152344,
+      1857.84313964844
+    ]
+  }
+]

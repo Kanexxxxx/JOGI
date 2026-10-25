@@ -1,0 +1,641 @@
+{
+  "results": [
+    {
+      "script": "test_audience_director.gd",
+      "exit_code": 0,
+      "seconds": 9.405,
+      "gda": {
+        "path": "res://tests/test_audience_director.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nTEST_AUDIENCE_DIRECTOR_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 106,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-31rq3t3_",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-31rq3t3_",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-31rq3t3_\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_broadcast_director.gd",
+      "exit_code": 0,
+      "seconds": 1.378,
+      "gda": {
+        "path": "res://tests/test_broadcast_director.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nTEST_BROADCAST_DIRECTOR_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 107,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-aij3tjb3",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-aij3tjb3",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-aij3tjb3\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_broadcast_integration.gd",
+      "exit_code": 0,
+      "seconds": 6.461,
+      "gda": {
+        "path": "res://tests/test_broadcast_integration.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nTEST_BROADCAST_INTEGRATION_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 110,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-nll4eutk",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-nll4eutk",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-nll4eutk\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_cape_motion.gd",
+      "exit_code": 0,
+      "seconds": 5.588,
+      "gda": {
+        "path": "res://tests/test_cape_motion.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nCAPE_STATE lula run={ \"enabled\": true, \"surfaces\": 1, \"phase\": 2.38047445491038, \"amplitude\": 0.14965793219962, \"frequency\": 1.4488845615205, \"paused\": false, \"mode\": \"run\" } boost={ \"enabled\": true, \"surfaces\": 1, \"phase\": 5.05994878596839, \"amplitude\": 0.24476367064191, \"frequency\": 2.60712188257951, \"paused\": false, \"mode\": \"boost\" } hurt={ \"enabled\": true, \"surfaces\": 1, \"phase\": 5.5982212112386, \"amplitude\": 0.02454721842913, \"frequency\": 0.80447940729995, \"paused\": false, \"mode\": \"hurt\" }\r\nCAPE_STATE flavio run={ \"enabled\": true, \"surfaces\": 1, \"phase\": 2.38047445491038, \"amplitude\": 0.14965793219962, \"frequency\": 1.4488845615205, \"paused\": false, \"mode\": \"run\" } boost={ \"enabled\": true, \"surfaces\": 1, \"phase\": 5.05994878596839, \"amplitude\": 0.24476367064191, \"frequency\": 2.60712188257951, \"paused\": false, \"mode\": \"boost\" } hurt={ \"enabled\": true, \"surfaces\": 1, \"phase\": 5.5982212112386, \"amplitude\": 0.02454721842913, \"frequency\": 0.80447940729995, \"paused\": false, \"mode\": \"hurt\" }\r\nTEST_CAPE_MOTION_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 1104,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-0xs5ucx7",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-0xs5ucx7",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-0xs5ucx7\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_character_preview.gd",
+      "exit_code": 0,
+      "seconds": 2.258,
+      "gda": {
+        "path": "res://tests/test_character_preview.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nCHARACTER_PREVIEW_CONTRACT_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 110,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-_ppqmop6",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-_ppqmop6",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-_ppqmop6\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_checkpoint_clock_recovery.gd",
+      "exit_code": 0,
+      "seconds": 8.324,
+      "gda": {
+        "path": "res://tests/test_checkpoint_clock_recovery.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nTEST_CHECKPOINT_CLOCK_RECOVERY_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 114,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-fio9hfk7",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-fio9hfk7",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-fio9hfk7\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_estreia_revision.gd",
+      "exit_code": 0,
+      "seconds": 8.63,
+      "gda": {
+        "path": "res://tests/test_estreia_revision.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nTEST_ESTREIA_REVISION_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 105,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-9urewq9g",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-9urewq9g",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-9urewq9g\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_fase3_admin_telemetry.gd",
+      "exit_code": 0,
+      "seconds": 1.255,
+      "gda": {
+        "path": "res://tests/test_fase3_admin_telemetry.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nTEST_FASE3_ADMIN_TELEMETRY_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 110,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-mox2d9_p",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-mox2d9_p",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-mox2d9_p\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_gift_visual_cache.gd",
+      "exit_code": 0,
+      "seconds": 1.243,
+      "gda": {
+        "path": "res://tests/test_gift_visual_cache.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nTEST_GIFT_VISUAL_CACHE_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 106,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-75m7q1iq",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-75m7q1iq",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-75m7q1iq\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_hero_presentation.gd",
+      "exit_code": 0,
+      "seconds": 1.48,
+      "gda": {
+        "path": "res://tests/test_hero_presentation.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nTEST_HERO_PRESENTATION_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 106,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-8s635146",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-8s635146",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-8s635146\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_hud_interaction_regressions.gd",
+      "exit_code": 0,
+      "seconds": 1.337,
+      "gda": {
+        "path": "res://tests/test_hud_interaction_regressions.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nTEST_HUD_INTERACTION_REGRESSIONS_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 116,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-ueozgqn_",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-ueozgqn_",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-ueozgqn_\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_hud_redesign_goals_avatars.gd",
+      "exit_code": 4,
+      "seconds": 1.827,
+      "gda": {
+        "error": {
+          "category": "operation",
+          "code": "script_failed",
+          "message": "script run --strict: res://tests/test_hud_redesign_goals_avatars.gd exited with status 1",
+          "diagnostics": "--- script stdout ---\nGodot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nTEST_HUD_REDESIGN_GOALS_AVATARS_FAILED\r\n--- script stderr ---\nHUD_REDESIGN_TEST_FAIL: Elemento respeita margens horizontais simetricas: @Label@56\r\nHUD_REDESIGN_TEST_FAIL: Elemento respeita margens horizontais simetricas: @Label@56\r\nHUD_REDESIGN_TEST_FAIL: Elemento respeita margens horizontais simetricas: @Label@56\r\nHUD_REDESIGN_TEST_FAIL: Elemento respeita margens horizontais simetricas: @Label@56\r\nHUD_REDESIGN_TEST_FAIL: Elemento respeita margens horizontais simetricas: @Label@56\r\n",
+          "evidence": {
+            "exit_status": 1,
+            "script_errors": [],
+            "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-gdfugs_v",
+            "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-gdfugs_v",
+            "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-gdfugs_v\\logs\\godot.log"
+          }
+        }
+      }
+    },
+    {
+      "script": "test_idle_presentation.gd",
+      "exit_code": 0,
+      "seconds": 6.147,
+      "gda": {
+        "path": "res://tests/test_idle_presentation.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nTEST_IDLE_PRESENTATION_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 106,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-v30laakp",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-v30laakp",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-v30laakp\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_interaction_cards_chain.gd",
+      "exit_code": 0,
+      "seconds": 7.662,
+      "gda": {
+        "path": "res://tests/test_interaction_cards_chain.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nTEST_INTERACTION_CARDS_CHAIN_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 112,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-_4xu2rcg",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-_4xu2rcg",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-_4xu2rcg\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_lula_vs_bolsonaro.gd",
+      "exit_code": 0,
+      "seconds": 1.276,
+      "gda": {
+        "path": "res://tests/test_lula_vs_bolsonaro.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nASSERT_OK: Todos os testes de Lula vs Bolsonaro (sátira 2 corredores, pista infinita, ataques, escudos e vitória por tempo) passaram!\r\nTEST_LULA_VS_BOLSONARO_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 243,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-jtfo_fm2",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-jtfo_fm2",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-jtfo_fm2\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_paid_round_boundary.gd",
+      "exit_code": 0,
+      "seconds": 1.474,
+      "gda": {
+        "path": "res://tests/test_paid_round_boundary.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nTEST_PAID_ROUND_BOUNDARY_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 108,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-dhtmwgfg",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-dhtmwgfg",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-dhtmwgfg\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_planalto_asset.gd",
+      "exit_code": 0,
+      "seconds": 1.637,
+      "gda": {
+        "path": "res://tests/test_planalto_asset.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nPLANALTO_ASSET {\"minimum\":\"(32.025, 0.0, -19.7)\",\"size\":\"(21.725, 8.17, 39.4)\",\"surfaces\":12,\"triangles\":42752}\r\nTEST_PLANALTO_ASSET_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 216,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-y96gkij7",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-y96gkij7",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-y96gkij7\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_production_lifecycle.gd",
+      "exit_code": 0,
+      "seconds": 1.382,
+      "gda": {
+        "path": "res://tests/test_production_lifecycle.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nTEST_PRODUCTION_LIFECYCLE_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 109,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-x68olucz",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-x68olucz",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-x68olucz\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_production_storage_guard.gd",
+      "exit_code": 0,
+      "seconds": 6.551,
+      "gda": {
+        "path": "res://tests/test_production_storage_guard.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nTEST_PRODUCTION_STORAGE_GUARD_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 113,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-7v38el8h",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-7v38el8h",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-7v38el8h\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_race_ambience.gd",
+      "exit_code": 0,
+      "seconds": 10.119,
+      "gda": {
+        "path": "res://tests/test_race_ambience.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nAUDIO_REVISION {\"ambience\":{\"enabled\":false,\"paused\":false,\"players\":2,\"ready\":true,\"seconds\":10.0,\"status\":\"torcida_local_pronta\"},\"durations\":{\"final_stretch_a\":3.25079369544983,\"final_stretch_b\":2.69351482391357,\"next_round_a\":4.27247142791748,\"next_round_b\":3.85451245307922,\"overtake_1a\":2.32199549674988,\"overtake_1b\":2.55419492721558,\"overtake_2a\":2.64707493782043,\"overtake_2b\":3.01859402656555,\"podium_1a\":2.50775504112244,\"podium_1b\":2.78639459609985,\"podium_2a\":3.11147403717041,\"podium_2b\":3.25079369544983},\"fixed_node_count\":true,\"simulated_seconds\":160000,\"voice_count\":38,\"voices_ready\":true}\r\nTEST_RACE_AMBIENCE_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 712,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-tv74xsa5",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-tv74xsa5",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-tv74xsa5\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_race_audio.gd",
+      "exit_code": 0,
+      "seconds": 2.083,
+      "gda": {
+        "path": "res://tests/test_race_audio.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nTEST_RACE_AUDIO_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 99,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-spkpsyty",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-spkpsyty",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-spkpsyty\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_race_meme_board.gd",
+      "exit_code": 0,
+      "seconds": 1.57,
+      "gda": {
+        "path": "res://tests/test_race_meme_board.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nMEME_BOARD {\"approved_clips\":5,\"enabled\":true,\"playing\":false}\r\nTEST_RACE_MEME_BOARD_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 168,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-0nnpswdd",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-0nnpswdd",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-0nnpswdd\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_race_persistence.gd",
+      "exit_code": 0,
+      "seconds": 1.853,
+      "gda": {
+        "path": "res://tests/test_race_persistence.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nTEST_RACE_PERSISTENCE_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 105,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-7xogpy2t",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-7xogpy2t",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-7xogpy2t\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_race_prototype.gd",
+      "exit_code": 0,
+      "seconds": 1.436,
+      "gda": {
+        "path": "res://tests/test_race_prototype.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nTEST_RACE_PROTOTYPE_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 103,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-vlidr_x7",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-vlidr_x7",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-vlidr_x7\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_race_sound_effects.gd",
+      "exit_code": 0,
+      "seconds": 1.421,
+      "gda": {
+        "path": "res://tests/test_race_sound_effects.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nTEST_RACE_SOUND_EFFECTS_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 107,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-e0isnh71",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-e0isnh71",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-e0isnh71\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_round_cycle.gd",
+      "exit_code": 0,
+      "seconds": 1.553,
+      "gda": {
+        "path": "res://tests/test_round_cycle.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nTEST_ROUND_CYCLE_PASSED: 50 rodadas, ciclo, empate, pausa, replay e reinício\r\n",
+        "stderr": "",
+        "stdout_bytes": 154,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-flkj5qkk",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-flkj5qkk",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-flkj5qkk\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_round_finish_presentation.gd",
+      "exit_code": 0,
+      "seconds": 1.266,
+      "gda": {
+        "path": "res://tests/test_round_finish_presentation.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nTEST_ROUND_FINISH_PRESENTATION_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 114,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-1fwejrv9",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-1fwejrv9",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-1fwejrv9\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_rounded_hud.gd",
+      "exit_code": 0,
+      "seconds": 1.961,
+      "gda": {
+        "path": "res://tests/test_rounded_hud.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nTEST_ROUNDED_HUD_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 100,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-g36aapzi",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-g36aapzi",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-g36aapzi\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_session_persistence.gd",
+      "exit_code": 0,
+      "seconds": 2.784,
+      "gda": {
+        "path": "res://tests/test_session_persistence.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nTEST_SESSION_PERSISTENCE_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 108,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-ere3w5ms",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-ere3w5ms",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-ere3w5ms\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_sfx_cached.gd",
+      "exit_code": 0,
+      "seconds": 1.356,
+      "gda": {
+        "path": "res://tests/test_sfx_cached.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nSFX_CACHED {\"durations\":{\"boost\":1.0,\"impact\":0.800000011920929,\"shield\":1.20000004768372,\"victory\":3.0},\"ready\":true,\"total_seconds\":6.00000005960464}\r\nTEST_SFX_CACHED_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 252,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-towp0rj9",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-towp0rj9",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-towp0rj9\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_stadium_art_revision.gd",
+      "exit_code": 0,
+      "seconds": 1.43,
+      "gda": {
+        "path": "res://tests/test_stadium_art_revision.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nTEST_STADIUM_ART_REVISION_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 109,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-vnral22g",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-vnral22g",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-vnral22g\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_stadium_effects.gd",
+      "exit_code": 0,
+      "seconds": 1.247,
+      "gda": {
+        "path": "res://tests/test_stadium_effects.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nTEST_STADIUM_EFFECTS_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 104,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-fh8qwqk2",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-fh8qwqk2",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-fh8qwqk2\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_stadium_hud.gd",
+      "exit_code": 0,
+      "seconds": 1.526,
+      "gda": {
+        "path": "res://tests/test_stadium_hud.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nTEST_STADIUM_HUD_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 100,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-axa_02mb",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-axa_02mb",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-axa_02mb\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_stadium_integration.gd",
+      "exit_code": 0,
+      "seconds": 7.818,
+      "gda": {
+        "path": "res://tests/test_stadium_integration.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nTEST_STADIUM_INTEGRATION_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 108,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-ld2qov2f",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-ld2qov2f",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-ld2qov2f\\logs\\godot.log"
+      }
+    },
+    {
+      "script": "test_tiktok_gift_teams.gd",
+      "exit_code": 0,
+      "seconds": 7.019,
+      "gda": {
+        "path": "res://tests/test_tiktok_gift_teams.gd",
+        "exit_status": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\r\n\r\nTEST_TIKTOK_GIFT_TEAMS_PASSED\r\n",
+        "stderr": "",
+        "stdout_bytes": 106,
+        "stdout_truncated": false,
+        "stdout_file": null,
+        "diagnostics": [],
+        "engine_data_path": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-uv70238c",
+        "user_data_root": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-uv70238c",
+        "log_file": "C:\\Users\\Kanex\\AppData\\Local\\Temp\\jogi-godot-test-uv70238c\\logs\\godot.log"
+      }
+    }
+  ],
+  "passed": 34,
+  "failed": 1,
+  "excluded": {
+    "test_live_bridge_e2e.gd": "requires Python bridge runner; executed separately"
+  }
+}

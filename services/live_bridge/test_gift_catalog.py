@@ -40,7 +40,7 @@ class GiftCatalogTests(unittest.IsolatedAsyncioTestCase):
             rows=first.outbox.db.execute('SELECT envelope FROM gifts ORDER BY rowid').fetchall()
             old,new=(json.loads(row[0]) for row in rows)
             self.assertEqual(old['payload']['gift_tier'],'T2')
-            self.assertEqual(new['payload']['gift_tier'],'T3')
+            self.assertEqual(new['payload']['gift_tier'],'T2')
             self.assertEqual(new['payload']['action_id'],'gift_t3_attack')
             self.assertEqual(new['payload']['coin_value'],50)
             self.assertEqual(new['payload']['unit_coin_value'],50)

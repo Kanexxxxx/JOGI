@@ -244,11 +244,11 @@ class TestTikTokLiveAdapter(unittest.IsolatedAsyncioTestCase):
         # Vota primeiro para registrar o candidato favorito
         await adapter.handle_comment_event({
             "comment": "#2",
-            "user": {"unique_id": "tt_u3", "nickname": "BolsonaroFan"},
+            "user": {"id": "stable_u3", "unique_id": "tt_u3", "nickname": "BolsonaroFan"},
         })
 
         # Like deve ir para o candidato 2
-        like_event = {"likes": 25, "user": {"unique_id": "tt_u3", "nickname": "BolsonaroFan"}}
+        like_event = {"likes": 25, "user": {"id": "stable_u3", "unique_id": "tt_u3", "nickname": "BolsonaroFan"}}
         res_like = await adapter.handle_like_event(like_event)
         self.assertIsNotNone(res_like)
         self.assertEqual(res_like["event_type"], "like_batch")
@@ -256,7 +256,7 @@ class TestTikTokLiveAdapter(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(res_like["payload"]["candidate_slot"], 2)
 
         # Share
-        share_event = {"user": {"unique_id": "tt_u3", "nickname": "BolsonaroFan"}}
+        share_event = {"user": {"id": "stable_u3", "unique_id": "tt_u3", "nickname": "BolsonaroFan"}}
         res_share = await adapter.handle_share_event(share_event)
         self.assertIsNotNone(res_share)
         self.assertEqual(res_share["event_type"], "share")

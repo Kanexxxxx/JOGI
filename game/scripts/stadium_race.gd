@@ -78,6 +78,14 @@ func _ready() -> void:
 	if stadium_hud != null:
 		stadium_hud.set_gift_cache(gift_visuals)
 		stadium_hud.set_avatar_cache(avatar_visuals)
+		if OS.get_environment("LIVE_PLATFORM").to_lower() == "tiktok" or not is_production_mode():
+			var catalog: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://assets/catalogs/tiktok_gift_showcase.json"))
+			if catalog is Dictionary:
+				var showcase: Array[Dictionary] = []
+				for entry: Variant in catalog.get("entries", []):
+					if entry is Dictionary:
+						showcase.append(entry as Dictionary)
+				stadium_hud.set_gift_showcase(showcase)
 	_setup_finish_line()
 	for runner: CandidateRunner in runners:
 		runner.runner_stumbled.connect(_on_runner_stumbled)
@@ -311,7 +319,7 @@ func _on_show_event(envelope: Dictionary) -> void:
 	var payload: Dictionary = envelope.get("payload", {}) as Dictionary
 	if payload.has("coin_value") and float(payload["coin_value"]) <= 0.0:
 		return
-	if str(payload.get("gift_tier", "")) == "T4":
+	if _resolve_gift_legend_action(payload) == "super_turbo" and str(payload.get("effect_status", "")) == "applied":
 		var team: int = int(payload.get("candidate_slot", 0))
 		if team in [1, 2]:
 			_begin_super_turbo.call_deferred(team)
@@ -685,7 +693,7 @@ func get_telemetry_snapshot() -> Dictionary:
 		"orphan_nodes": int(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT)),
 	}
 	snapshot["interaction_cards"] = stadium_hud.get_interaction_diagnostics() if stadium_hud != null else {}
-	(snapshot["interaction_cards"] as Dictionary)["revision"] = "cards-20261025-v2"
+	(snapshot["interaction_cards"] as Dictionary)["revision"] = "gifts-teams-20261025-v1"
 	snapshot["checkpoint_recovered"] = persistence.recovered if persistence != null else false
 	snapshot["gift_visuals"] = gift_visuals.get_cache_stats() if gift_visuals != null else {}
 	snapshot["avatar_visuals"] = avatar_visuals.get_cache_stats() if avatar_visuals != null else {}

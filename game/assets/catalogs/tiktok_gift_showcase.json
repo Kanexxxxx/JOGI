@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "platform": "tiktok",
+  "account": "xinka_",
+  "entries": [
+    {
+      "action": "boost",
+      "gift_name": "Rosa",
+      "gift_id": null,
+      "unit_coin_value": 1,
+      "verified": true,
+      "availability_confirmed": true,
+      "image_resource": "res://assets/gifts/tiktok/catalog-small.jpeg",
+      "image_region": [
+        28,
+        744,
+        102,
+        94
+      ],
+      "confirmation_source": "operator_account_screenshot_2026-10-25_0036",
+      "id_confirmed": false
+    },
+    {
+      "action": "shield",
+      "gift_name": "Mini dino",
+      "gift_id": null,
+      "unit_coin_value": 10,
+      "verified": true,
+      "availability_confirmed": true,
+      "image_resource": "res://assets/gifts/tiktok/catalog-small.jpeg",
+      "image_region": [
+        470,
+        755,
+        82,
+        80
+      ],
+      "confirmation_source": "operator_account_screenshot_2026-10-25_0036",
+      "id_confirmed": false
+    },
+    {
+      "action": "attack",
+      "gift_name": "Trompete de Festa",
+      "gift_id": null,
+      "unit_coin_value": 149,
+      "verified": true,
+      "availability_confirmed": true,
+      "image_resource": "res://assets/gifts/tiktok/catalog-mid.jpeg",
+      "image_region": [
+        32,
+        994,
+        104,
+        92
+      ],
+      "confirmation_source": "operator_account_screenshot_2026-10-25_0036",
+      "id_confirmed": false
+    },
+    {
+      "action": "super_turbo",
+      "gift_name": "Calêndula",
+      "gift_id": null,
+      "unit_coin_value": 1000,
+      "verified": true,
+      "availability_confirmed": true,
+      "image_resource": "res://assets/gifts/tiktok/catalog-large.jpeg",
+      "image_region": [
+        30,
+        834,
+        100,
+        92
+      ],
+      "confirmation_source": "operator_account_screenshot_2026-10-25_0036",
+      "id_confirmed": false
+    }
+  ]
+}

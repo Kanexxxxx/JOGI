@@ -597,8 +597,16 @@
         state.snapshot.platform,
         state.snapshot.live_goals?.gifts?.goal_gift_id
       );
+      for (const gift of (data.showcase || [])) {
+        const row=document.createElement('p');
+        const ability={boost:'IMPULSO',shield:'ESCUDO',attack:'ATAQUE',super_turbo:'SUPER TURBO'}[gift.action] || gift.action;
+        row.textContent=`Vitrine: ${gift.gift_name} · ${gift.unit_coin_value} moeda(s) · ${ability} · Equipe escolhida pelo remetente`;
+        container.appendChild(row);
+      }
       if (!data.entries.length) {
-        container.textContent = 'Nenhum presente identificado recebido nesta instância.';
+        const empty=document.createElement('p');
+        empty.textContent = 'Nenhum presente identificado recebido nesta instância. IDs serão registrados a partir dos eventos reais; não são inventados pelo catálogo visual.';
+        container.appendChild(empty);
         return;
       }
       for (const entry of data.entries) {

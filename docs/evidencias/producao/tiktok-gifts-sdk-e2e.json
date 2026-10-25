@@ -1,0 +1,42 @@
+{
+  "scope": "isolated SDK CommentEvent -> authenticated real bridge/Godot -> HUD telemetry",
+  "public_live": false,
+  "external_sdk_requests": false,
+  "synthetic_production_events": false,
+  "paid_gifts": {
+    "acknowledged_once": 3,
+    "frozen_slots": [
+      1,
+      2,
+      0
+    ],
+    "neutral_coins": 1,
+    "duplicate_reapplied": false
+  },
+  "result": "PASS",
+  "backend_receipts": [
+    "accepted",
+    "accepted",
+    "accepted",
+    "accepted",
+    "accepted",
+    "accepted",
+    "accepted"
+  ],
+  "sdk_input_events": 3,
+  "sdk_duplicates_dropped": 1,
+  "godot_votes": {
+    "13": 2,
+    "22": 2
+  },
+  "interaction_cards": {
+    "overflow_visual_only": 0,
+    "queued": 0,
+    "revision": "gifts-teams-20261025-v1",
+    "ttl_seconds": 6.4,
+    "visible": 2
+  },
+  "authenticated_godot_connected": true,
+  "real_sdk_event_class": "CommentEvent",
+  "limits": "Headless HUD scene telemetry, no raster capture; no real platform spectator. No per-vote ACK exists; Godot audience ledger is observed."
+}

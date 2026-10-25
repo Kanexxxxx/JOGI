@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import inspect
+import uuid
 import asyncio
 from dataclasses import dataclass, field
 import logging
@@ -13,6 +15,7 @@ from email.utils import parsedate_to_datetime
 from typing import Any
 
 from .base import BaseLiveAdapter
+from .tiktok_teams import TikTokTeams, stable_user_id, event_time_ms
 from .normalization import ViewerContext, bounded_int, read_field
 from gift_images import extract_gift_image
 from avatar_images import extract_avatar_url
@@ -81,6 +84,7 @@ class TikTokAdapterConfig:
     offline_poll_sec: float = 120.0
     ambiguous_poll_sec: float = 300.0
     rate_limit_cooldown_sec: float = 900.0
+    team_store_path: str | None = None
     default_candidate_slot: int | None = None  # Neutral until viewer chooses 13/22.
 
 
@@ -108,6 +112,27 @@ class TikTokLiveAdapter(BaseLiveAdapter):
     _retry_after: float = field(default=0.0, init=False, repr=False)
     _next_retry_at: float | None = field(default=None, init=False, repr=False)
     _last_error_kind: str | None = field(default=None, init=False, repr=False)
+    _observed_by_type: dict[str, int] = field(default_factory=dict, init=False, repr=False)
+    _last_raw_event_at: float | None = field(default=None, init=False, repr=False)
+    _last_raw_event_type: str | None = field(default=None, init=False, repr=False)
+    _valid_votes: int = field(default=0, init=False, repr=False)
+    _ignored_non_vote_comments: int = field(default=0, init=False, repr=False)
+    _duplicates_dropped: int = field(default=0, init=False, repr=False)
+    _parser_errors: int = field(default=0, init=False, repr=False)
+    _last_connected_at: float | None = field(default=None, init=False, repr=False)
+    _last_http_endpoint: str | None = field(default=None, init=False, repr=False)
+
+    def _observe(self, event_type: str) -> None:
+        # Aggregate only: no chat text, user identity, cookie or raw payload retained.
+        self._observed_by_type[event_type] = self._observed_by_type.get(event_type, 0) + 1
+        self._last_raw_event_at = time.time()
+        self._last_raw_event_type = event_type
+
+    def _handler_error(self, event_type: str, error: Exception) -> None:
+        self._parser_errors += 1
+        self.record_error(f"{event_type}: {type(error).__name__}")
+        logger.error("TikTok handler failed: type=%s error=%s", event_type, type(error).__name__)
+
 
     async def _request_guard(self, request: Any) -> None:
         # SDK fallback must not issue a second network request after a block.
@@ -115,6 +140,14 @@ class TikTokLiveAdapter(BaseLiveAdapter):
             raise ConnectionError("TikTok request suppressed after HTTP block")
 
     async def _response_guard(self, response: Any) -> None:
+        # Endpoint categories identify the failing layer without storing URLs/query secrets.
+        url_path = str(getattr(getattr(response, "request", None), "url", "")).split("?", 1)[0]
+        self._last_http_endpoint = (
+            "room_discovery" if "/user/room" in url_path or url_path.rstrip("/").endswith("/live") else
+            "gift_catalog" if "gift" in url_path else
+            "room_info" if "room/info" in url_path else
+            "webcast_or_other"
+        )
         status = int(response.status_code)
         if status in (429, 401, 403):
             self._http_status = status
@@ -157,6 +190,16 @@ class TikTokLiveAdapter(BaseLiveAdapter):
         return "connection_error", min(self.config.max_backoff_sec, self.config.base_backoff_sec * (2 ** min(self._reconnect_attempts, 6)))
 
     def __post_init__(self) -> None:
+        self._teams = TikTokTeams(self.config.team_store_path, account=(self.config.unique_id or "").strip().lstrip("@").lower())
+        recovery = self._teams.collector_state()
+        self._next_retry_at = recovery.get("next_retry_at")
+        self._http_status = recovery.get("last_http_status")
+        self._paid_lock = asyncio.Lock()
+        self._paid_recovery_task = None
+        for key, value in self._teams.tracker_state().items():
+            age = time.time()-float(value[1])
+            if 0 <= age < self._streak_tracker.ttl_seconds:
+                self._streak_tracker._streaks[key] = (int(value[0]), time.monotonic()-age, bool(value[2]))
         clean_user = (self.config.unique_id or "").strip().lstrip("@")
         if not TIKTOK_AVAILABLE:
             self._status = "DISABLED_NO_LIB"
@@ -189,8 +232,7 @@ class TikTokLiveAdapter(BaseLiveAdapter):
     def _extract_user_info(self, event: Any) -> tuple[str, str]:
         """Extrai user_id e display_name de eventos brutos do TikTok com fallbacks seguros."""
         user = read_field(event, "user")
-        user_id = str(read_field(user, "id") or read_field(user, "user_id")
-                      or read_field(user, "unique_id") or read_field(event, "user_id") or "anon_tiktok")[:128]
+        user_id = stable_user_id(event) or "anon_tiktok"
         nickname = str(read_field(user, "nickname") or read_field(event, "display_name") or user_id)[:256]
         return user_id, nickname
 
@@ -203,21 +245,26 @@ class TikTokLiveAdapter(BaseLiveAdapter):
         Extrai exclusivamente a intenÃ§Ã£o de torcida 13/22 via Zero-Trust.
         O texto livre do chat NUNCA Ã© repassado ao Godot.
         """
+        self._observe("comment")
         comment_text: str = ""
         if isinstance(event, dict):
-            comment_text = str(event.get("comment") or "")
+            comment_text = str(event.get("comment") or event.get("content") or "")
         else:
-            comment_text = str(getattr(event, "comment", "") or "")
+            comment_text = str(getattr(event, "comment", "") or getattr(event, "content", "") or "")
 
         slot = parse_vote_slot_from_comment(comment_text)
         if slot is None or not (1 <= slot <= 2):
+            self._ignored_non_vote_comments += 1
             return None
 
         user_id, display_name = self._extract_user_info(event)
         identity = self._viewers.identity(event, "tiktok", "vote")
         if identity is None:
+            self._duplicates_dropped += 1
             return None
+        self._valid_votes += 1
         if user_id != "anon_tiktok":
+            self._teams.choose(user_id, slot, event_time_ms(event), str(identity.get("event_id") or uuid.uuid4().hex))
             self._viewers.choose(user_id, slot)
 
         envelope = build_vote_envelope(
@@ -235,12 +282,14 @@ class TikTokLiveAdapter(BaseLiveAdapter):
 
     async def handle_like_event(self, event: Any) -> dict[str, Any] | None:
         """Processa lotes de curtidas do TikTok LIVE."""
+        self._observe("like")
         user_id, display_name = self._extract_user_info(event)
         identity = self._viewers.identity(event, "tiktok", "like_batch")
         if identity is None:
+            self._duplicates_dropped += 1
             return None
         likes = bounded_int(read_field(event, "count") or read_field(event, "likes"), 1, 50_000)
-        slot = self._viewers.team(user_id, self.config.default_candidate_slot)
+        slot = self._teams.team(stable_user_id(event), event_time_ms(event), coarse=not read_field(event,"timestamp_ms") and bool(read_field(read_field(event,"common"),"create_time")))
         envelope = build_like_batch_envelope(
             user_id=user_id,
             display_name=display_name,
@@ -258,10 +307,13 @@ class TikTokLiveAdapter(BaseLiveAdapter):
         Processa presentes do TikTok LIVE com deduplicaÃ§Ã£o de streaks.
         Evita contagem duplicada em combos progressivos (1 -> 3 -> 5) emitindo apenas os novos deltas.
         """
+        self._observe("gift")
+        await self._drain_paid_pending()
         user_id, display_name = self._extract_user_info(event)
 
         identity = self._viewers.identity(event, "tiktok", "gift")
         if identity is None:
+            self._duplicates_dropped += 1
             return None
         gift = read_field(event, "gift")
         raw_gift_id = read_field(event, "gift_id") or read_field(gift, "id")
@@ -278,7 +330,7 @@ class TikTokLiveAdapter(BaseLiveAdapter):
                           or streaking or repeat_count > 1 or streak_id)
 
         delta = self._streak_tracker.register_gift_packet(
-            user_id=user_id,
+            user_id=user_id if stable_user_id(event) else "combo_only:"+str(streak_id or read_field(read_field(event,"user"),"unique_id") or identity.get("event_id") or identity["sequence"]),
             gift_id=gift_id,
             streak_id=streak_id,
             repeat_count=repeat_count,
@@ -287,21 +339,20 @@ class TikTokLiveAdapter(BaseLiveAdapter):
         )
 
         if delta <= 0:
-            logger.debug(
-                "Presente descartado pelo GiftStreakTracker (combo jÃ¡ contabilizado): user=%s gift=%s delta=%d",
-                user_id,
-                gift_id,
-                delta,
-            )
+            tracker = {key:[value[0],time.time()-(time.monotonic()-value[1]),value[2]] for key,value in self._streak_tracker._streaks.items()}
+            self._teams.stage_gifts([],tracker)
+            self._duplicates_dropped += 1
+            logger.debug("Gift combo delta already counted; no envelope emitted")
             return None
 
         # Mapeamento de presentes por valor em diamantes para tiers T1..T4
         tier = gift_tier_for_unit_coins(diamond_count)
 
-        slot = self._viewers.team(user_id, self.config.default_candidate_slot)
+        slot = self._teams.team(stable_user_id(event), event_time_ms(event), coarse=not read_field(event,"timestamp_ms") and bool(read_field(read_field(event,"common"),"create_time")))
         # Each wire envelope is bounded to 1000 gifts; a large cumulative delta
         # is emitted in chunks, preserving the total without truncating the combo.
         envelope: dict[str, Any] | None = None
+        staged: list[dict[str, Any]] = []
         for part_index, start in enumerate(range(0, delta, 1000)):
             part_identity = dict(identity)
             if identity.get("event_id"):
@@ -315,16 +366,21 @@ class TikTokLiveAdapter(BaseLiveAdapter):
                 gift_image_url=gift_image_url,
                 avatar_url=self._extract_user_avatar(event),
             )
-            await self.emit_envelope(envelope)
+            staged.append(envelope)
+        tracker = {key:[value[0],time.time()-(time.monotonic()-value[1]),value[2]] for key,value in self._streak_tracker._streaks.items()}
+        self._teams.stage_gifts(staged,tracker)
+        await self._drain_paid_pending()
         return envelope
 
     async def handle_share_event(self, event: Any) -> dict[str, Any] | None:
         """Processa compartilhamento da live pelo espectador."""
+        self._observe("share")
         user_id, display_name = self._extract_user_info(event)
         identity = self._viewers.identity(event, "tiktok", "share")
         if identity is None:
+            self._duplicates_dropped += 1
             return None
-        slot = self._viewers.team(user_id, self.config.default_candidate_slot)
+        slot = self._teams.team(stable_user_id(event), event_time_ms(event), coarse=not read_field(event,"timestamp_ms") and bool(read_field(read_field(event,"common"),"create_time")))
 
         envelope = build_share_envelope(
             user_id=user_id,
@@ -337,13 +393,39 @@ class TikTokLiveAdapter(BaseLiveAdapter):
         await self.emit_envelope(envelope)
         return envelope
 
+    async def _drain_paid_pending(self) -> None:
+        if not self._callbacks and self.queue is None:
+            return
+        async with self._paid_lock:
+            for envelope in self._teams.pending_gifts():
+                # Paid delivery never uses Base.emit_envelope's exception-swallowing path.
+                if self.queue is not None:
+                    await self.queue.put(envelope)
+                for callback in list(self._callbacks):
+                    result = callback(envelope)
+                    if inspect.isawaitable(result):
+                        await result
+                self._teams.acknowledge_gift(envelope["event_id"])
+                self._events_emitted += 1
+                self._last_event_timestamp = time.time()
+
+    async def _recover_paid(self) -> None:
+        while self._running:
+            try:
+                await self._drain_paid_pending()
+            except Exception as exc:
+                self._handler_error("gift_delivery_pending",exc)
+            await asyncio.sleep(1.0)
+
     async def handle_follow_event(self, event: Any) -> dict[str, Any] | None:
+        self._observe("follow")
         user_id, display_name = self._extract_user_info(event)
         identity = self._viewers.identity(event, "tiktok", "follow")
         if identity is None:
+            self._duplicates_dropped += 1
             return None
         envelope = build_follow_envelope(user_id=user_id, display_name=display_name,
-            candidate_slot=self._viewers.team(user_id, self.config.default_candidate_slot),
+            candidate_slot=self._teams.team(stable_user_id(event), event_time_ms(event), coarse=not read_field(event,"timestamp_ms") and bool(read_field(read_field(event,"common"),"create_time"))),
             source="tiktok", avatar_url=self._extract_user_avatar(event), **identity)
         await self.emit_envelope(envelope)
         return envelope
@@ -357,6 +439,9 @@ class TikTokLiveAdapter(BaseLiveAdapter):
         async def _on_connect(event: Any) -> None:
             self._status = "connected"
             self._reconnect_attempts = 0
+            self._last_connected_at = time.time()
+            self._next_retry_at = None
+            self._last_error_kind = None
 
         @client.on(DisconnectEvent if DisconnectEvent is not None else "disconnect")
         async def _on_disconnect(event: Any) -> None:
@@ -367,44 +452,45 @@ class TikTokLiveAdapter(BaseLiveAdapter):
             try:
                 await self.handle_comment_event(event)
             except Exception as exc:
-                self.record_error(exc)
-                logger.error("Erro ao tratar comment no TikTokLiveAdapter: %s", exc)
+                self._handler_error("comment", exc)
 
         @client.on(LikeEvent if LikeEvent is not None else "like")
         async def _on_like(event: Any) -> None:
             try:
                 await self.handle_like_event(event)
             except Exception as exc:
-                self.record_error(exc)
-                logger.error("Erro ao tratar like no TikTokLiveAdapter: %s", exc)
+                self._handler_error("like", exc)
 
         @client.on(GiftEvent if GiftEvent is not None else "gift")
         async def _on_gift(event: Any) -> None:
             try:
                 await self.handle_gift_event(event)
             except Exception as exc:
-                self.record_error(exc)
-                logger.error("Erro ao tratar gift no TikTokLiveAdapter: %s", exc)
+                self._handler_error("gift", exc)
 
         @client.on(ShareEvent if ShareEvent is not None else "share")
         async def _on_share(event: Any) -> None:
             try:
                 await self.handle_share_event(event)
             except Exception as exc:
-                self.record_error(exc)
-                logger.error("Erro ao tratar share no TikTokLiveAdapter: %s", exc)
+                self._handler_error("share", exc)
 
         @client.on(FollowEvent if FollowEvent is not None else "follow")
         async def _on_follow(event: Any) -> None:
             try:
                 await self.handle_follow_event(event)
             except Exception as exc:
-                self.record_error(exc)
-                logger.error("Erro ao tratar follow no TikTokLiveAdapter: %s", exc)
+                self._handler_error("follow", exc)
 
     async def _connection_loop(self) -> None:
         """Loop de conexÃ£o e reconexÃ£o automÃ¡tica com backoff exponencial + full jitter."""
         while self._running:
+            if self._next_retry_at and self._next_retry_at > time.time():
+                saved = self._teams.collector_state()
+                self._status = saved.get("status", "rate_limited")
+                await asyncio.sleep(self._next_retry_at-time.time())
+                if not self._running:
+                    break
             try:
                 self._status = "connecting"
                 logger.info(
@@ -448,6 +534,7 @@ class TikTokLiveAdapter(BaseLiveAdapter):
                 self._reconnect_attempts += 1
                 backoff = max(0.0, minimum_delay) + random.uniform(0.0, 0.5)
                 self._next_retry_at = time.time() + backoff
+                self._teams.save_collector_state({"status":self._status,"next_retry_at":self._next_retry_at,"last_http_status":self._http_status})
 
                 logger.warning(
                     "Queda no TikTok LIVE (@%s). Tentativa %d de reconexÃ£o em %.1fs: %s",
@@ -474,11 +561,18 @@ class TikTokLiveAdapter(BaseLiveAdapter):
 
         self._running = True
         self._started_at = time.time()
+        self._paid_recovery_task = asyncio.create_task(self._recover_paid())
         self._worker_task = asyncio.create_task(self._connection_loop())
 
     async def stop(self) -> None:
         """Desconecta do TikTok LIVE e cancela tarefas pendentes de rede."""
         self._running = False
+        if self._paid_recovery_task is not None:
+            self._paid_recovery_task.cancel()
+            try:
+                await self._paid_recovery_task
+            except asyncio.CancelledError:
+                pass
         if self._client is not None and hasattr(self._client, "disconnect"):
             try:
                 await self._client.disconnect(close_client=True)
@@ -501,11 +595,30 @@ class TikTokLiveAdapter(BaseLiveAdapter):
         return self.build_base_stats(
             extra_metadata={
                 "unique_id": self.config.unique_id,
+                "team_persistence": bool(self.config.team_store_path),
+                "paid_pending": len(self._teams.pending_gifts()),
                 "reconnect_attempts": self._reconnect_attempts,
                 "tiktok_library_available": TIKTOK_AVAILABLE,
                 "last_http_status": self._http_status,
                 "last_error_kind": self._last_error_kind,
                 "next_retry_at": self._next_retry_at,
                 "profile_existence": "not_determined_by_live_endpoint",
+                "last_http_endpoint": self._last_http_endpoint,
+                "ingestion": {
+                    "room_detected": "yes" if self.is_connected() else ("no" if self._status == "waiting_room" else "unknown"),
+                    "collector_connected": self.is_connected(),
+                    "room_id_resolved": bool(self._client is not None and getattr(self._client, "room_id", None)),
+                    "last_connected_at": self._last_connected_at,
+                    "last_raw_event_at": self._last_raw_event_at,
+                    "last_raw_event_type": self._last_raw_event_type,
+                    "observed_by_type": dict(self._observed_by_type),
+                    "comments_observed": self._observed_by_type.get("comment", 0),
+                    "valid_votes": self._valid_votes,
+                    "ignored_non_vote_comments": self._ignored_non_vote_comments,
+                    "duplicates_dropped": self._duplicates_dropped,
+                    "parser_errors": self._parser_errors,
+                    "envelopes_emitted": self._events_emitted,
+                    "delivery_confirmation": "see_backend_and_godot_metrics",
+                },
             }
         ).to_dict()

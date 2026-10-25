@@ -59,7 +59,7 @@ class BalanceContractTests(unittest.TestCase):
 class FollowAndGoalTests(unittest.IsolatedAsyncioTestCase):
     async def test_tiktok_follow_dedup_and_comments_count_without_repeat_boost(self) -> None:
         adapter = TikTokLiveAdapter()
-        user = {'unique_id': 'f1', 'nickname': 'Visitante'}
+        user = {'id': 'stable_f1', 'unique_id': 'f1', 'nickname': 'Visitante'}
         first = await adapter.handle_comment_event({'user': user, 'comment': '13'})
         second = await adapter.handle_comment_event({'user': user, 'comment': '22'})
         self.assertEqual(first['payload']['boost_amount'], 1.1)

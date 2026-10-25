@@ -1,6 +1,12 @@
 class_name LiveEventBusInstance
 extends Node
 
+var gift_effect_status: String = "blocked"
+
+func record_gift_application(status: String) -> void:
+	if current_event_type == "gift" and status in ["applied", "reserved"]:
+		gift_effect_status = status
+
 signal live_event_accepted(envelope: Dictionary)
 signal candidate_boost_requested(candidate_slot: int, boost_amount: float, duration: float, voter_name: String, label: String)
 signal candidate_vote_registered(candidate_slot: int, vote_weight: int, voter_name: String)
@@ -498,11 +504,19 @@ func ingest_envelope(envelope: Dictionary) -> bool:
 	var previous_payload: Dictionary = current_event_payload
 	current_event_type = event_type
 	current_event_payload = payload
-	live_event_accepted.emit(clean_envelope)
+	var confirmed_gift: bool = event_type == "gift" and source == "tiktok"
+	if confirmed_gift:
+		gift_effect_status = "neutral" if candidate_slot == 0 else ("unknown_value" if float(payload.get("coin_value", 0.0)) <= 0.0 else "blocked")
+	else:
+		live_event_accepted.emit(clean_envelope)
 	if event_type == "admin_command":
 		_execute_admin_command(event_id, payload)
 	elif not effects_suspended:
 		_dispatch_typed_signals(event_type, candidate_slot, safe_display_name, payload)
+	if confirmed_gift:
+		payload["effect_status"] = gift_effect_status
+		clean_envelope["payload"] = payload
+		live_event_accepted.emit(clean_envelope)
 	current_event_type = previous_type
 	current_event_payload = previous_payload
 	if event_type == "gift":
@@ -569,9 +583,12 @@ func _dispatch_typed_signals(
 				return # Preço desconhecido: agradecer sem inventar efeito pago.
 			var tier: int = _resolve_gift_tier_number(payload)
 			var action_id: String = String(payload.get("action_id", ""))
+			if session_platform == "tiktok" or current_event_payload.get("_tiktok_mapping", false):
+				var mapped: Dictionary = {"gift_t1_turbo": 1, "gift_t2_shield_or_obstacle": 2, "gift_t2_shield": 2, "gift_t3_attack": 3, "gift_t4_super_rally": 4}
+				tier = int(mapped.get(action_id, tier))
 			var gift_name: String = sanitize_display_name(String(payload.get("gift_name", "Presente T%d" % tier)))
 			if tier == 3 or action_id == "gift_t3_attack" or action_id == "admin_attack":
-				var target_slot: int = clampi(int(payload.get("target_slot", 2 if candidate_slot == 1 else 1)), 1, 2)
+				var target_slot: int = 3 - candidate_slot if session_platform == "tiktok" else clampi(int(payload.get("target_slot", 3 - candidate_slot)), 1, 2)
 				var obs_type: String = String(payload.get("obstacle_type", "pilha_documentos"))
 				candidate_attack_requested.emit(target_slot, obs_type, voter_name)
 				var boost_amt: float = clampf(float(payload.get("boost_amount", 1.5)), 0.0, 24.0)
@@ -583,7 +600,8 @@ func _dispatch_typed_signals(
 				var default_dur: float = 3.5 + float(tier) * 0.8
 				var boost_amt: float = clampf(float(payload.get("boost_amount", default_boost)), 0.0, 24.0)
 				var boost_dur: float = clampf(float(payload.get("boost_duration", payload.get("duration", default_dur))), 0.5, 12.0)
-				candidate_boost_requested.emit(candidate_slot, boost_amt, boost_dur, voter_name, gift_name)
+				if not (session_platform == "tiktok" and tier == 2):
+					candidate_boost_requested.emit(candidate_slot, boost_amt, boost_dur, voter_name, gift_name)
 				if tier in [2, 4] or action_id in ["gift_t2_shield", "gift_t4_super_rally", "admin_shield"] or bool(payload.get("grant_shield", false)):
 					var shield_dur: float = clampf(float(payload.get("shield_duration", maxf(boost_dur, 5.0))), 1.0, 15.0)
 					candidate_shield_requested.emit(candidate_slot, shield_dur, voter_name)

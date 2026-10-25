@@ -1,5 +1,7 @@
 """Observed gift metadata and explicit per-gift mechanics; never a fabricated official catalog."""
 from __future__ import annotations
+import json
+from pathlib import Path
 import sqlite3
 import time
 from typing import Any
@@ -39,7 +41,9 @@ class GiftCatalog:
         if not row or not row[0]:
             return envelope
         tier, action = ACTIONS[row[0]]
-        clean = {**payload, 'gift_tier':tier, 'action_id':action}
+        clean = {**payload, 'action_id':action}
+        if envelope['source'] != 'tiktok':
+            clean['gift_tier'] = tier
         # Overrides change only the mechanic; price, delta and total remain actual.
         # A former attack must never carry an attack target into a shield/boost.
         if row[0] != 'attack':
@@ -70,3 +74,13 @@ class GiftCatalog:
                 'override':bool(override)})
         total = self.db.execute('SELECT COUNT(*) FROM gift_catalog').fetchone()[0]
         return {'entries':entries,'total':total,'offset':offset,'limit':limit,'official_catalog_complete':False}
+
+    def showcase(self, account: str) -> list[dict[str, Any]]:
+        path=Path(__file__).resolve().parents[2]/"game/assets/catalogs/tiktok_gift_showcase.json"
+        try:
+            value=json.loads(path.read_text(encoding="utf-8"))
+            if value.get("platform") != "tiktok" or value.get("account") != account:
+                return []
+            return value.get("entries", [])[:4]
+        except (OSError,ValueError,TypeError):
+            return []
