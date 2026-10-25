@@ -418,6 +418,7 @@ class LiveBridgeServer:
             return {
                 "platform_events_connected": self._live_adapter.is_connected(),
                 "platform_events_status": stats["status"],
+                **({"tiktok_collector": stats.get("metadata", {})} if self.platform == "tiktok" else {}),
                 **kwai_meta,
             }
         return {

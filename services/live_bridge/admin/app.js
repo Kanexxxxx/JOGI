@@ -260,8 +260,14 @@
         ? `${platform === 'kwai' ? 'Kwai' : 'TikTok'}: aguardando sala AO VIVO`
         : collector === 'reconnecting'
         ? `${platform.toUpperCase()}: reconectando automaticamente`
-        : collector === 'account_not_found'
-        ? `${platform.toUpperCase()}: conta pública não encontrada`
+        : collector === 'account_not_found' || collector === 'room_unavailable'
+        ? `${platform.toUpperCase()}: sala indisponível ou consulta inconclusiva; perfil não declarado inexistente`
+        : collector === 'rate_limited'
+        ? 'TikTok: limite de requisições · aguardando intervalo de segurança'
+        : collector === 'access_blocked'
+        ? 'TikTok: acesso à consulta bloqueado · requer verificação'
+        : collector === 'connection_error'
+        ? 'TikTok: erro de conexão · nova tentativa com espera'
         : collector === 'webhook_listening'
         ? 'Kwai: receptor :8786 ativo · aguardando coletor/sala'
         : collector === 'login_required'

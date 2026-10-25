@@ -11,12 +11,13 @@ from server import LiveBridgeServer
 class FakeClient:
     created = []
 
-    def __init__(self, unique_id):
+    def __init__(self, unique_id, **kwargs):
         self.unique_id = unique_id
         self.handlers = {}
         self.is_connected = False
         self.done = asyncio.Event()
         self.start_options = None
+        self.closed_http = False
         FakeClient.created.append(self)
 
     def on(self, kind):
@@ -31,7 +32,8 @@ class FakeClient:
         await self.handlers[module.ConnectEvent if module.ConnectEvent is not None else 'connect'](None)
         return asyncio.create_task(self.done.wait())
 
-    async def disconnect(self):
+    async def disconnect(self, close_client=False):
+        self.closed_http = close_client
         self.is_connected = False
         self.done.set()
 
@@ -53,10 +55,11 @@ class TikTokListenerTests(unittest.IsolatedAsyncioTestCase):
             await until(adapter.is_connected)
             await asyncio.sleep(0.06)
             self.assertEqual(len(FakeClient.created), 1)
-            self.assertEqual(FakeClient.created[0].unique_id, '@nostalgiia.br')
+            self.assertEqual(FakeClient.created[0].unique_id, 'nostalgiia.br')
             self.assertEqual(FakeClient.created[0].start_options, {'fetch_room_info': True, 'fetch_gift_info': True})
             await adapter.stop()
             self.assertFalse(adapter.is_connected())
+            self.assertTrue(FakeClient.created[0].closed_http)
 
     async def test_offline_room_is_waiting_room_and_retries_with_backoff(self):
         class UserOfflineError(Exception):
@@ -66,12 +69,61 @@ class TikTokListenerTests(unittest.IsolatedAsyncioTestCase):
                 raise UserOfflineError('test offline room')
         FakeClient.created = []
         with patch.object(module, 'TikTokLiveClient', OfflineClient), patch.object(module, 'TIKTOK_AVAILABLE', True), patch.object(module.random, 'uniform', return_value=0):
-            adapter = TikTokLiveAdapter(config=TikTokAdapterConfig(unique_id='nostalgiia.br', base_backoff_sec=0.01, max_backoff_sec=0.02))
+            adapter = TikTokLiveAdapter(config=TikTokAdapterConfig(unique_id='nostalgiia.br', base_backoff_sec=0.01, max_backoff_sec=0.02, offline_poll_sec=0.01))
             await adapter.start()
             await until(lambda: len(FakeClient.created) >= 2)
+            self.assertTrue(FakeClient.created[0].closed_http)
             self.assertEqual(adapter.get_stats()['status'], 'waiting_room')
             self.assertFalse(adapter.is_connected())
             await adapter.stop()
+
+    async def test_ambiguous_user_error_never_declares_profile_nonexistent(self):
+        error_type = type('UserNotFoundError', (Exception,), {})
+        adapter = TikTokLiveAdapter(config=TikTokAdapterConfig(unique_id='xinka_'))
+        status, delay = adapter._classify_failure(error_type('ambiguous LIVE endpoint'))
+        self.assertEqual(status, 'room_unavailable')
+        self.assertGreaterEqual(delay, 300)
+        self.assertEqual(adapter.get_stats()['metadata']['profile_existence'], 'not_determined_by_live_endpoint')
+
+    async def test_rate_limit_blocks_sdk_fallback_and_honours_retry_after(self):
+        import httpx
+        adapter = TikTokLiveAdapter(config=TikTokAdapterConfig(unique_id='xinka_'))
+        request = httpx.Request('GET', 'https://www.tiktok.com/api-live/user/room/')
+        response = httpx.Response(429, headers={'Retry-After': '1800'}, request=request)
+        with self.assertRaises(ConnectionError):
+            await adapter._response_guard(response)
+        # The SDK catches initial errors and tries API fallback: block BEFORE sending it.
+        with self.assertRaises(ConnectionError):
+            await adapter._request_guard(request)
+        status, delay = adapter._classify_failure(ValueError('SDK might wrap HTTP as JSON error'))
+        self.assertEqual((status, delay), ('rate_limited', 1800))
+
+    async def test_sdk_signer_rate_limit_respects_its_cooldown(self):
+        error_type = type('SignatureRateLimitError', (Exception,), {'retry_after': 3600})
+        adapter = TikTokLiveAdapter(config=TikTokAdapterConfig(unique_id='xinka_'))
+        self.assertEqual(adapter._classify_failure(error_type()), ('rate_limited', 3600))
+
+    async def test_offline_block_and_network_errors_are_distinct(self):
+        import httpx
+        adapter = TikTokLiveAdapter(config=TikTokAdapterConfig(unique_id='xinka_'))
+        offline_type = type('UserOfflineError', (Exception,), {})
+        self.assertEqual(adapter._classify_failure(offline_type())[0], 'waiting_room')
+        self.assertEqual(adapter._classify_failure(TimeoutError())[0], 'connection_error')
+        response = httpx.Response(403, request=httpx.Request('GET','https://www.tiktok.com/'))
+        with self.assertRaises(ConnectionError):
+            await adapter._response_guard(response)
+        self.assertEqual(adapter._classify_failure(ConnectionError())[0], 'access_blocked')
+
+    async def test_sdk_http_hooks_are_configured_without_double_at_referer(self):
+        from TikTokLive import TikTokLiveClient
+        adapter = TikTokLiveAdapter(config=TikTokAdapterConfig(unique_id='@xinka_'))
+        client = TikTokLiveClient(unique_id=adapter.config.unique_id, web_kwargs={
+            'httpx_kwargs': {'event_hooks': {'request': [adapter._request_guard], 'response': [adapter._response_guard]}}})
+        try:
+            self.assertEqual(client.web.params['referer'], 'https://www.tiktok.com/@xinka_/live')
+            self.assertIn(adapter._response_guard, client.web.httpx_client.event_hooks['response'])
+        finally:
+            await client.web.close()
 
     async def test_bridge_instantiates_configured_listener_and_receives_fake_event(self):
         with patch.object(module, 'TikTokLiveClient', FakeClient), patch.object(module, 'TIKTOK_AVAILABLE', True):
