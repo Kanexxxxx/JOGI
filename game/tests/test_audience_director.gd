@@ -89,11 +89,11 @@ func _run_suite() -> bool:
 	if not _check(_audience.ingest_event(_event("vote", "u1", 2)), "Trocar equipe deve ser aceito durante cooldown"):
 		return false
 	var snapshot: Dictionary = _audience.get_snapshot()
-	if not _check(_participations.size() == 1 and snapshot["participants"] == 1 and snapshot["participants_by_team"] == [0, 0, 1], "Troca atualiza escolha sem duplicar entrada nem cartão"):
+	if not _check(_participations.size() == 2 and _moments.size() == 1 and snapshot["participants"] == 1 and snapshot["participants_by_team"] == [0, 0, 1], "Troca atualiza escolha e avisa HUD sem duplicar participante ou momento"):
 		return false
 	_clock += 1900
 	_audience.ingest_event(_event("vote", "u1", 2))
-	if not _check(_participations.size() == 2 and not _participations[1]["joined"], "Limite exato de dois segundos deve permitir nome sem nova adesão"):
+	if not _check(_participations.size() == 3 and _moments.size() == 2 and not _participations[2]["joined"], "Todos os votos chegam ao HUD; limite de dois segundos permite novo momento sem nova adesão"):
 		return false
 	var combo1: Dictionary = _event("gift", "donor_a", 1, 7, "Ana")
 	combo1["payload"]["repeat_count"] = 1

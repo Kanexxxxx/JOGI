@@ -3,6 +3,8 @@ extends SceneTree
 var _ran: bool = false
 var _clock: int = 10000
 var _notice_count: int = 0
+var _participation_count: int = 0
+var _moment_count: int = 0
 var _test_base: String = ""
 
 
@@ -54,18 +56,22 @@ func _test_audience_roundtrip() -> bool:
 	var restored: AudienceDirector = AudienceDirector.new()
 	_clock = 100
 	restored.time_provider = func() -> int: return _clock
-	restored.participation_received.connect(func(_participant: Dictionary) -> void: _notice_count += 1)
+	restored.participation_received.connect(func(_participant: Dictionary) -> void:
+		_notice_count += 1
+		_participation_count += 1)
 	restored.leaderboard_changed.connect(func(_entries: Array[Dictionary]) -> void: _notice_count += 1)
-	restored.moment_requested.connect(func(_kind: String, _team: int, _name: String) -> void: _notice_count += 1)
+	restored.moment_requested.connect(func(_kind: String, _team: int, _name: String) -> void:
+		_notice_count += 1
+		_moment_count += 1)
 	var imported: bool = transported is Dictionary and restored.import_state(transported as Dictionary)
 	var same_snapshot: bool = restored.get_snapshot() == original.get_snapshot()
 	var no_replay: bool = not restored.ingest_event(_gift("persist_gift_0002", 21, 0))
 	var silent: bool = _notice_count == 0
 	restored.ingest_event(_vote("persist_vote_0002", 2))
-	var cooldown_survived: bool = _notice_count == 0 and restored.get_snapshot()["participants_by_team"] == [0, 0, 1]
+	var cooldown_survived: bool = _notice_count == 1 and _participation_count == 1 and _moment_count == 0 and restored.get_snapshot()["participants_by_team"] == [0, 0, 1] and restored.get_session_counts()["votes"] == [0, 1, 1]
 	_clock += AudienceDirector.NAME_COOLDOWN_MS
 	restored.ingest_event(_vote("persist_vote_0003", 2))
-	var resumed_notices: bool = _notice_count == 2
+	var resumed_notices: bool = _notice_count == 3 and _participation_count == 2 and _moment_count == 1 and restored.get_session_counts()["votes"] == [0, 1, 2]
 	var before_corrupt: Dictionary = restored.export_state()
 	var corruptions: Array[Dictionary] = []
 	var broken: Dictionary = exported.duplicate(true)
@@ -112,7 +118,7 @@ func _test_audience_roundtrip() -> bool:
 	legacy.free()
 	original.free()
 	restored.free()
-	return _check(imported and same_snapshot, "Estado deve sobreviverJSON e restaurar usuários/torcidas/ranking/contagens") and _check(no_replay and silent, "Importação silenciosa deve preservar dedup sem agradecer presentes antigos") and _check(cooldown_survived and resumed_notices, "Cooldown deve sobreviver à troca de relógio monotônico") and _check(rejected_safely and protected_copy, "Estado inválido ou alterações na cópia não podem alterar sessão atual") and _check(legacy_compatible, "Checkpoint schema1 antigo deve preservar moedas e preencher novos contadoresgifts/follows comzero")
+	return _check(imported and same_snapshot, "Estado deve sobreviverJSON e restaurar usuários/torcidas/ranking/contagens") and _check(no_replay and silent, "Importação silenciosa deve preservar dedup sem agradecer presentes antigos") and _check(cooldown_survived and resumed_notices, "Cooldown de momentos sobrevive à troca de relógio; participação e votos continuam independentes") and _check(rejected_safely and protected_copy, "Estado inválido ou alterações na cópia não podem alterar sessão atual") and _check(legacy_compatible, "Checkpoint schema1 antigo deve preservar moedas e preencher novos contadoresgifts/follows comzero")
 
 
 func _test_store_roundtrip() -> bool:

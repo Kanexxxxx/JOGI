@@ -17,7 +17,9 @@ const INK: Color = Color("041137")
 const SAFE_LEFT: float = 42.0
 const SAFE_RIGHT: float = 1038.0
 const SAFE_WIDTH: float = 996.0
-const INTERACTION_TTL_SECONDS: float = 3.4
+const INTERACTION_TTL_SECONDS: float = 6.4
+const INTERACTION_FADE_SECONDS: float = 0.3
+const MAX_INTERACTION_QUEUE: int = 64
 const CHAT_TTL_SECONDS: float = 6.5
 
 var timer_label: Label = null
@@ -95,6 +97,8 @@ var _gift_cache: GiftVisualCache = null
 var _circle_shader: Shader = null
 var _interaction_slots: Array[Dictionary] = []
 var _interaction_entries: Array[Dictionary] = []
+var _interaction_pending: Array[Dictionary] = []
+var _interaction_overflow: int = 0
 
 
 class StadiumArtwork:
@@ -586,6 +590,7 @@ func _build_social_and_ranking_panels() -> void:
 		card.position = Vector2(42.0, 1352.0 + float(slot_idx) * 70.0)
 		card.size = Vector2(484.0, 64.0)
 		card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		card.z_index = 12
 		card.visible = false
 		var c_style: StyleBoxFlat = StyleBoxFlat.new()
 		c_style.bg_color = Color("051338", 0.92)
@@ -847,7 +852,7 @@ func _push_interaction_card(participant: Dictionary, clean_name: String, kind: S
 	var qty: int = maxi(1, int(participant.get("gift_quantity", 1)))
 	# Combina deltas sucessivos do mesmo combo pago na mesma identidade sem duplicar cards.
 	if kind == "gift" and not identity.is_empty():
-		for existing: Dictionary in _interaction_entries:
+		for existing: Dictionary in _interaction_entries + _interaction_pending:
 			if str(existing.get("identity", "")) == identity and str(existing.get("kind", "")) == "gift" and str(existing.get("gift_id", "")) == gift_id and int(existing.get("team", 0)) == team:
 				var total_qty: int = int(existing.get("gift_quantity", 1)) + qty
 				existing["gift_quantity"] = total_qty
@@ -862,27 +867,41 @@ func _push_interaction_card(participant: Dictionary, clean_name: String, kind: S
 				_refresh_interaction_cards()
 				return
 
-	# Para votos/curtidas em alta frequência (>50 eventos/s), limita troca visual a cada 0.25s,
-	# mantendo presentes e follows sempre prioritários.
-	if not kind in ["gift", "follow"] and not _interaction_entries.is_empty():
-		var newest_created: float = float(_interaction_entries[0].get("created", -10.0))
-		if _elapsed - newest_created < 0.25:
+	# Keep the two readable cards stable; a burst waits instead of replacing them.
+	# Repeated choices aggregate only presentation, never game votes or effects.
+	for existing: Dictionary in _interaction_entries + _interaction_pending:
+		if kind != "gift" and not identity.is_empty() and str(existing.get("identity", "")) == identity and str(existing.get("kind", "")) == kind and int(existing.get("team", 0)) == team:
+			var repetitions: int = int(existing.get("repetitions", 1)) + 1
+			existing["repetitions"] = repetitions
+			existing["action"] = action + " ×" + str(repetitions)
+			_refresh_interaction_cards()
 			return
-
-	_interaction_entries.push_front({
-		"identity": identity,
-		"display_name": clean_name,
-		"kind": kind,
-		"team": team if team in [1, 2] else 0,
-		"action": action,
-		"gift_id": gift_id,
-		"gift_quantity": qty,
-		"avatar_icon_path": avatar_path,
-		"created": _elapsed,
-		"expires": _elapsed + INTERACTION_TTL_SECONDS
-	})
-	while _interaction_entries.size() > 2:
-		_interaction_entries.pop_back()
+	var entry: Dictionary = {
+		"identity": identity, "display_name": clean_name, "kind": kind,
+		"team": team if team in [1, 2] else 0, "action": action,
+		"gift_id": gift_id, "gift_quantity": qty, "avatar_icon_path": avatar_path,
+		"created": _elapsed, "expires": _elapsed + INTERACTION_TTL_SECONDS
+	}
+	if _interaction_entries.size() < 2:
+		_interaction_entries.push_front(entry)
+	else:
+		if _interaction_pending.size() >= MAX_INTERACTION_QUEUE:
+			# A new paid acknowledgement can displace a free visual notification.
+			# Neither path alters the accepted-event ledger or race effects.
+			var displaced: bool = false
+			if kind == "gift":
+				for pending_index: int in range(_interaction_pending.size() - 1, -1, -1):
+					if str(_interaction_pending[pending_index].get("kind", "")) != "gift":
+						_interaction_pending.remove_at(pending_index)
+						displaced = true
+						break
+			_interaction_overflow += 1
+			if not displaced:
+				return
+		if kind == "gift":
+			_interaction_pending.push_front(entry)
+		else:
+			_interaction_pending.append(entry)
 	_refresh_interaction_cards()
 
 
@@ -894,8 +913,26 @@ func _expire_interactions() -> void:
 		if float(_interaction_entries[index]["expires"]) <= _elapsed:
 			_interaction_entries.remove_at(index)
 			changed = true
+	while _interaction_entries.size() < 2 and not _interaction_pending.is_empty():
+		var next_entry: Dictionary = _interaction_pending.pop_front()
+		next_entry["created"] = _elapsed
+		next_entry["expires"] = _elapsed + INTERACTION_TTL_SECONDS
+		_interaction_entries.append(next_entry)
+		changed = true
 	if changed:
 		_refresh_interaction_cards()
+	_animate_interaction_cards()
+
+
+func _animate_interaction_cards() -> void:
+	for index: int in range(mini(_interaction_entries.size(), _interaction_slots.size())):
+		var entry: Dictionary = _interaction_entries[index]
+		var panel: Control = _interaction_slots[index]["panel"] as Control
+		var age: float = maxf(0.0, _elapsed - float(entry["created"]))
+		var remaining: float = maxf(0.0, float(entry["expires"]) - _elapsed)
+		var fade: float = minf(clampf(age / INTERACTION_FADE_SECONDS, 0.0, 1.0), clampf(remaining / INTERACTION_FADE_SECONDS, 0.0, 1.0))
+		panel.modulate.a = fade
+		panel.position.x = SAFE_LEFT + 22.0 * (1.0 - fade)
 
 
 func _refresh_interaction_cards() -> void:
@@ -985,6 +1022,11 @@ func _refresh_interaction_cards() -> void:
 		panel.visible = true
 	if _chat_panel != null:
 		_refresh_chat()
+
+
+func get_interaction_diagnostics() -> Dictionary:
+	return {"visible": _interaction_entries.size(), "queued": _interaction_pending.size(),
+		"overflow_visual_only": _interaction_overflow, "ttl_seconds": INTERACTION_TTL_SECONDS}
 
 
 func _restore_audience_prompt() -> void:
@@ -1240,6 +1282,7 @@ func apply_state(state: Dictionary) -> void:
 		_event_root.hide()
 		_event_text.text = ""
 		_interaction_entries.clear()
+		_interaction_pending.clear()
 		_chat_entries.clear()
 		_refresh_interaction_cards()
 		_refresh_chat()

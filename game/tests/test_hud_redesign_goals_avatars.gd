@@ -162,11 +162,21 @@ func _run() -> void:
 	_check(hud.frame.get_child_count() == baseline_children, "Rajada de >50 eventos/s mantem arvore de nodes fixa")
 	_check(hud._interaction_entries.size() <= 2, "Coluna esquerda nunca excede 2 cards")
 
-	# Expiracao limpa cards transitorios
+	# Expiry admits queued cards with a fresh readable TTL instead of discarding them.
+	var queued_before_expiry: int = hud._interaction_pending.size()
+	_check(queued_before_expiry == StadiumHUD.MAX_INTERACTION_QUEUE, "Rajada satura somente a fila visual limitada")
 	hud._elapsed += 10.0
 	hud._expire_interactions()
 	hud._expire_chat()
-	_check(hud._interaction_entries.is_empty() and not (slot0["panel"] as Panel).visible, "Cards transitorios expiram e liberam a pista")
+	_check(hud._interaction_entries.size() == 2 and hud._interaction_pending.size() == queued_before_expiry - 2, "Cards expirados promovem dois eventos que aguardavam")
+	for active_entry: Dictionary in hud._interaction_entries:
+		_check(is_equal_approx(float(active_entry["created"]), hud._elapsed) and is_equal_approx(float(active_entry["expires"]) - hud._elapsed, StadiumHUD.INTERACTION_TTL_SECONDS), "TTL legivel inicia ao entrar no slot, nao ao receber na fila")
+	_check_bounds_and_text(hud.frame)
+	# Every queued item gets its own display interval, after which the HUD clears.
+	for drain_step: int in range(StadiumHUD.MAX_INTERACTION_QUEUE / 2 + 2):
+		hud._elapsed += StadiumHUD.INTERACTION_TTL_SECONDS + 0.1
+		hud._expire_interactions()
+	_check(hud._interaction_entries.is_empty() and hud._interaction_pending.is_empty() and not (slot0["panel"] as Panel).visible, "Fila visual drena sem eventos novos e libera a pista")
 
 	# 5. Top 5 · MOEDAS com homonimos, neutros, avatares e modo Podio Top 3
 	hud.update_leaderboard([

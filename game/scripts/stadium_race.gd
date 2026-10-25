@@ -684,6 +684,9 @@ func get_telemetry_snapshot() -> Dictionary:
 		"nodes": int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT)),
 		"orphan_nodes": int(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT)),
 	}
+	snapshot["interaction_cards"] = stadium_hud.get_interaction_diagnostics() if stadium_hud != null else {}
+	(snapshot["interaction_cards"] as Dictionary)["revision"] = "cards-20261025-v2"
+	snapshot["checkpoint_recovered"] = persistence.recovered if persistence != null else false
 	snapshot["gift_visuals"] = gift_visuals.get_cache_stats() if gift_visuals != null else {}
 	snapshot["avatar_visuals"] = avatar_visuals.get_cache_stats() if avatar_visuals != null else {}
 	snapshot["persistence"] = {"ready": persistence.is_ready, "error": persistence.last_error} if persistence != null else {"ready": false, "error": "not_enabled"}

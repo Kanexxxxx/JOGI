@@ -153,24 +153,26 @@ func ingest_event(envelope: Dictionary) -> bool:
 	var last_shown: int = int(participant.get("last_shown_ms", -NAME_COOLDOWN_MS))
 	# Paid acknowledgements cannot disappear because the same person just voted.
 	# The presentation layer may combine successive combo deltas into one visible card.
-	if kind in ["gift", "follow"] or now_ms - last_shown >= NAME_COOLDOWN_MS:
+	var emit_moment: bool = kind in ["gift", "follow"] or now_ms - last_shown >= NAME_COOLDOWN_MS
+	if emit_moment:
 		participant["last_shown_ms"] = now_ms
-		var card_payload: Dictionary = {
-			"identity": identity,
-			"display_name": display_name, "team": team, "kind": kind,
-			"amount": amount, "gift_quantity": gift_quantity, "joined": joined, "switched_team": switched,
-			"source": source
-		}
-		if not avatar_icon_path.is_empty():
-			card_payload["avatar_icon_path"] = avatar_icon_path
-		if not safe_gift_id.is_empty():
-			card_payload["gift_id"] = safe_gift_id
-		if not safe_gift_name.is_empty():
-			card_payload["gift_name"] = safe_gift_name
-		if not safe_gift_icon_path.is_empty():
-			card_payload["gift_icon_path"] = safe_gift_icon_path
-		participation_received.emit(card_payload)
-		var moment: String = "join" if kind == "vote" else kind
+	var card_payload: Dictionary = {
+		"identity": identity,
+		"display_name": display_name, "team": team, "kind": kind,
+		"amount": amount, "gift_quantity": gift_quantity, "joined": joined, "switched_team": switched,
+		"source": source
+	}
+	if not avatar_icon_path.is_empty():
+		card_payload["avatar_icon_path"] = avatar_icon_path
+	if not safe_gift_id.is_empty():
+		card_payload["gift_id"] = safe_gift_id
+	if not safe_gift_name.is_empty():
+		card_payload["gift_name"] = safe_gift_name
+	if not safe_gift_icon_path.is_empty():
+		card_payload["gift_icon_path"] = safe_gift_icon_path
+	participation_received.emit(card_payload)
+	var moment: String = "join" if kind == "vote" else kind
+	if emit_moment:
 		moment_requested.emit(moment, team, display_name)
 	return true
 

@@ -1,0 +1,29 @@
+{
+  "godot_connected": true,
+  "telemetry_fresh": true,
+  "pending_gifts": 0,
+  "platform_events_status": "rate_limited",
+  "current_round": 17,
+  "match_time_remaining": 186.900000000258,
+  "checkpoint_recovered": true,
+  "interaction_cards": {
+    "overflow_visual_only": 0,
+    "queued": 0,
+    "revision": "cards-20261025-v2",
+    "ttl_seconds": 6.4,
+    "visible": 0
+  },
+  "persistence": {
+    "error": "",
+    "ready": true
+  },
+  "performance": {
+    "draw_calls": 301,
+    "fps": 60.0,
+    "frame_ms": 3.68,
+    "nodes": 374,
+    "orphan_nodes": 0,
+    "physics_ms": 1.45,
+    "static_mem_mb": 115.2
+  }
+}
