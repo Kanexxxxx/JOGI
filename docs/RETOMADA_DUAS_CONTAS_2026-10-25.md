@@ -61,3 +61,13 @@ Comentários, curtidas, seguidores, compartilhamentos, presentes e combos **reai
 ## Uso imediato
 
 Jogos e painéis já abertos. Na próxima abertura: `ABRIR_TIKTOK.cmd`, `ABRIR_KWAI.cmd` (ou `ABRIR_DUAS_LIVES.cmd`) e `ABRIR_PAINEIS.cmd`. Nenhum atalho inicia transmissão. Não abrir outro launcher para a sessão já ativa. Encerramento local permanece26/10/2026 às07h Brasília; isso não promete encerrar OBS/Studio automaticamente.
+
+## Recuperação adicional do renderizador
+
+A inspeção final encontrou o TikTok20536 sem responder e sem conexão Godot, embora seu processo continuasse vivo. O log do motor registrou `VK_ERROR_OUT_OF_HOST_MEMORY` em `command_queue_execute_and_present`: falha de apresentação Vulkan. O Kwai35376 continuou a60FPS e avançou de rodada. O supervisor existente detecta saída de processo, mas não recuperava sozinho esse travamento com processo vivo; portanto, não está homologada operação sem supervisão.
+
+Checkpoint/journal TikTok e banco foram copiados para `LOCALAPPDATA/JOGI/backups/tiktok-render-recovery-20261025-094219`, com JSON válido, SQLite íntegro e zero presentes pendentes. Fechamento normal foi tentado uma vez e não respondeu. Somente esse PID foi encerrado após verificar nome e pai; o supervisor reabriu o TikTok5576 a partir do último checkpoint. Backend, coletor, navegador e Kwai não foram reiniciados. Não se iniciou partida do zero; a rodada1 e seu progresso persistido foram recuperados. A recuperação usa o último checkpoint, não inventa os frames não persistidos.
+
+Direct3D12 foi exercitado em teste GPU isolado na RTX4060, mantendo **Forward+**, qualidade e efeitos. As oito combinações de tier/equipe, neutralidade e duplicados passaram, com nove capturas. O projeto Windows agora seleciona `rendering_device/driver.windows=d3d12`. Log da instância reaberta confirma D3D12/Forward+; o Kwai que já estava funcionando continuou em Vulkan sem interrupção. Em sua próxima abertura, o projeto também usará D3D12.
+
+Ver `evidencias/producao/dual-after-render-recovery.json`: inclui explicitamente o intervalo desconectado de manutenção e a recuperação subsequente, telemetria recente, distância e cronômetro avançando a60FPS e sem pendências. Essa amostra curta não prova eliminação de toda falha de driver nem estabilidade42h. Capturas D3D12 são fixtures TESTE LOCAL; não foram exibidas numa LIVE pública.

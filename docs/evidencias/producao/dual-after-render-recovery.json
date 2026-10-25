@@ -1,0 +1,1421 @@
+[
+  {
+    "elapsed": 0,
+    "platforms": {
+      "tiktok": {
+        "account": "nostalgiia.br",
+        "backend": "ok",
+        "connected": false,
+        "fresh": false,
+        "pending": 0,
+        "collector": "waiting_room",
+        "round": null,
+        "state": null,
+        "remaining": null,
+        "elapsed": null,
+        "paused": null,
+        "persistence": null,
+        "performance": null,
+        "cards": null,
+        "runners": [],
+        "diagnostics": {
+          "room_detected": null,
+          "feed_connected": null,
+          "page_kind": null,
+          "websocket_frames": null,
+          "json_responses": null,
+          "auth_rejections": null
+        }
+      },
+      "kwai": {
+        "account": "mentalista..",
+        "backend": "ok",
+        "connected": true,
+        "fresh": true,
+        "pending": 0,
+        "collector": "waiting_room",
+        "round": 2,
+        "state": "RACING",
+        "remaining": 135.43333333355,
+        "elapsed": 464.56666666645,
+        "paused": false,
+        "persistence": {
+          "error": "",
+          "ready": true
+        },
+        "performance": {
+          "draw_calls": 330,
+          "fps": 60.0,
+          "frame_ms": 7.32,
+          "nodes": 383,
+          "orphan_nodes": 0,
+          "physics_ms": 2.31,
+          "render_height": 1920,
+          "render_width": 1080,
+          "static_mem_mb": 118.7,
+          "window_height": 960,
+          "window_width": 540
+        },
+        "cards": {
+          "overflow_visual_only": 0,
+          "queued": 0,
+          "revision": "dual-recovery-20261025-v2",
+          "ttl_seconds": 6.4,
+          "visible": 0
+        },
+        "runners": [
+          {
+            "candidate_id": 1,
+            "progress_m": 5575.0576171875,
+            "current_speed": 12.9133521647506
+          },
+          {
+            "candidate_id": 2,
+            "progress_m": 5574.765625,
+            "current_speed": 10.8215264306902
+          }
+        ],
+        "diagnostics": {
+          "room_detected": "unknown",
+          "feed_connected": false,
+          "page_kind": "profile",
+          "websocket_frames": 0,
+          "json_responses": 59,
+          "auth_rejections": 0
+        }
+      }
+    }
+  },
+  {
+    "elapsed": 5,
+    "platforms": {
+      "tiktok": {
+        "account": "nostalgiia.br",
+        "backend": "ok",
+        "connected": false,
+        "fresh": false,
+        "pending": 0,
+        "collector": "waiting_room",
+        "round": null,
+        "state": null,
+        "remaining": null,
+        "elapsed": null,
+        "paused": null,
+        "persistence": null,
+        "performance": null,
+        "cards": null,
+        "runners": [],
+        "diagnostics": {
+          "room_detected": null,
+          "feed_connected": null,
+          "page_kind": null,
+          "websocket_frames": null,
+          "json_responses": null,
+          "auth_rejections": null
+        }
+      },
+      "kwai": {
+        "account": "mentalista..",
+        "backend": "ok",
+        "connected": true,
+        "fresh": true,
+        "pending": 0,
+        "collector": "waiting_room",
+        "round": 2,
+        "state": "RACING",
+        "remaining": 130.533333333546,
+        "elapsed": 469.466666666454,
+        "paused": false,
+        "persistence": {
+          "error": "",
+          "ready": true
+        },
+        "performance": {
+          "draw_calls": 327,
+          "fps": 60.0,
+          "frame_ms": 5.16,
+          "nodes": 383,
+          "orphan_nodes": 0,
+          "physics_ms": 2.42,
+          "render_height": 1920,
+          "render_width": 1080,
+          "static_mem_mb": 118.74,
+          "window_height": 960,
+          "window_width": 540
+        },
+        "cards": {
+          "overflow_visual_only": 0,
+          "queued": 0,
+          "revision": "dual-recovery-20261025-v2",
+          "ttl_seconds": 6.4,
+          "visible": 0
+        },
+        "runners": [
+          {
+            "candidate_id": 1,
+            "progress_m": 5633.71044921875,
+            "current_speed": 11.197977539959
+          },
+          {
+            "candidate_id": 2,
+            "progress_m": 5633.39111328125,
+            "current_speed": 11.3225975031793
+          }
+        ],
+        "diagnostics": {
+          "room_detected": "unknown",
+          "feed_connected": false,
+          "page_kind": "profile",
+          "websocket_frames": 0,
+          "json_responses": 59,
+          "auth_rejections": 0
+        }
+      }
+    }
+  },
+  {
+    "elapsed": 10,
+    "platforms": {
+      "tiktok": {
+        "account": "nostalgiia.br",
+        "backend": "ok",
+        "connected": false,
+        "fresh": false,
+        "pending": 0,
+        "collector": "waiting_room",
+        "round": null,
+        "state": null,
+        "remaining": null,
+        "elapsed": null,
+        "paused": null,
+        "persistence": null,
+        "performance": null,
+        "cards": null,
+        "runners": [],
+        "diagnostics": {
+          "room_detected": null,
+          "feed_connected": null,
+          "page_kind": null,
+          "websocket_frames": null,
+          "json_responses": null,
+          "auth_rejections": null
+        }
+      },
+      "kwai": {
+        "account": "mentalista..",
+        "backend": "ok",
+        "connected": true,
+        "fresh": true,
+        "pending": 0,
+        "collector": "waiting_room",
+        "round": 2,
+        "state": "RACING",
+        "remaining": 125.516666666878,
+        "elapsed": 474.483333333122,
+        "paused": false,
+        "persistence": {
+          "error": "",
+          "ready": true
+        },
+        "performance": {
+          "draw_calls": 326,
+          "fps": 60.0,
+          "frame_ms": 4.94,
+          "nodes": 383,
+          "orphan_nodes": 0,
+          "physics_ms": 1.79,
+          "render_height": 1920,
+          "render_width": 1080,
+          "static_mem_mb": 118.7,
+          "window_height": 960,
+          "window_width": 540
+        },
+        "cards": {
+          "overflow_visual_only": 0,
+          "queued": 0,
+          "revision": "dual-recovery-20261025-v2",
+          "ttl_seconds": 6.4,
+          "visible": 0
+        },
+        "runners": [
+          {
+            "candidate_id": 1,
+            "progress_m": 5693.99169921875,
+            "current_speed": 12.6131456275203
+          },
+          {
+            "candidate_id": 2,
+            "progress_m": 5693.70751953125,
+            "current_speed": 12.3698201304023
+          }
+        ],
+        "diagnostics": {
+          "room_detected": "unknown",
+          "feed_connected": false,
+          "page_kind": "profile",
+          "websocket_frames": 0,
+          "json_responses": 67,
+          "auth_rejections": 0
+        }
+      }
+    }
+  },
+  {
+    "elapsed": 15,
+    "platforms": {
+      "tiktok": {
+        "account": "nostalgiia.br",
+        "backend": "ok",
+        "connected": false,
+        "fresh": false,
+        "pending": 0,
+        "collector": "waiting_room",
+        "round": null,
+        "state": null,
+        "remaining": null,
+        "elapsed": null,
+        "paused": null,
+        "persistence": null,
+        "performance": null,
+        "cards": null,
+        "runners": [],
+        "diagnostics": {
+          "room_detected": null,
+          "feed_connected": null,
+          "page_kind": null,
+          "websocket_frames": null,
+          "json_responses": null,
+          "auth_rejections": null
+        }
+      },
+      "kwai": {
+        "account": "mentalista..",
+        "backend": "ok",
+        "connected": true,
+        "fresh": true,
+        "pending": 0,
+        "collector": "waiting_room",
+        "round": 2,
+        "state": "RACING",
+        "remaining": 120.500000000211,
+        "elapsed": 479.499999999789,
+        "paused": false,
+        "persistence": {
+          "error": "",
+          "ready": true
+        },
+        "performance": {
+          "draw_calls": 330,
+          "fps": 60.0,
+          "frame_ms": 4.62,
+          "nodes": 383,
+          "orphan_nodes": 0,
+          "physics_ms": 1.51,
+          "render_height": 1920,
+          "render_width": 1080,
+          "static_mem_mb": 118.7,
+          "window_height": 960,
+          "window_width": 540
+        },
+        "cards": {
+          "overflow_visual_only": 0,
+          "queued": 0,
+          "revision": "dual-recovery-20261025-v2",
+          "ttl_seconds": 6.4,
+          "visible": 0
+        },
+        "runners": [
+          {
+            "candidate_id": 1,
+            "progress_m": 5754.1142578125,
+            "current_speed": 11.5679791178473
+          },
+          {
+            "candidate_id": 2,
+            "progress_m": 5753.91796875,
+            "current_speed": 12.3038026487778
+          }
+        ],
+        "diagnostics": {
+          "room_detected": "unknown",
+          "feed_connected": false,
+          "page_kind": "profile",
+          "websocket_frames": 0,
+          "json_responses": 67,
+          "auth_rejections": 0
+        }
+      }
+    }
+  },
+  {
+    "elapsed": 20,
+    "platforms": {
+      "tiktok": {
+        "account": "nostalgiia.br",
+        "backend": "ok",
+        "connected": true,
+        "fresh": true,
+        "pending": 0,
+        "collector": "waiting_room",
+        "round": 1,
+        "state": "RACING",
+        "remaining": 246.666666666973,
+        "elapsed": 353.333333333027,
+        "paused": false,
+        "persistence": {
+          "error": "",
+          "ready": true
+        },
+        "performance": {
+          "draw_calls": 321,
+          "fps": 60.0,
+          "frame_ms": 4.85,
+          "nodes": 383,
+          "orphan_nodes": 0,
+          "physics_ms": 1.52,
+          "render_height": 1920,
+          "render_width": 1080,
+          "static_mem_mb": 109.1,
+          "window_height": 960,
+          "window_width": 540
+        },
+        "cards": {
+          "overflow_visual_only": 0,
+          "queued": 0,
+          "revision": "dual-recovery-20261025-v2",
+          "ttl_seconds": 6.4,
+          "visible": 0
+        },
+        "runners": [
+          {
+            "candidate_id": 1,
+            "progress_m": 4239.88525390625,
+            "current_speed": 12.2971197717725
+          },
+          {
+            "candidate_id": 2,
+            "progress_m": 4239.92529296875,
+            "current_speed": 11.9726664528625
+          }
+        ],
+        "diagnostics": {
+          "room_detected": null,
+          "feed_connected": null,
+          "page_kind": null,
+          "websocket_frames": null,
+          "json_responses": null,
+          "auth_rejections": null
+        }
+      },
+      "kwai": {
+        "account": "mentalista..",
+        "backend": "ok",
+        "connected": true,
+        "fresh": true,
+        "pending": 0,
+        "collector": "waiting_room",
+        "round": 2,
+        "state": "RACING",
+        "remaining": 115.483333333545,
+        "elapsed": 484.516666666455,
+        "paused": false,
+        "persistence": {
+          "error": "",
+          "ready": true
+        },
+        "performance": {
+          "draw_calls": 330,
+          "fps": 60.0,
+          "frame_ms": 3.92,
+          "nodes": 383,
+          "orphan_nodes": 0,
+          "physics_ms": 1.64,
+          "render_height": 1920,
+          "render_width": 1080,
+          "static_mem_mb": 118.7,
+          "window_height": 960,
+          "window_width": 540
+        },
+        "cards": {
+          "overflow_visual_only": 0,
+          "queued": 0,
+          "revision": "dual-recovery-20261025-v2",
+          "ttl_seconds": 6.4,
+          "visible": 0
+        },
+        "runners": [
+          {
+            "candidate_id": 1,
+            "progress_m": 5814.3466796875,
+            "current_speed": 12.3097153504291
+          },
+          {
+            "candidate_id": 2,
+            "progress_m": 5814.173828125,
+            "current_speed": 12.7724714807275
+          }
+        ],
+        "diagnostics": {
+          "room_detected": "unknown",
+          "feed_connected": false,
+          "page_kind": "profile",
+          "websocket_frames": 0,
+          "json_responses": 67,
+          "auth_rejections": 0
+        }
+      }
+    }
+  },
+  {
+    "elapsed": 25,
+    "platforms": {
+      "tiktok": {
+        "account": "nostalgiia.br",
+        "backend": "ok",
+        "connected": true,
+        "fresh": true,
+        "pending": 0,
+        "collector": "waiting_room",
+        "round": 1,
+        "state": "RACING",
+        "remaining": 241.650000000302,
+        "elapsed": 358.349999999698,
+        "paused": false,
+        "persistence": {
+          "error": "",
+          "ready": true
+        },
+        "performance": {
+          "draw_calls": 324,
+          "fps": 60.0,
+          "frame_ms": 6.37,
+          "nodes": 383,
+          "orphan_nodes": 0,
+          "physics_ms": 1.83,
+          "render_height": 1920,
+          "render_width": 1080,
+          "static_mem_mb": 109.12,
+          "window_height": 960,
+          "window_width": 540
+        },
+        "cards": {
+          "overflow_visual_only": 0,
+          "queued": 0,
+          "revision": "dual-recovery-20261025-v2",
+          "ttl_seconds": 6.4,
+          "visible": 0
+        },
+        "runners": [
+          {
+            "candidate_id": 1,
+            "progress_m": 4300.1748046875,
+            "current_speed": 11.6522233957049
+          },
+          {
+            "candidate_id": 2,
+            "progress_m": 4300.03564453125,
+            "current_speed": 12.2299340646735
+          }
+        ],
+        "diagnostics": {
+          "room_detected": null,
+          "feed_connected": null,
+          "page_kind": null,
+          "websocket_frames": null,
+          "json_responses": null,
+          "auth_rejections": null
+        }
+      },
+      "kwai": {
+        "account": "mentalista..",
+        "backend": "ok",
+        "connected": true,
+        "fresh": true,
+        "pending": 0,
+        "collector": "waiting_room",
+        "round": 2,
+        "state": "RACING",
+        "remaining": 110.466666666879,
+        "elapsed": 489.533333333121,
+        "paused": false,
+        "persistence": {
+          "error": "",
+          "ready": true
+        },
+        "performance": {
+          "draw_calls": 330,
+          "fps": 60.0,
+          "frame_ms": 4.91,
+          "nodes": 383,
+          "orphan_nodes": 0,
+          "physics_ms": 1.65,
+          "render_height": 1920,
+          "render_width": 1080,
+          "static_mem_mb": 118.7,
+          "window_height": 960,
+          "window_width": 540
+        },
+        "cards": {
+          "overflow_visual_only": 0,
+          "queued": 0,
+          "revision": "dual-recovery-20261025-v2",
+          "ttl_seconds": 6.4,
+          "visible": 0
+        },
+        "runners": [
+          {
+            "candidate_id": 1,
+            "progress_m": 5874.58544921875,
+            "current_speed": 11.7181492942002
+          },
+          {
+            "candidate_id": 2,
+            "progress_m": 5874.546875,
+            "current_speed": 11.629256357183
+          }
+        ],
+        "diagnostics": {
+          "room_detected": "unknown",
+          "feed_connected": false,
+          "page_kind": "profile",
+          "websocket_frames": 0,
+          "json_responses": 67,
+          "auth_rejections": 0
+        }
+      }
+    }
+  },
+  {
+    "elapsed": 30,
+    "platforms": {
+      "tiktok": {
+        "account": "nostalgiia.br",
+        "backend": "ok",
+        "connected": true,
+        "fresh": true,
+        "pending": 0,
+        "collector": "waiting_room",
+        "round": 1,
+        "state": "RACING",
+        "remaining": 236.633333333631,
+        "elapsed": 363.366666666369,
+        "paused": false,
+        "persistence": {
+          "error": "",
+          "ready": true
+        },
+        "performance": {
+          "draw_calls": 324,
+          "fps": 60.0,
+          "frame_ms": 5.38,
+          "nodes": 383,
+          "orphan_nodes": 0,
+          "physics_ms": 1.62,
+          "render_height": 1920,
+          "render_width": 1080,
+          "static_mem_mb": 109.1,
+          "window_height": 960,
+          "window_width": 540
+        },
+        "cards": {
+          "overflow_visual_only": 0,
+          "queued": 0,
+          "revision": "dual-recovery-20261025-v2",
+          "ttl_seconds": 6.4,
+          "visible": 0
+        },
+        "runners": [
+          {
+            "candidate_id": 1,
+            "progress_m": 4360.22314453125,
+            "current_speed": 12.4938707686192
+          },
+          {
+            "candidate_id": 2,
+            "progress_m": 4360.376953125,
+            "current_speed": 13.039466105331
+          }
+        ],
+        "diagnostics": {
+          "room_detected": null,
+          "feed_connected": null,
+          "page_kind": null,
+          "websocket_frames": null,
+          "json_responses": null,
+          "auth_rejections": null
+        }
+      },
+      "kwai": {
+        "account": "mentalista..",
+        "backend": "ok",
+        "connected": true,
+        "fresh": true,
+        "pending": 0,
+        "collector": "waiting_room",
+        "round": 2,
+        "state": "RACING",
+        "remaining": 105.450000000212,
+        "elapsed": 494.549999999788,
+        "paused": false,
+        "persistence": {
+          "error": "",
+          "ready": true
+        },
+        "performance": {
+          "draw_calls": 327,
+          "fps": 60.0,
+          "frame_ms": 4.22,
+          "nodes": 383,
+          "orphan_nodes": 0,
+          "physics_ms": 1.6,
+          "render_height": 1920,
+          "render_width": 1080,
+          "static_mem_mb": 118.7,
+          "window_height": 960,
+          "window_width": 540
+        },
+        "cards": {
+          "overflow_visual_only": 0,
+          "queued": 0,
+          "revision": "dual-recovery-20261025-v2",
+          "ttl_seconds": 6.4,
+          "visible": 0
+        },
+        "runners": [
+          {
+            "candidate_id": 1,
+            "progress_m": 5934.66357421875,
+            "current_speed": 12.3595702484075
+          },
+          {
+            "candidate_id": 2,
+            "progress_m": 5934.4482421875,
+            "current_speed": 10.9282270937568
+          }
+        ],
+        "diagnostics": {
+          "room_detected": "unknown",
+          "feed_connected": false,
+          "page_kind": "profile",
+          "websocket_frames": 0,
+          "json_responses": 67,
+          "auth_rejections": 0
+        }
+      }
+    }
+  },
+  {
+    "elapsed": 35,
+    "platforms": {
+      "tiktok": {
+        "account": "nostalgiia.br",
+        "backend": "ok",
+        "connected": true,
+        "fresh": true,
+        "pending": 0,
+        "collector": "waiting_room",
+        "round": 1,
+        "state": "RACING",
+        "remaining": 231.616666666961,
+        "elapsed": 368.383333333039,
+        "paused": false,
+        "persistence": {
+          "error": "",
+          "ready": true
+        },
+        "performance": {
+          "draw_calls": 323,
+          "fps": 60.0,
+          "frame_ms": 4.81,
+          "nodes": 383,
+          "orphan_nodes": 0,
+          "physics_ms": 1.6,
+          "render_height": 1920,
+          "render_width": 1080,
+          "static_mem_mb": 109.14,
+          "window_height": 960,
+          "window_width": 540
+        },
+        "cards": {
+          "overflow_visual_only": 0,
+          "queued": 0,
+          "revision": "dual-recovery-20261025-v2",
+          "ttl_seconds": 6.4,
+          "visible": 0
+        },
+        "runners": [
+          {
+            "candidate_id": 1,
+            "progress_m": 4420.6142578125,
+            "current_speed": 11.2993078280457
+          },
+          {
+            "candidate_id": 2,
+            "progress_m": 4420.748046875,
+            "current_speed": 11.6881070491523
+          }
+        ],
+        "diagnostics": {
+          "room_detected": null,
+          "feed_connected": null,
+          "page_kind": null,
+          "websocket_frames": null,
+          "json_responses": null,
+          "auth_rejections": null
+        }
+      },
+      "kwai": {
+        "account": "mentalista..",
+        "backend": "ok",
+        "connected": true,
+        "fresh": true,
+        "pending": 0,
+        "collector": "waiting_room",
+        "round": 2,
+        "state": "RACING",
+        "remaining": 100.433333333546,
+        "elapsed": 499.566666666454,
+        "paused": false,
+        "persistence": {
+          "error": "",
+          "ready": true
+        },
+        "performance": {
+          "draw_calls": 327,
+          "fps": 60.0,
+          "frame_ms": 3.76,
+          "nodes": 383,
+          "orphan_nodes": 0,
+          "physics_ms": 1.54,
+          "render_height": 1920,
+          "render_width": 1080,
+          "static_mem_mb": 118.7,
+          "window_height": 960,
+          "window_width": 540
+        },
+        "cards": {
+          "overflow_visual_only": 0,
+          "queued": 0,
+          "revision": "dual-recovery-20261025-v2",
+          "ttl_seconds": 6.4,
+          "visible": 0
+        },
+        "runners": [
+          {
+            "candidate_id": 1,
+            "progress_m": 5995.04638671875,
+            "current_speed": 11.4732954979792
+          },
+          {
+            "candidate_id": 2,
+            "progress_m": 5994.62646484375,
+            "current_speed": 12.2520631615931
+          }
+        ],
+        "diagnostics": {
+          "room_detected": "unknown",
+          "feed_connected": false,
+          "page_kind": "profile",
+          "websocket_frames": 0,
+          "json_responses": 67,
+          "auth_rejections": 0
+        }
+      }
+    }
+  },
+  {
+    "elapsed": 40,
+    "platforms": {
+      "tiktok": {
+        "account": "nostalgiia.br",
+        "backend": "ok",
+        "connected": true,
+        "fresh": true,
+        "pending": 0,
+        "collector": "waiting_room",
+        "round": 1,
+        "state": "RACING",
+        "remaining": 226.60000000029,
+        "elapsed": 373.39999999971,
+        "paused": false,
+        "persistence": {
+          "error": "",
+          "ready": true
+        },
+        "performance": {
+          "draw_calls": 324,
+          "fps": 60.0,
+          "frame_ms": 4.63,
+          "nodes": 383,
+          "orphan_nodes": 0,
+          "physics_ms": 1.43,
+          "render_height": 1920,
+          "render_width": 1080,
+          "static_mem_mb": 109.11,
+          "window_height": 960,
+          "window_width": 540
+        },
+        "cards": {
+          "overflow_visual_only": 0,
+          "queued": 0,
+          "revision": "dual-recovery-20261025-v2",
+          "ttl_seconds": 6.4,
+          "visible": 0
+        },
+        "runners": [
+          {
+            "candidate_id": 1,
+            "progress_m": 4480.62744140625,
+            "current_speed": 12.9175442371714
+          },
+          {
+            "candidate_id": 2,
+            "progress_m": 4480.65966796875,
+            "current_speed": 11.0773957345071
+          }
+        ],
+        "diagnostics": {
+          "room_detected": null,
+          "feed_connected": null,
+          "page_kind": null,
+          "websocket_frames": null,
+          "json_responses": null,
+          "auth_rejections": null
+        }
+      },
+      "kwai": {
+        "account": "mentalista..",
+        "backend": "ok",
+        "connected": true,
+        "fresh": true,
+        "pending": 0,
+        "collector": "waiting_room",
+        "round": 2,
+        "state": "RACING",
+        "remaining": 95.4166666668795,
+        "elapsed": 504.58333333312,
+        "paused": false,
+        "persistence": {
+          "error": "",
+          "ready": true
+        },
+        "performance": {
+          "draw_calls": 330,
+          "fps": 60.0,
+          "frame_ms": 3.39,
+          "nodes": 383,
+          "orphan_nodes": 0,
+          "physics_ms": 1.68,
+          "render_height": 1920,
+          "render_width": 1080,
+          "static_mem_mb": 118.7,
+          "window_height": 960,
+          "window_width": 540
+        },
+        "cards": {
+          "overflow_visual_only": 0,
+          "queued": 0,
+          "revision": "dual-recovery-20261025-v2",
+          "ttl_seconds": 6.4,
+          "visible": 0
+        },
+        "runners": [
+          {
+            "candidate_id": 1,
+            "progress_m": 6055.03125,
+            "current_speed": 12.74385289395
+          },
+          {
+            "candidate_id": 2,
+            "progress_m": 6054.95263671875,
+            "current_speed": 12.3412310056153
+          }
+        ],
+        "diagnostics": {
+          "room_detected": "unknown",
+          "feed_connected": false,
+          "page_kind": "profile",
+          "websocket_frames": 0,
+          "json_responses": 67,
+          "auth_rejections": 0
+        }
+      }
+    }
+  },
+  {
+    "elapsed": 45,
+    "platforms": {
+      "tiktok": {
+        "account": "nostalgiia.br",
+        "backend": "ok",
+        "connected": true,
+        "fresh": true,
+        "pending": 0,
+        "collector": "waiting_room",
+        "round": 1,
+        "state": "RACING",
+        "remaining": 221.583333333619,
+        "elapsed": 378.416666666381,
+        "paused": false,
+        "persistence": {
+          "error": "",
+          "ready": true
+        },
+        "performance": {
+          "draw_calls": 321,
+          "fps": 60.0,
+          "frame_ms": 6.03,
+          "nodes": 383,
+          "orphan_nodes": 0,
+          "physics_ms": 2.19,
+          "render_height": 1920,
+          "render_width": 1080,
+          "static_mem_mb": 109.11,
+          "window_height": 960,
+          "window_width": 540
+        },
+        "cards": {
+          "overflow_visual_only": 0,
+          "queued": 0,
+          "revision": "dual-recovery-20261025-v2",
+          "ttl_seconds": 6.4,
+          "visible": 0
+        },
+        "runners": [
+          {
+            "candidate_id": 1,
+            "progress_m": 4540.9658203125,
+            "current_speed": 10.909427883445
+          },
+          {
+            "candidate_id": 2,
+            "progress_m": 4540.87353515625,
+            "current_speed": 11.9941353147107
+          }
+        ],
+        "diagnostics": {
+          "room_detected": null,
+          "feed_connected": null,
+          "page_kind": null,
+          "websocket_frames": null,
+          "json_responses": null,
+          "auth_rejections": null
+        }
+      },
+      "kwai": {
+        "account": "mentalista..",
+        "backend": "ok",
+        "connected": true,
+        "fresh": true,
+        "pending": 0,
+        "collector": "waiting_room",
+        "round": 2,
+        "state": "RACING",
+        "remaining": 90.4000000002131,
+        "elapsed": 509.599999999787,
+        "paused": false,
+        "persistence": {
+          "error": "",
+          "ready": true
+        },
+        "performance": {
+          "draw_calls": 330,
+          "fps": 60.0,
+          "frame_ms": 5.32,
+          "nodes": 383,
+          "orphan_nodes": 0,
+          "physics_ms": 1.9,
+          "render_height": 1920,
+          "render_width": 1080,
+          "static_mem_mb": 118.7,
+          "window_height": 960,
+          "window_width": 540
+        },
+        "cards": {
+          "overflow_visual_only": 0,
+          "queued": 0,
+          "revision": "dual-recovery-20261025-v2",
+          "ttl_seconds": 6.4,
+          "visible": 0
+        },
+        "runners": [
+          {
+            "candidate_id": 1,
+            "progress_m": 6115.42724609375,
+            "current_speed": 11.041651709601
+          },
+          {
+            "candidate_id": 2,
+            "progress_m": 6115.10888671875,
+            "current_speed": 12.6099109517353
+          }
+        ],
+        "diagnostics": {
+          "room_detected": "unknown",
+          "feed_connected": false,
+          "page_kind": "profile",
+          "websocket_frames": 0,
+          "json_responses": 67,
+          "auth_rejections": 0
+        }
+      }
+    }
+  },
+  {
+    "elapsed": 50,
+    "platforms": {
+      "tiktok": {
+        "account": "nostalgiia.br",
+        "backend": "ok",
+        "connected": true,
+        "fresh": true,
+        "pending": 0,
+        "collector": "waiting_room",
+        "round": 1,
+        "state": "RACING",
+        "remaining": 216.566666666949,
+        "elapsed": 383.433333333051,
+        "paused": false,
+        "persistence": {
+          "error": "",
+          "ready": true
+        },
+        "performance": {
+          "draw_calls": 324,
+          "fps": 60.0,
+          "frame_ms": 5.44,
+          "nodes": 383,
+          "orphan_nodes": 0,
+          "physics_ms": 1.83,
+          "render_height": 1920,
+          "render_width": 1080,
+          "static_mem_mb": 109.11,
+          "window_height": 960,
+          "window_width": 540
+        },
+        "cards": {
+          "overflow_visual_only": 0,
+          "queued": 0,
+          "revision": "dual-recovery-20261025-v2",
+          "ttl_seconds": 6.4,
+          "visible": 0
+        },
+        "runners": [
+          {
+            "candidate_id": 1,
+            "progress_m": 4601.11962890625,
+            "current_speed": 13.1763924576322
+          },
+          {
+            "candidate_id": 2,
+            "progress_m": 4601.0830078125,
+            "current_speed": 12.0616703358254
+          }
+        ],
+        "diagnostics": {
+          "room_detected": null,
+          "feed_connected": null,
+          "page_kind": null,
+          "websocket_frames": null,
+          "json_responses": null,
+          "auth_rejections": null
+        }
+      },
+      "kwai": {
+        "account": "mentalista..",
+        "backend": "ok",
+        "connected": true,
+        "fresh": true,
+        "pending": 0,
+        "collector": "waiting_room",
+        "round": 2,
+        "state": "RACING",
+        "remaining": 85.3833333335468,
+        "elapsed": 514.616666666453,
+        "paused": false,
+        "persistence": {
+          "error": "",
+          "ready": true
+        },
+        "performance": {
+          "draw_calls": 330,
+          "fps": 60.0,
+          "frame_ms": 4.61,
+          "nodes": 383,
+          "orphan_nodes": 0,
+          "physics_ms": 5.6,
+          "render_height": 1920,
+          "render_width": 1080,
+          "static_mem_mb": 118.7,
+          "window_height": 960,
+          "window_width": 540
+        },
+        "cards": {
+          "overflow_visual_only": 0,
+          "queued": 0,
+          "revision": "dual-recovery-20261025-v2",
+          "ttl_seconds": 6.4,
+          "visible": 0
+        },
+        "runners": [
+          {
+            "candidate_id": 1,
+            "progress_m": 6175.494140625,
+            "current_speed": 13.1175819248954
+          },
+          {
+            "candidate_id": 2,
+            "progress_m": 6175.52001953125,
+            "current_speed": 12.1726712218769
+          }
+        ],
+        "diagnostics": {
+          "room_detected": "unknown",
+          "feed_connected": false,
+          "page_kind": "profile",
+          "websocket_frames": 0,
+          "json_responses": 67,
+          "auth_rejections": 0
+        }
+      }
+    }
+  },
+  {
+    "elapsed": 55,
+    "platforms": {
+      "tiktok": {
+        "account": "nostalgiia.br",
+        "backend": "ok",
+        "connected": true,
+        "fresh": true,
+        "pending": 0,
+        "collector": "waiting_room",
+        "round": 1,
+        "state": "RACING",
+        "remaining": 211.550000000278,
+        "elapsed": 388.449999999722,
+        "paused": false,
+        "persistence": {
+          "error": "",
+          "ready": true
+        },
+        "performance": {
+          "draw_calls": 323,
+          "fps": 60.0,
+          "frame_ms": 5.08,
+          "nodes": 383,
+          "orphan_nodes": 0,
+          "physics_ms": 1.61,
+          "render_height": 1920,
+          "render_width": 1080,
+          "static_mem_mb": 109.11,
+          "window_height": 960,
+          "window_width": 540
+        },
+        "cards": {
+          "overflow_visual_only": 0,
+          "queued": 0,
+          "revision": "dual-recovery-20261025-v2",
+          "ttl_seconds": 6.4,
+          "visible": 0
+        },
+        "runners": [
+          {
+            "candidate_id": 1,
+            "progress_m": 4661.265625,
+            "current_speed": 10.846925604448
+          },
+          {
+            "candidate_id": 2,
+            "progress_m": 4661.275390625,
+            "current_speed": 12.8863558786751
+          }
+        ],
+        "diagnostics": {
+          "room_detected": null,
+          "feed_connected": null,
+          "page_kind": null,
+          "websocket_frames": null,
+          "json_responses": null,
+          "auth_rejections": null
+        }
+      },
+      "kwai": {
+        "account": "mentalista..",
+        "backend": "ok",
+        "connected": true,
+        "fresh": true,
+        "pending": 0,
+        "collector": "waiting_room",
+        "round": 2,
+        "state": "RACING",
+        "remaining": 80.3666666668804,
+        "elapsed": 519.63333333312,
+        "paused": false,
+        "persistence": {
+          "error": "",
+          "ready": true
+        },
+        "performance": {
+          "draw_calls": 327,
+          "fps": 60.0,
+          "frame_ms": 3.82,
+          "nodes": 383,
+          "orphan_nodes": 0,
+          "physics_ms": 1.61,
+          "render_height": 1920,
+          "render_width": 1080,
+          "static_mem_mb": 118.7,
+          "window_height": 960,
+          "window_width": 540
+        },
+        "cards": {
+          "overflow_visual_only": 0,
+          "queued": 0,
+          "revision": "dual-recovery-20261025-v2",
+          "ttl_seconds": 6.4,
+          "visible": 0
+        },
+        "runners": [
+          {
+            "candidate_id": 1,
+            "progress_m": 6235.7392578125,
+            "current_speed": 10.817684423218
+          },
+          {
+            "candidate_id": 2,
+            "progress_m": 6235.56103515625,
+            "current_speed": 10.8192627348436
+          }
+        ],
+        "diagnostics": {
+          "room_detected": "unknown",
+          "feed_connected": false,
+          "page_kind": "profile",
+          "websocket_frames": 0,
+          "json_responses": 67,
+          "auth_rejections": 0
+        }
+      }
+    }
+  },
+  {
+    "elapsed": 60,
+    "platforms": {
+      "tiktok": {
+        "account": "nostalgiia.br",
+        "backend": "ok",
+        "connected": true,
+        "fresh": true,
+        "pending": 0,
+        "collector": "waiting_room",
+        "round": 1,
+        "state": "RACING",
+        "remaining": 206.533333333607,
+        "elapsed": 393.466666666393,
+        "paused": false,
+        "persistence": {
+          "error": "",
+          "ready": true
+        },
+        "performance": {
+          "draw_calls": 324,
+          "fps": 60.0,
+          "frame_ms": 5.85,
+          "nodes": 383,
+          "orphan_nodes": 0,
+          "physics_ms": 1.67,
+          "render_height": 1920,
+          "render_width": 1080,
+          "static_mem_mb": 109.11,
+          "window_height": 960,
+          "window_width": 540
+        },
+        "cards": {
+          "overflow_visual_only": 0,
+          "queued": 0,
+          "revision": "dual-recovery-20261025-v2",
+          "ttl_seconds": 6.4,
+          "visible": 0
+        },
+        "runners": [
+          {
+            "candidate_id": 1,
+            "progress_m": 4721.61572265625,
+            "current_speed": 13.0256919692436
+          },
+          {
+            "candidate_id": 2,
+            "progress_m": 4721.74365234375,
+            "current_speed": 12.2813141287102
+          }
+        ],
+        "diagnostics": {
+          "room_detected": null,
+          "feed_connected": null,
+          "page_kind": null,
+          "websocket_frames": null,
+          "json_responses": null,
+          "auth_rejections": null
+        }
+      },
+      "kwai": {
+        "account": "mentalista..",
+        "backend": "ok",
+        "connected": true,
+        "fresh": true,
+        "pending": 0,
+        "collector": "waiting_room",
+        "round": 2,
+        "state": "RACING",
+        "remaining": 75.350000000214,
+        "elapsed": 524.649999999786,
+        "paused": false,
+        "persistence": {
+          "error": "",
+          "ready": true
+        },
+        "performance": {
+          "draw_calls": 327,
+          "fps": 60.0,
+          "frame_ms": 3.93,
+          "nodes": 383,
+          "orphan_nodes": 0,
+          "physics_ms": 1.63,
+          "render_height": 1920,
+          "render_width": 1080,
+          "static_mem_mb": 118.7,
+          "window_height": 960,
+          "window_width": 540
+        },
+        "cards": {
+          "overflow_visual_only": 0,
+          "queued": 0,
+          "revision": "dual-recovery-20261025-v2",
+          "ttl_seconds": 6.4,
+          "visible": 0
+        },
+        "runners": [
+          {
+            "candidate_id": 1,
+            "progress_m": 6296.0029296875,
+            "current_speed": 13.1366110776699
+          },
+          {
+            "candidate_id": 2,
+            "progress_m": 6295.55908203125,
+            "current_speed": 11.8691058399473
+          }
+        ],
+        "diagnostics": {
+          "room_detected": "unknown",
+          "feed_connected": false,
+          "page_kind": "profile",
+          "websocket_frames": 0,
+          "json_responses": 67,
+          "auth_rejections": 0
+        }
+      }
+    }
+  }
+]
