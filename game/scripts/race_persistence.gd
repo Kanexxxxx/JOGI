@@ -29,6 +29,7 @@ const MATCH_FLOATS: Dictionary = {
 var is_ready: bool = false
 var recovered: bool = false
 var last_error: String = ""
+var validation_detail: String = ""
 var _race: RaceMain = null
 var _audience: AudienceDirector = null
 var _bus: LiveEventBusInstance = null
@@ -220,127 +221,173 @@ func _capture_snapshot(cursor: int) -> Dictionary:
 
 func _validate_snapshot(state: Dictionary) -> bool:
 	if not _integer(state.get("schema_version"), STATE_SCHEMA_VERSION, STATE_SCHEMA_VERSION) or not state.get("match") is Dictionary:
+		validation_detail = "2: if not _integer(state.get(\"schema_version\"), STATE_SCHEMA_VERSION, STATE_SCHEMA_VERSION) or not state.get(\"match\") is Dictionary:"
 		return false
 	if not state.get("runners") is Array or (state["runners"] as Array).size() != 2:
+		validation_detail = "4: if not state.get(\"runners\") is Array or (state[\"runners\"] as Array).size() != 2:"
 		return false
 	if not state.get("audience") is Dictionary or not state.get("bus_event_ids") is Array or not state.get("obstacles") is Array:
+		validation_detail = "6: if not state.get(\"audience\") is Dictionary or not state.get(\"bus_event_ids\") is Array or not state.get(\"obstacles\") is Array:"
 		return false
 	if not _integer(state.get("journal_cursor"), 0, RaceSessionStore.MAX_JOURNAL_BYTES):
+		validation_detail = "8: if not _integer(state.get(\"journal_cursor\"), 0, RaceSessionStore.MAX_JOURNAL_BYTES):"
 		return false
 	var data: Dictionary = state["match"] as Dictionary
 	if data.has("round_history"):
 		if not data["round_history"] is Array or (data["round_history"] as Array).size() > 50:
+			validation_detail = "12: if not data[\"round_history\"] is Array or (data[\"round_history\"] as Array).size() > 50:"
 			return false
 		for result: Variant in data["round_history"] as Array:
 			if not result is Dictionary:
+				validation_detail = "15: if not result is Dictionary:"
 				return false
 			if not _integer(result.get("cycle"), 1, 1000000000) or not _integer(result.get("round"), 1, 50) or not _integer(result.get("winner_slot"), 0, 2):
+				validation_detail = "17: if not _integer(result.get(\"cycle\"), 1, 1000000000) or not _integer(result.get(\"round\"), 1, 50) or not _integer(result.get(\"winner_slot\"), 0, 2):"
 				return false
 			if not _number(result.get("lula_m"), 0.0, 1000000000000.0) or not _number(result.get("flavio_m"), 0.0, 1000000000000.0):
+				validation_detail = "19: if not _number(result.get(\"lula_m\"), 0.0, 1000000000000.0) or not _number(result.get(\"flavio_m\"), 0.0, 1000000000000.0):"
 				return false
 	if data.has("experience_ended"):
 		if typeof(data["experience_ended"]) != TYPE_BOOL or not data.get("experience_end_reason") is String or not _number(data.get("experience_ended_at"), 0.0, 100000000000.0):
+			validation_detail = "22: if typeof(data[\"experience_ended\"]) != TYPE_BOOL or not data.get(\"experience_end_reason\") is String or not _number(data.get(\"experience_ended_at\"), 0.0, 100000000000.0):"
 			return false
 		if bool(data["experience_ended"]) and (not bool(data.get("race_paused", false)) or bool(data.get("auto_loop_after_podium", true))):
+			validation_detail = "24: if bool(data[\"experience_ended\"]) and (not bool(data.get(\"race_paused\", false)) or bool(data.get(\"auto_loop_after_podium\", true))):"
 			return false
 	if data.has("audio_settings"):
 		if not data["audio_settings"] is Dictionary:
+			validation_detail = "27: if not data[\"audio_settings\"] is Dictionary:"
 			return false
 		for key: String in ["voices_enabled", "sfx_enabled", "crowd_enabled", "memes_enabled"]:
 			if typeof(data["audio_settings"].get(key)) != TYPE_BOOL:
+				validation_detail = "30: if typeof(data[\"audio_settings\"].get(key)) != TYPE_BOOL:"
 				return false
 	if data.has("pending_round_effects") and not _valid_pending_effects(data["pending_round_effects"]):
+		validation_detail = "32: if data.has(\"pending_round_effects\") and not _valid_pending_effects(data[\"pending_round_effects\"]):"
 		return false
 	if data.has("live_goal"):
 		if not data["live_goal"] is Dictionary:
+			validation_detail = "35: if not data[\"live_goal\"] is Dictionary:"
 			return false
 		var goal: Dictionary = data["live_goal"] as Dictionary
 		if not goal.get("goal_kind") in ["likes", "follows", "gifts", "coins", "gift_specific"] or not _integer(goal.get("goal_target"), 1, MAX_COUNTER):
+			validation_detail = "38: if not goal.get(\"goal_kind\") in [\"likes\", \"follows\", \"gifts\", \"coins\", \"gift_specific\"] or not _integer(goal.get(\"goal_target\"), 1, MAX_COUNTER):"
 			return false
 		if goal.get("goal_kind") == "gift_specific" and (not goal.get("goal_gift_id") is String or String(goal["goal_gift_id"]).is_empty() or String(goal["goal_gift_id"]).length() > 64):
+			validation_detail = "40: if goal.get(\"goal_kind\") == \"gift_specific\" and (not goal.get(\"goal_gift_id\") is String or String(goal[\"goal_gift_id\"]).is_empty() or String(goal[\"goal_gift_id\"]).length("
 			return false
 		if not goal.get("goal_label") is String or String(goal["goal_label"]).is_empty() or String(goal["goal_label"]).length() > 40:
+			validation_detail = "42: if not goal.get(\"goal_label\") is String or String(goal[\"goal_label\"]).is_empty() or String(goal[\"goal_label\"]).length() > 40:"
 			return false
 	if data.has("live_goals") and not _valid_live_goals(data["live_goals"]):
+		validation_detail = "44: if data.has(\"live_goals\") and not _valid_live_goals(data[\"live_goals\"]):"
 		return false
 	for field_value: Variant in MATCH_FLOATS:
 		var field: String = String(field_value)
 		var limits: Array = MATCH_FLOATS[field] as Array
 		if not _number(data.get(field), float(limits[0]), float(limits[1])):
+			validation_detail = "49: if not _number(data.get(field), float(limits[0]), float(limits[1])):"
 			return false
 	if float(data["match_time_remaining"]) > float(data["match_duration"]) or float(data["race_elapsed_time"]) > float(data["match_duration"]):
+		validation_detail = "51: if float(data[\"match_time_remaining\"]) > float(data[\"match_duration\"]) or float(data[\"race_elapsed_time\"]) > float(data[\"match_duration\"]):"
 		return false
 	if absf(float(data["race_elapsed_time"]) + float(data["match_time_remaining"]) - float(data["match_duration"])) > 0.01:
+		validation_detail = "53: if absf(float(data[\"race_elapsed_time\"]) + float(data[\"match_time_remaining\"]) - float(data[\"match_duration\"])) > 0.01:"
 		return false
 	if not _integer(data.get("current_round"), 1, 50) or not _integer(data.get("cycle_number"), 1, MAX_COUNTER) or not _integer(data.get("current_state"), 0, 4):
+		validation_detail = "55: if not _integer(data.get(\"current_round\"), 1, 50) or not _integer(data.get(\"cycle_number\"), 1, MAX_COUNTER) or not _integer(data.get(\"current_state\"), 0, 4):"
 		return false
 	if not _integer(data.get("winner_slot"), 0, 2) or not _integer(data.get("recorded_winner_slot"), 0, 2) or not _integer(data.get("match_events_count"), 0, MAX_COUNTER):
+		validation_detail = "57: if not _integer(data.get(\"winner_slot\"), 0, 2) or not _integer(data.get(\"recorded_winner_slot\"), 0, 2) or not _integer(data.get(\"match_events_count\"), 0, MAX_COUNTER):"
 		return false
 	for field: String in ["race_paused", "result_recorded", "auto_loop_after_podium", "obstacles_enabled"]:
 		if typeof(data.get(field)) != TYPE_BOOL:
+			validation_detail = "60: if typeof(data.get(field)) != TYPE_BOOL:"
 			return false
 	if not data.get("last_live_event_text") is String or String(data["last_live_event_text"]).length() > 512:
+		validation_detail = "62: if not data.get(\"last_live_event_text\") is String or String(data[\"last_live_event_text\"]).length() > 512:"
 		return false
 	if not data.get("cycle_wins") is Array or (data["cycle_wins"] as Array).size() != 2:
+		validation_detail = "64: if not data.get(\"cycle_wins\") is Array or (data[\"cycle_wins\"] as Array).size() != 2:"
 		return false
 	for wins: Variant in data["cycle_wins"] as Array:
 		if not _integer(wins, 0, 50):
+			validation_detail = "67: if not _integer(wins, 0, 50):"
 			return false
 	if int(data["cycle_wins"][0]) + int(data["cycle_wins"][1]) > 50:
+		validation_detail = "69: if int(data[\"cycle_wins\"][0]) + int(data[\"cycle_wins\"][1]) > 50:"
 		return false
 	if int(data["cycle_wins"][0]) + int(data["cycle_wins"][1]) > int(data["current_round"]):
+		validation_detail = "71: if int(data[\"cycle_wins\"][0]) + int(data[\"cycle_wins\"][1]) > int(data[\"current_round\"]):"
 		return false
 	var result_recorded: bool = bool(data["result_recorded"])
 	if result_recorded != (int(data["current_state"]) >= RaceMain.RaceState.PHOTO_FINISH):
+		validation_detail = "74: if result_recorded != (int(data[\"current_state\"]) >= RaceMain.RaceState.PHOTO_FINISH):"
 		return false
 	if int(data["winner_slot"]) != int(data["recorded_winner_slot"]) or (not result_recorded and int(data["winner_slot"]) != 0):
+		validation_detail = "76: if int(data[\"winner_slot\"]) != int(data[\"recorded_winner_slot\"]) or (not result_recorded and int(data[\"winner_slot\"]) != 0):"
 		return false
 	if result_recorded and float(data["match_time_remaining"]) != 0.0:
+		validation_detail = "78: if result_recorded and float(data[\"match_time_remaining\"]) != 0.0:"
 		return false
 	if int(data["winner_slot"]) > 0 and int(data["cycle_wins"][int(data["winner_slot"]) - 1]) < 1:
+		validation_detail = "80: if int(data[\"winner_slot\"]) > 0 and int(data[\"cycle_wins\"][int(data[\"winner_slot\"]) - 1]) < 1:"
 		return false
 	for index: int in range(2):
 		if not state["runners"][index] is Dictionary:
+			validation_detail = "83: if not state[\"runners\"][index] is Dictionary:"
 			return false
 		var runner: Dictionary = state["runners"][index] as Dictionary
 		if not _integer(runner.get("candidate_id"), index + 1, index + 1) or not _vector_array(runner.get("start_position")):
+			validation_detail = "86: if not _integer(runner.get(\"candidate_id\"), index + 1, index + 1) or not _vector_array(runner.get(\"start_position\")):"
 			return false
 		for field_value: Variant in RUNNER_FLOATS:
 			var field: String = String(field_value)
 			var limits: Array = RUNNER_FLOATS[field] as Array
 			if not _number(runner.get(field), float(limits[0]), float(limits[1])):
+				validation_detail = "91: if not _number(runner.get(field), float(limits[0]), float(limits[1])):"
 				return false
 		for field: String in RUNNER_COUNTERS:
 			if not _integer(runner.get(field), 0, MAX_COUNTER):
+				validation_detail = "94: if not _integer(runner.get(field), 0, MAX_COUNTER):"
 				return false
 		for field: String in RUNNER_BOOLS:
 			if typeof(runner.get(field)) != TYPE_BOOL:
+				validation_detail = "97: if typeof(runner.get(field)) != TYPE_BOOL:"
 				return false
 		if bool(runner["is_racing"]) != (int(data["current_state"]) == RaceMain.RaceState.RACING) or bool(runner["is_finished"]) != result_recorded:
+			validation_detail = "99: if bool(runner[\"is_racing\"]) != (int(data[\"current_state\"]) == RaceMain.RaceState.RACING) or bool(runner[\"is_finished\"]) != result_recorded:"
 			return false
 	if result_recorded:
 		var difference: float = float(state["runners"][0]["progress_m"]) - float(state["runners"][1]["progress_m"])
 		var expected_winner: int = 0 if absf(difference) <= RaceMain.DRAW_DISTANCE_METERS + RaceMain.DISTANCE_COMPARISON_EPSILON else (1 if difference > 0.0 else 2)
 		if int(data["winner_slot"]) != expected_winner:
+			validation_detail = "104: if int(data[\"winner_slot\"]) != expected_winner:"
 			return false
 	var ids: Array = state["bus_event_ids"] as Array
 	if ids.size() > LiveEventBusInstance.MAX_DEDUP_CACHE_SIZE:
+		validation_detail = "107: if ids.size() > LiveEventBusInstance.MAX_DEDUP_CACHE_SIZE:"
 		return false
 	var seen: Dictionary = {}
 	for value: Variant in ids:
 		if not value is String or String(value).length() < 8 or String(value).length() > 128 or seen.has(value):
+			validation_detail = "111: if not value is String or String(value).length() < 8 or String(value).length() > 128 or seen.has(value):"
 			return false
 		seen[value] = true
 	var obstacles: Array = state["obstacles"] as Array
 	if obstacles.size() > MAX_OBSTACLES:
+		validation_detail = "115: if obstacles.size() > MAX_OBSTACLES:"
 		return false
 	for value: Variant in obstacles:
 		if not value is Dictionary:
+			validation_detail = "118: if not value is Dictionary:"
 			return false
 		var obstacle: Dictionary = value as Dictionary
 		if not _integer(obstacle.get("target_slot"), 1, 2) or not _number(obstacle.get("relative_z"), -10000.0, 1.0):
+			validation_detail = "121: if not _integer(obstacle.get(\"target_slot\"), 1, 2) or not _number(obstacle.get(\"relative_z\"), -10000.0, 1.0):"
 			return false
 		if not obstacle.get("obstacle_type") is String or String(obstacle["obstacle_type"]).is_empty() or String(obstacle["obstacle_type"]).length() > 32:
+			validation_detail = "123: if not obstacle.get(\"obstacle_type\") is String or String(obstacle[\"obstacle_type\"]).is_empty() or String(obstacle[\"obstacle_type\"]).length() > 32:"
 			return false
 	var probe: AudienceDirector = AudienceDirector.new()
 	var audience_valid: bool = probe.import_state(state["audience"] as Dictionary)

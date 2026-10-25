@@ -1,0 +1,205 @@
+[
+  {
+    "godot_connected": true,
+    "telemetry_fresh": true,
+    "telemetry_age_seconds": 0.1,
+    "pending_gifts": 0,
+    "current_round": 18,
+    "state_name": "RACING",
+    "match_time_remaining": 584.950000000014,
+    "next_round_in": 0.0,
+    "race_paused": false,
+    "persistence": {
+      "error": "",
+      "ready": true
+    },
+    "checkpoint_recovered": true,
+    "performance": {
+      "draw_calls": 302,
+      "fps": 60.0,
+      "frame_ms": 4.62,
+      "nodes": 374,
+      "orphan_nodes": 0,
+      "physics_ms": 1.64,
+      "static_mem_mb": 115.3
+    },
+    "distances": [
+      180.412658691406,
+      180.831665039063
+    ]
+  },
+  {
+    "godot_connected": true,
+    "telemetry_fresh": true,
+    "telemetry_age_seconds": 0.09,
+    "pending_gifts": 0,
+    "current_round": 18,
+    "state_name": "RACING",
+    "match_time_remaining": 579.933333333352,
+    "next_round_in": 0.0,
+    "race_paused": false,
+    "persistence": {
+      "error": "",
+      "ready": true
+    },
+    "checkpoint_recovered": true,
+    "performance": {
+      "draw_calls": 298,
+      "fps": 60.0,
+      "frame_ms": 4.32,
+      "nodes": 374,
+      "orphan_nodes": 0,
+      "physics_ms": 1.97,
+      "static_mem_mb": 115.33
+    },
+    "distances": [
+      240.820266723633,
+      241.187286376953
+    ]
+  },
+  {
+    "godot_connected": true,
+    "telemetry_fresh": true,
+    "telemetry_age_seconds": 0.08,
+    "pending_gifts": 0,
+    "current_round": 18,
+    "state_name": "RACING",
+    "match_time_remaining": 574.916666666689,
+    "next_round_in": 0.0,
+    "race_paused": false,
+    "persistence": {
+      "error": "",
+      "ready": true
+    },
+    "checkpoint_recovered": true,
+    "performance": {
+      "draw_calls": 302,
+      "fps": 60.0,
+      "frame_ms": 4.35,
+      "nodes": 374,
+      "orphan_nodes": 0,
+      "physics_ms": 1.72,
+      "static_mem_mb": 115.3
+    },
+    "distances": [
+      300.848785400391,
+      301.082427978516
+    ]
+  },
+  {
+    "godot_connected": true,
+    "telemetry_fresh": true,
+    "telemetry_age_seconds": 0.07,
+    "pending_gifts": 0,
+    "current_round": 18,
+    "state_name": "RACING",
+    "match_time_remaining": 569.900000000027,
+    "next_round_in": 0.0,
+    "race_paused": false,
+    "persistence": {
+      "error": "",
+      "ready": true
+    },
+    "checkpoint_recovered": true,
+    "performance": {
+      "draw_calls": 302,
+      "fps": 60.0,
+      "frame_ms": 5.21,
+      "nodes": 374,
+      "orphan_nodes": 0,
+      "physics_ms": 1.37,
+      "static_mem_mb": 115.3
+    },
+    "distances": [
+      361.152008056641,
+      361.299652099609
+    ]
+  },
+  {
+    "godot_connected": true,
+    "telemetry_fresh": true,
+    "telemetry_age_seconds": 0.05,
+    "pending_gifts": 0,
+    "current_round": 18,
+    "state_name": "RACING",
+    "match_time_remaining": 564.883333333365,
+    "next_round_in": 0.0,
+    "race_paused": false,
+    "persistence": {
+      "error": "",
+      "ready": true
+    },
+    "checkpoint_recovered": true,
+    "performance": {
+      "draw_calls": 302,
+      "fps": 60.0,
+      "frame_ms": 4.7,
+      "nodes": 374,
+      "orphan_nodes": 0,
+      "physics_ms": 2.03,
+      "static_mem_mb": 115.3
+    },
+    "distances": [
+      421.328979492188,
+      421.571044921875
+    ]
+  },
+  {
+    "godot_connected": true,
+    "telemetry_fresh": true,
+    "telemetry_age_seconds": 0.04,
+    "pending_gifts": 0,
+    "current_round": 18,
+    "state_name": "RACING",
+    "match_time_remaining": 559.866666666703,
+    "next_round_in": 0.0,
+    "race_paused": false,
+    "persistence": {
+      "error": "",
+      "ready": true
+    },
+    "checkpoint_recovered": true,
+    "performance": {
+      "draw_calls": 298,
+      "fps": 60.0,
+      "frame_ms": 4.09,
+      "nodes": 374,
+      "orphan_nodes": 0,
+      "physics_ms": 1.47,
+      "static_mem_mb": 115.3
+    },
+    "distances": [
+      481.482116699219,
+      481.753021240234
+    ]
+  },
+  {
+    "godot_connected": true,
+    "telemetry_fresh": true,
+    "telemetry_age_seconds": 0.03,
+    "pending_gifts": 0,
+    "current_round": 18,
+    "state_name": "RACING",
+    "match_time_remaining": 554.850000000041,
+    "next_round_in": 0.0,
+    "race_paused": false,
+    "persistence": {
+      "error": "",
+      "ready": true
+    },
+    "checkpoint_recovered": true,
+    "performance": {
+      "draw_calls": 299,
+      "fps": 60.0,
+      "frame_ms": 4.38,
+      "nodes": 374,
+      "orphan_nodes": 0,
+      "physics_ms": 1.78,
+      "static_mem_mb": 115.3
+    },
+    "distances": [
+      541.766845703125,
+      542.189331054688
+    ]
+  }
+]

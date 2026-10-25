@@ -230,6 +230,10 @@ func _unhandled_input(event: InputEvent) -> void:
 func _physics_process(delta: float) -> void:
 	check_experience_deadline()
 	if race_paused:
+		_telemetry_timer += delta
+		if _telemetry_timer >= TELEMETRY_INTERVAL:
+			_telemetry_timer = 0.0
+			send_telemetry_now()
 		return
 	if _toast_timer > 0.0:
 		_toast_timer = maxf(0.0, _toast_timer - delta)
@@ -249,8 +253,9 @@ func _physics_process(delta: float) -> void:
 				start_racing()
 
 		RaceState.RACING:
-			race_elapsed_time += minf(delta, match_time_remaining)
 			match_time_remaining = maxf(0.0, match_time_remaining - delta)
+			# Derive the complementary clock; cumulative addition can exceed 600 by ulps.
+			race_elapsed_time = clampf(match_duration - match_time_remaining, 0.0, match_duration)
 
 			# Atualiza reciclagem contínua da pista infinita
 			_recycle_track_chunks()
