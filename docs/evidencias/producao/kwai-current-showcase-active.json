@@ -1,0 +1,47 @@
+{
+  "platform": "kwai",
+  "account": "mentalista..",
+  "backend": "ok",
+  "connected": true,
+  "fresh": true,
+  "pending": 0,
+  "collector": "waiting_room",
+  "round": 4,
+  "remaining": 0.0,
+  "fps": 60.0,
+  "recovered": true,
+  "persistence": {
+    "error": "",
+    "ready": true
+  },
+  "showcase": [
+    {
+      "name": "Concha Rosa",
+      "value": 5,
+      "action": "boost",
+      "gift_id": null,
+      "availability_confirmed": false
+    },
+    {
+      "name": "P\u00e9rola do Mar",
+      "value": 10,
+      "action": "shield",
+      "gift_id": null,
+      "availability_confirmed": false
+    },
+    {
+      "name": "Gol de Rede",
+      "value": 199,
+      "action": "attack",
+      "gift_id": null,
+      "availability_confirmed": false
+    },
+    {
+      "name": "Roda-gigante",
+      "value": 1999,
+      "action": "super_turbo",
+      "gift_id": null,
+      "availability_confirmed": false
+    }
+  ]
+}

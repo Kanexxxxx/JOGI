@@ -1122,7 +1122,7 @@ class LiveBridgeServer:
                 result = {
                     "status": "ok",
                     "platform": self.platform,
-                    "showcase": self.gift_catalog.showcase(self.account) if self.platform == "tiktok" else [],
+                    "showcase": self.gift_catalog.showcase(self.account, self.platform),
                     **self.gift_catalog.listing(
                         int(query_params.get("limit", [200])[0]),
                         int(query_params.get("offset", [0])[0]),

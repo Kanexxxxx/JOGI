@@ -18,6 +18,15 @@ def gift(event_id, value=42, source='tiktok'):
 
 
 class GiftSchemaTests(unittest.TestCase):
+    def test_kwai_reference_is_separate_and_does_not_fabricate_ids_or_room_availability(self):
+        import sqlite3
+        from gift_catalog import GiftCatalog
+        with sqlite3.connect(':memory:') as db:
+            entries=GiftCatalog(db).showcase('mentalista..','kwai')
+            self.assertEqual([entry['unit_coin_value'] for entry in entries],[5,10,199,1999])
+            self.assertTrue(all(entry['verified'] and entry['gift_id'] is None and not entry['availability_confirmed'] for entry in entries))
+            self.assertTrue(all('/kwai/' in entry['image_resource'] for entry in entries))
+
     def test_showcase_prices_are_not_claimed_confirmed_for_another_account(self):
         import sqlite3
         from gift_catalog import GiftCatalog

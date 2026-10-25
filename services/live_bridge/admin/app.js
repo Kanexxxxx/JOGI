@@ -600,7 +600,9 @@
       for (const gift of (data.showcase || [])) {
         const row=document.createElement('p');
         const ability={boost:'IMPULSO',shield:'ESCUDO',attack:'ATAQUE',super_turbo:'SUPER TURBO'}[gift.action] || gift.action;
-        row.textContent=`Vitrine: ${gift.gift_name} · ${gift.unit_coin_value} moeda(s) · ${ability} · Equipe escolhida pelo remetente`;
+        const price=gift.verified ? `${gift.unit_coin_value} ${gift.currency_label || 'moeda(s)'}` : 'valor não confirmado';
+        const scope=gift.availability_confirmed ? '' : ' · referência do menu';
+        row.textContent=`Vitrine: ${gift.gift_name} · ${price} · ${ability}${scope} · Equipe escolhida pelo remetente`;
         container.appendChild(row);
       }
       if (!data.entries.length) {

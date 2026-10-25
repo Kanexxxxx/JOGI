@@ -155,9 +155,10 @@ class StadiumArtwork:
 		for index: int in range(4):
 			if not abilities_visible:
 				break
-			var card_x: float = 42.0 + float(index) * 252.0
-			_card(Rect2(card_x, 1606.0, 240.0, 112.0), Color("051338", 0.92), ability_borders[index], 20, 2)
-			var icon_center: Vector2 = Vector2(card_x + 120.0, 1636.0)
+			var card_x: float = 42.0 + float(index % 2) * 504.0
+			var card_y: float = 1508.0 + floorf(float(index) / 2.0) * 110.0
+			_card(Rect2(card_x, card_y, 492.0, 100.0), Color("051338", 0.92), ability_borders[index], 20, 2)
+			var icon_center: Vector2 = Vector2(card_x + 54.0, card_y + 50.0)
 			if not gift_image_active[index]:
 				_ability_icon(index, icon_center)
 
@@ -347,44 +348,44 @@ void fragment() {
 	var mechanics: Array[String] = ["IMPULSO", "ESCUDO", "ATAQUE", "SUPER TURBO"]
 	var subtitles: Array[String] = ["+ VELOCIDADE", "BLOQUEIA ATAQUE", "ATRAPALHA RIVAL", "MÁX. VELOCIDADE"]
 	var sub_colors: Array[Color] = [Color("ffe57f"), Color("8be9ff"), Color("ff94b2"), Color("93e6ff")]
+	var kwai_ranges: Array[String] = ["1–9 DIAMANTES", "10–99 DIAMANTES", "100–999 DIAMANTES", "1.000+ DIAMANTES"]
 	for index: int in range(mechanics.size()):
-		var card_x: float = 42.0 + float(index) * 252.0
+		var card_x: float = 42.0 + float(index % 2) * 504.0
+		var card_y: float = 1508.0 + floorf(float(index) / 2.0) * 110.0
 		var showcase_panel: Panel = Panel.new()
 		showcase_panel.name = "GiftShowcase%d" % index
-		showcase_panel.position = Vector2(card_x, 1607.0)
-		showcase_panel.size = Vector2(240.0, 112.0)
+		showcase_panel.position = Vector2(card_x, card_y)
+		showcase_panel.size = Vector2(492.0, 100.0)
 		showcase_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var showcase_style: StyleBoxFlat = StyleBoxFlat.new()
-		showcase_style.bg_color = Color("061332", .97)
+		showcase_style.bg_color = Color(0.0, 0.0, 0.0, 0.0) # Keep the fallback mechanic icon drawn by FrameArtwork visible.
 		showcase_style.border_color = sub_colors[index]
 		showcase_style.set_border_width_all(2)
 		showcase_style.set_corner_radius_all(20)
 		showcase_panel.add_theme_stylebox_override("panel", showcase_style)
 		frame.add_child(showcase_panel)
 		_showcase_panels.append(showcase_panel)
-		var caption: Label = _label(mechanics[index], Rect2(card_x + 8.0, 1654.0, 224.0, 24.0), 23, WHITE, true)
-		caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		_fit_line(caption, 15)
+		var caption: Label = _label(mechanics[index], Rect2(card_x + 108.0, card_y + 7.0, 368.0, 32.0), 29, WHITE, true)
+		_fit_line(caption, 24)
 		_gift_captions.append(caption)
-		var sub_lbl: Label = _label(subtitles[index], Rect2(card_x + 8.0, 1677.0, 224.0, 20.0), 15, sub_colors[index])
-		sub_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		_fit_line(sub_lbl, 11)
+		var sub_lbl: Label = _label(subtitles[index], Rect2(card_x + 108.0, card_y + 40.0, 368.0, 26.0), 23, sub_colors[index])
+		_fit_line(sub_lbl, 20)
 		_gift_subtitles.append(sub_lbl)
 		var gift_image: TextureRect = TextureRect.new()
-		gift_image.position = Vector2(card_x + 98.0, 1610.0)
-		gift_image.size = Vector2(44.0, 44.0)
+		gift_image.position = Vector2(card_x + 12.0, card_y + 8.0)
+		gift_image.size = Vector2(84.0, 84.0)
 		gift_image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		gift_image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		gift_image.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		gift_image.visible = false
 		frame.add_child(gift_image)
 		_gift_images.append(gift_image)
-		var metadata_label: Label = _label("CATÁLOGO NÃO CONFIRMADO", Rect2(card_x + 8.0, 1697.0, 224.0, 20.0), 14, sub_colors[index])
-		metadata_label.size = Vector2(224.0, 20.0)
-		metadata_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		_fit_line(metadata_label, 11)
+		var metadata_text: String = kwai_ranges[index] if OS.get_environment("LIVE_PLATFORM").to_lower() == "kwai" else "CATÁLOGO NÃO CONFIRMADO"
+		var metadata_label: Label = _label(metadata_text, Rect2(card_x + 108.0, card_y + 69.0, 368.0, 26.0), 21, sub_colors[index])
+		metadata_label.size = Vector2(368.0, 26.0)
+		_fit_line(metadata_label, 19)
 		_showcase_details.append(metadata_label)
-	var team_instruction: Label = _label("COMENTE 13 OU 22 ANTES DE ENVIAR PRESENTES", Rect2(SAFE_LEFT, 1570.0, 484.0, 30.0), 17, WHITE, true)
+	var team_instruction: Label = _label("COMENTE 13 OU 22 ANTES DE ENVIAR PRESENTES", Rect2(SAFE_LEFT, 1472.0, 996.0, 30.0), 23, WHITE, true)
 	team_instruction.name = "GiftTeamInstruction"
 	team_instruction.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_fit_line(team_instruction, 13)
@@ -597,7 +598,7 @@ func _build_social_and_ranking_panels() -> void:
 	# Coluna esquerda (x=42..526): 2 cards transitórios de interação com avatar circular + pílula discreta de chamada
 	_audience_pill = Panel.new()
 	_audience_pill.name = "AudienceCalloutPill"
-	_audience_pill.position = Vector2(42.0, 1448.0)
+	_audience_pill.position = Vector2(42.0, 1424.0)
 	_audience_pill.size = Vector2(484.0, 42.0)
 	_audience_pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var pill_style: StyleBoxFlat = StyleBoxFlat.new()
@@ -614,7 +615,7 @@ func _build_social_and_ranking_panels() -> void:
 	for slot_idx: int in range(2):
 		var card: Panel = Panel.new()
 		card.name = "ViewerInteractionCard%d" % slot_idx
-		card.position = Vector2(42.0, 1352.0 + float(slot_idx) * 70.0)
+		card.position = Vector2(42.0, 1310.0 + float(slot_idx) * 70.0)
 		card.size = Vector2(484.0, 64.0)
 		card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		card.z_index = 12
@@ -694,7 +695,7 @@ func _build_social_and_ranking_panels() -> void:
 	# Coluna direita (x=546..1038): TOP 5 · MOEDAS compacto (colapsa quando vazio, sem 5 travessões fixos)
 	_ranking_panel = Panel.new()
 	_ranking_panel.name = "TopSupportersPanel"
-	_ranking_panel.position = Vector2(546.0, 1522.0)
+	_ranking_panel.position = Vector2(546.0, 1392.0)
 	_ranking_panel.size = Vector2(492.0, 72.0)
 	_ranking_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var r_style: StyleBoxFlat = StyleBoxFlat.new()
@@ -755,12 +756,12 @@ func update_leaderboard(entries: Array[Dictionary]) -> void:
 	var visible_rows: int = mini(entries.size(), max_rows)
 	if visible_rows == 0:
 		_ranking_panel.size = Vector2(492.0, 72.0)
-		_ranking_panel.position = Vector2(546.0, 1522.0)
+		_ranking_panel.position = Vector2(546.0, 1392.0)
 		_ranking_empty_label.visible = true
 	else:
 		var panel_h: float = 48.0 + float(visible_rows) * 36.0
 		_ranking_panel.size = Vector2(492.0, panel_h)
-		_ranking_panel.position = Vector2(546.0, 1594.0 - panel_h)
+		_ranking_panel.position = Vector2(546.0, 1464.0 - panel_h)
 		_ranking_empty_label.visible = false
 
 	for index: int in range(_ranking_names.size()):
@@ -986,7 +987,7 @@ func _refresh_interaction_cards() -> void:
 		_audience_pill.visible = _interaction_entries.is_empty()
 	for idx: int in range(_interaction_slots.size()):
 		var slot: Dictionary = _interaction_slots[idx]
-		(slot["panel"] as Control).position.y = (1430.0 if _event_root != null and _event_root.visible else 1352.0) + float(idx) * 70.0
+		(slot["panel"] as Control).position.y = (1330.0 if _event_root != null and _event_root.visible else 1310.0) + float(idx) * 70.0
 		var panel: Panel = slot["panel"] as Panel
 		var name_lbl: Label = slot["name_label"] as Label
 		var action_lbl: Label = slot["action_label"] as Label
@@ -1085,7 +1086,7 @@ func _build_chat_panel() -> void:
 	var panel: Panel = Panel.new()
 	panel.name = "RecentSupporters"
 	_chat_panel = panel
-	panel.position = Vector2(42.0, 1496.0)
+	panel.position = Vector2(42.0, 1318.0)
 	panel.size = Vector2(484.0, 98.0)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var style: StyleBoxFlat = StyleBoxFlat.new()
@@ -1096,7 +1097,7 @@ func _build_chat_panel() -> void:
 	panel.add_theme_stylebox_override("panel", style)
 	frame.add_child(panel)
 	for index: int in range(3):
-		var line: Label = _label("", Rect2(58.0, 1502.0 + float(index) * 28.0, 452.0, 28.0), 18, WHITE)
+		var line: Label = _label("", Rect2(58.0, 1324.0 + float(index) * 28.0, 452.0, 28.0), 18, WHITE)
 		_chat_lines.append(line)
 	_refresh_chat()
 
@@ -1156,9 +1157,10 @@ func _apply_gift_showcase() -> void:
 		var coins: int = int(entry.get("unit_coin_value", 0)) if entry.get("unit_coin_value") != null else 0
 		_gift_subtitles[index].text = name_text
 		_fit_line(_gift_subtitles[index], 12)
-		_showcase_details[index].text = ("%s %s" % [_count_text(coins), "moeda" if coins == 1 else "moedas"]) if verified and coins > 0 else "VALOR NÃO CONFIRMADO"
+		var currency: String = String(entry.get("currency_label", "moeda" if coins == 1 else "moedas"))
+		_showcase_details[index].text = ("%s %s" % [_count_text(coins), currency]) if verified and coins > 0 else "VALOR NÃO CONFIRMADO"
 		var resource_path: String = str(entry.get("image_resource", ""))
-		if not resource_path.begins_with("res://assets/gifts/tiktok/"):
+		if not (resource_path.begins_with("res://assets/gifts/tiktok/") or resource_path.begins_with("res://assets/gifts/kwai/")):
 			continue
 		var cache_key: String = resource_path + str(entry.get("image_region", []))
 		if _showcase_textures.has(cache_key):
@@ -1421,12 +1423,12 @@ func show_event(text: String, team: int = 0, kind: String = "boost") -> void:
 	_event_root.visible = true
 	_refresh_interaction_cards()
 	_refresh_chat()
-	_event_root.position.y = 1334.0
+	_event_root.position.y = 1234.0
 	_event_root.modulate.a = 0.0
 	_event_tween = create_tween()
 	_event_tween.set_parallel(true)
 	_event_tween.tween_property(_event_root, "modulate:a", 1.0, 0.16)
-	_event_tween.tween_property(_event_root, "position:y", 1344.0, 0.22).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_event_tween.tween_property(_event_root, "position:y", 1244.0, 0.22).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	_event_tween.set_parallel(false)
 	_event_tween.tween_interval(2.2)
 	_event_tween.tween_property(_event_root, "modulate:a", 0.0, 0.30)

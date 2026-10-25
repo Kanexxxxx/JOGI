@@ -73,14 +73,16 @@ class GiftCatalog:
         total = self.db.execute('SELECT COUNT(*) FROM gift_catalog').fetchone()[0]
         return {'entries':entries,'total':total,'offset':offset,'limit':limit,'official_catalog_complete':False}
 
-    def showcase(self, account: str) -> list[dict[str, Any]]:
-        path=Path(__file__).resolve().parents[2]/"game/assets/catalogs/tiktok_gift_showcase.json"
+    def showcase(self, account: str, platform: str = "tiktok") -> list[dict[str, Any]]:
+        if platform not in ('tiktok','kwai'):
+            return []
+        path=Path(__file__).resolve().parents[2]/f"game/assets/catalogs/{platform}_gift_showcase.json"
         try:
             value=json.loads(path.read_text(encoding="utf-8"))
-            if value.get("platform") != "tiktok":
+            if value.get("platform") != platform:
                 return []
             entries=value.get("entries", [])[:4]
-            if value.get("account") != account:
+            if platform == 'tiktok' and value.get("account") != account:
                 return [{**entry,'verified':False,'availability_confirmed':False,'reference_account':value.get('account')} for entry in entries]
             return entries
         except (OSError,ValueError,TypeError):

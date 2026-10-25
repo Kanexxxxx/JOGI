@@ -1,0 +1,19 @@
+{
+  "source": "User-provided Kwai viewer gift menu screenshots, 2026-10-25 09:58-09:59",
+  "image_processing": "Original JPEG files preserved. Godot AtlasTexture regions select the visible gift art at runtime. No generated official art.",
+  "scope": "Reference menu of another streamer, not proof of availability in mentalista.. room",
+  "files": [
+    {
+      "file": "catalog-fantasy.jpeg",
+      "sha256": "aec81d5cd4bb9957e9bef5e03049c15cd323736ca0ef5dba7d1240cb0f1fb72d"
+    },
+    {
+      "file": "catalog-party.jpeg",
+      "sha256": "b053fbf1f33517e8e9164d55a9da2492b306d0d2c9faf46f68d489db6c454d50"
+    },
+    {
+      "file": "catalog-sea.jpeg",
+      "sha256": "0ba67e5b494293831b2d79e87e804e7234f0d4f169e6cfd76102378910b70f35"
+    }
+  ]
+}

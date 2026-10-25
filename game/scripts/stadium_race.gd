@@ -78,14 +78,16 @@ func _ready() -> void:
 	if stadium_hud != null:
 		stadium_hud.set_gift_cache(gift_visuals)
 		stadium_hud.set_avatar_cache(avatar_visuals)
-		if OS.get_environment("LIVE_PLATFORM").to_lower() == "tiktok" or not is_production_mode():
-			var catalog: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://assets/catalogs/tiktok_gift_showcase.json"))
+		if OS.get_environment("LIVE_PLATFORM").to_lower() in ["tiktok", "kwai"] or not is_production_mode():
+			var catalog_platform: String = "kwai" if OS.get_environment("LIVE_PLATFORM").to_lower() == "kwai" else "tiktok"
+			var catalog_path: String = "res://assets/catalogs/%s_gift_showcase.json" % catalog_platform
+			var catalog: Variant = JSON.parse_string(FileAccess.get_file_as_string(catalog_path)) if FileAccess.file_exists(catalog_path) else {}
 			if catalog is Dictionary:
 				var showcase: Array[Dictionary] = []
 				for entry: Variant in catalog.get("entries", []):
 					if entry is Dictionary:
 						var item: Dictionary = (entry as Dictionary).duplicate(true)
-						if is_production_mode() and String(catalog.get("account", "")) != OS.get_environment("LIVE_ACCOUNT"):
+						if catalog_platform == "tiktok" and is_production_mode() and String(catalog.get("account", "")) != OS.get_environment("LIVE_ACCOUNT"):
 							item["verified"] = false
 							item["availability_confirmed"] = false
 						showcase.append(item)

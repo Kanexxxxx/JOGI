@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "platform": "kwai",
+  "catalog_scope": "viewer_menu_reference",
+  "account": null,
+  "source_note": "Menu de presentes visível ao espectador em outra sala, enviado pelo operador em 25/10/2026. Não comprova disponibilidade na sala @mentalista..; IDs não aparecem nas imagens.",
+  "entries": [
+    {"action":"boost","gift_name":"Concha Rosa","gift_id":null,"unit_coin_value":5,"currency_label":"diamantes","verified":true,"availability_confirmed":false,"id_confirmed":false,"image_resource":"res://assets/gifts/kwai/catalog-sea.jpeg","image_region":[181,726,94,79],"confirmation_source":"operator_viewer_menu_20261025_0959"},
+    {"action":"shield","gift_name":"Pérola do Mar","gift_id":null,"unit_coin_value":10,"currency_label":"diamantes","verified":true,"availability_confirmed":false,"id_confirmed":false,"image_resource":"res://assets/gifts/kwai/catalog-sea.jpeg","image_region":[318,724,93,84],"confirmation_source":"operator_viewer_menu_20261025_0959"},
+    {"action":"attack","gift_name":"Gol de Rede","gift_id":null,"unit_coin_value":199,"currency_label":"diamantes","verified":true,"availability_confirmed":false,"id_confirmed":false,"image_resource":"res://assets/gifts/kwai/catalog-party.jpeg","image_region":[458,968,81,77],"confirmation_source":"operator_viewer_menu_20261025_0959"},
+    {"action":"super_turbo","gift_name":"Roda-gigante","gift_id":null,"unit_coin_value":1999,"currency_label":"diamantes","verified":true,"availability_confirmed":false,"id_confirmed":false,"image_resource":"res://assets/gifts/kwai/catalog-fantasy.jpeg","image_region":[316,725,89,65],"image_source_partial":true,"confirmation_source":"operator_viewer_menu_20261025_0959"}
+  ]
+}
