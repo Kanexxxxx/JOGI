@@ -9,6 +9,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { DurableGiftDelivery } = require('./kwai_gift_delivery.cjs');
+const profileHandoff = require('./kwai_profile_handoff.cjs');
 
 function parseArgs(argv) {
   const out = {
@@ -344,6 +345,30 @@ function isHeadedLoginActive(lockPath) {
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+async function runLoginBrowser(args, chromium, executablePath, lockPath) {
+  // Login owns only the browser: never instantiate or pump the paid-event DB.
+  const request = profileHandoff.claim(lockPath);
+  let browser = null;
+  const stop = () => { if(browser) browser.close().catch(()=>{}); };
+  process.on('SIGINT',stop); process.on('SIGTERM',stop);
+  try {
+    console.log('[kwai] Login solicitado. Aguardando liberação segura do perfil...');
+    await profileHandoff.waitForRelease(lockPath,request);
+    browser = await chromium.launchPersistentContext(args.profileDir, {
+      headless:false, executablePath, viewport:{width:1280,height:800}, args:['--mute-audio'],
+    });
+    const closed = new Promise(resolve=>browser.once('close',resolve));
+    const page = browser.pages()[0] || await browser.newPage();
+    await page.goto('https://www.kwai.com/',{waitUntil:'domcontentloaded',timeout:15000}).catch(()=>{});
+    console.log('[kwai] Faça login manualmente e feche esta janela ao concluir. A fila de presentes continua no coletor.');
+    await closed;
+  } finally {
+    if(browser)await browser.close().catch(()=>{});
+    profileHandoff.release(lockPath,request);
+    process.removeListener('SIGINT',stop);process.removeListener('SIGTERM',stop);
+  }
+}
+
 async function main() {
   const args = parseArgs(process.argv);
   const bridgeBase = assertLoopbackHttpUrl(args.bridge, '--bridge');
@@ -358,6 +383,9 @@ async function main() {
   const executablePath = findChromiumExecutable();
   fs.mkdirSync(args.profileDir, { recursive: true });
   const headedLockPath = path.join(path.dirname(args.profileDir), 'headed_login.lock');
+  if(args.headed)return runLoginBrowser(args,chromium,executablePath,headedLockPath);
+  const profileOwnerPath = headedLockPath + '.owner';
+  const profileOwner = profileHandoff.claim(profileOwnerPath);
 
   const seenIds = new BoundedSet(10000);
   let eventsForwarded = 0;
@@ -413,11 +441,12 @@ async function main() {
 
   const closeContext = async () => {
     if (context) {
-      await context.close().catch(() => {});
+      try { await context.close(); } catch (_) { return false; }
       context = null;
       page = null;
       lastGotoAt = 0;
     }
+    return true;
   };
 
   const ensureBrowserOpen = async () => {
@@ -658,7 +687,9 @@ async function main() {
         continue;
       }
       if (!args.headed && isHeadedLoginActive(headedLockPath)) {
-        await closeContext();
+        const loginRequest = profileHandoff.read(headedLockPath);
+        const closed = await closeContext();
+        if(closed)profileHandoff.acknowledge(headedLockPath,loginRequest);
         await postWebhook(webhookUrl, {
           type: 'collector_status',
           status: 'waiting_room',
@@ -730,6 +761,7 @@ async function main() {
     clearInterval(deliveryPump);
     await closeContext();
     await delivery.close();
+    profileHandoff.release(profileOwnerPath,profileOwner);
     cleanupLock();
   }
 }
@@ -739,4 +771,4 @@ if (require.main === module) main().catch(err => {
   process.exit(1);
 });
 
-module.exports = { normalizeFeedPayload, isAllowedNavigationUrl, postGiftWebhook };
+module.exports = { normalizeFeedPayload, isAllowedNavigationUrl, postGiftWebhook, runLoginBrowser };
