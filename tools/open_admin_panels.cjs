@@ -3,6 +3,8 @@
 const fs=require('node:fs'),path=require('node:path'),os=require('node:os'),crypto=require('node:crypto');
 function playwright(){for(const location of ['playwright',path.join(os.homedir(),'.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright')]){try{return require(location);}catch(_){}}throw new Error('Playwright local indisponível.');}
 (async()=>{
+ const selected=process.argv[2] || 'both';
+ if(!['both','tiktok','kwai'].includes(selected))throw new Error('Use tiktok, kwai ou both.');
  const {chromium}=playwright();
  const base=path.join(process.env.LOCALAPPDATA,'JOGI');
  const candidates=[path.join(process.env.ProgramFiles||'C:/Program Files','Google/Chrome/Application/chrome.exe')];
@@ -12,6 +14,7 @@ function playwright(){for(const location of ['playwright',path.join(os.homedir()
  const context=await chromium.launchPersistentContext(path.join(base,'operator-browser'),{headless:false,executablePath,viewport:{width:1380,height:940}});
  let ready=0;
  for(const [platform,port] of [['tiktok',8765],['kwai',8766]]){
+  if(selected!=='both' && selected!==platform)continue;
   try {
    const origin=`http://127.0.0.1:${port}`;
    const health=await context.request.get(origin+'/health');

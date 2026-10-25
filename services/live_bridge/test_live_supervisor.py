@@ -21,10 +21,10 @@ import run_live_instances
 def test_account_scoped_paths_and_lifetime_launcher_lock(tmp_path, monkeypatch):
     monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
     plan = run_live_instances.build_plan("tiktok", runtime_mode="production")
-    key = hashlib.sha256(b"xinka_").hexdigest()[:16]
-    assert plan["account"] == "xinka_"
+    key = hashlib.sha256(b"nostalgiia.br").hexdigest()[:16]
+    assert plan["account"] == "nostalgiia.br"
     assert Path(plan["state_dir"]) == tmp_path / "JOGI" / "live_bridge" / "tiktok" / "production" / "accounts" / key
-    assert plan["godot_environment"]["LIVE_ACCOUNT"] == "xinka_"
+    assert plan["godot_environment"]["LIVE_ACCOUNT"] == "nostalgiia.br"
     lock = run_live_instances.LauncherLock(Path(plan["state_dir"]))
     try:
         credential = Path(plan["state_dir"]) / "operator-token.key"

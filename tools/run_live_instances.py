@@ -27,9 +27,9 @@ if str(BRIDGE_DIR) not in sys.path:
     sys.path.insert(0, str(BRIDGE_DIR))
 from operational_shutdown import normalize_end_at
 from server import normalize_secret_token
-# TikTok: conta operacional correta @xinka_ (a sessao antiga @nostalgiia.br fica
-# preservada em seu proprio state_dir). JOGI_TIKTOK_ACCOUNT permite troca explicita.
-PUBLIC_ACCOUNTS = {"tiktok": os.environ.get("JOGI_TIKTOK_ACCOUNT", "xinka_").strip().lstrip("@") or "xinka_",
+# Operator confirmed the active Studio LIVE belongs to @nostalgiia.br.
+# @xinka_ remains intact in its own account directory; never merge the sessions.
+PUBLIC_ACCOUNTS = {"tiktok": os.environ.get("JOGI_TIKTOK_ACCOUNT", "nostalgiia.br").strip().lstrip("@") or "nostalgiia.br",
                    "kwai": "mentalista.."}
 PORTS = {"tiktok": 8765, "kwai": 8766}
 KWAI_WEBHOOK_PORT = 8786
@@ -326,7 +326,7 @@ def launch(plans: list[dict], *, bridge_only: bool = False) -> int:
                     collector.requires_attention = True
                     collector.last_exit = "bridge_port_already_in_use"
                 children.append(collector)
-            print(f"{plan['platform'].upper()}: painel {plan['panel']} | outbox {state_dir}", flush=True)
+            print(f"{plan['platform'].upper()} @{plan['account']}: painel {plan['panel']} | outbox {state_dir}", flush=True)
         supervisor = LiveSupervisor(children, state_dirs)
         print("Supervisão local ativa. Reinícios são isolados; Ctrl+C encerra os processos deste launcher.", flush=True)
         with stay_awake():
