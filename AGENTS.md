@@ -59,11 +59,11 @@ Nenhuma fase ou funcionalidade é considerada pronta sem cumprir as 5 etapas aba
 
 ## 5. Mapa de Documentação Viva do Projeto
 
-- [`DESIGN.md`](file:///C:/Users/Kanex/OneDrive/Desktop/JOGI/DESIGN.md) — Sistema visual do HUD 9:16 e Painel Administrativo Web.
-- [`GAME_DESIGN.md`](file:///C:/Users/Kanex/OneDrive/Desktop/JOGI/GAME_DESIGN.md) — Regras da corrida, candidatos, presentes, votos e balanceamento.
-- [`ARCHITECTURE.md`](file:///C:/Users/Kanex/OneDrive/Desktop/JOGI/ARCHITECTURE.md) — Arquitetura de módulos, `LiveEventBus`, WebSocket e estados.
-- [`ART_DIRECTION.md`](file:///C:/Users/Kanex/OneDrive/Desktop/JOGI/ART_DIRECTION.md) — Direção de arte 3D, proporções caricatas, pipeline Tripo CLI e iluminação.
-- [`INTEGRATIONS.md`](file:///C:/Users/Kanex/OneDrive/Desktop/JOGI/INTEGRATIONS.md) — Conectores TikTok Live / Kwai, deduplicação, filas e simulador local.
-- [`TESTING.md`](file:///C:/Users/Kanex/OneDrive/Desktop/JOGI/TESTING.md) — Estratégia de testes automatizados (Godot, Python, Playwright, Stress Test).
-- [`SECURITY.md`](file:///C:/Users/Kanex/OneDrive/Desktop/JOGI/SECURITY.md) — Segurança de entradas externas, variáveis de ambiente e menor privilégio.
-- [`CONTINUIDADE.md`](file:///C:/Users/Kanex/OneDrive/Desktop/JOGI/CONTINUIDADE.md) — Inventário atual do ambiente, pendências e plano de retomada.
+- [`DESIGN.md`](DESIGN.md) — Sistema visual do HUD 9:16 e Painel Administrativo Web.
+- [`GAME_DESIGN.md`](GAME_DESIGN.md) — Regras da corrida, candidatos, presentes, votos e balanceamento.
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) — Arquitetura de módulos, `LiveEventBus`, WebSocket e estados.
+- [`ART_DIRECTION.md`](ART_DIRECTION.md) — Direção de arte 3D, proporções caricatas, pipeline Tripo CLI e iluminação.
+- [`INTEGRATIONS.md`](INTEGRATIONS.md) — Conectores TikTok Live / Kwai, deduplicação, filas e simulador local.
+- [`TESTING.md`](TESTING.md) — Estratégia de testes automatizados (Godot, Python, Playwright, Stress Test).
+- [`SECURITY.md`](SECURITY.md) — Segurança de entradas externas, variáveis de ambiente e menor privilégio.
+- [`CONTINUIDADE.md`](CONTINUIDADE.md) — Inventário atual do ambiente, pendências e plano de retomada.
